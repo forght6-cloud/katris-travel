@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Katris Travel AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>🌍 Katris Travel AI</h1>
+  </header>
+
+  <main>
+    <h2>AI 智能旅行规划</h2>
+    <p>请输入旅行信息：</p>
+
+    <div class="input-box">
+      <input id="from" placeholder="出发地" />
+      <input id="to" placeholder="目的地" /><br />
+      <input id="date" type="date" />
+      <input id="time" type="time" /><br />
+      <input id="people" type="number" min="1" value="1" placeholder="人数" />
+      <input id="budget" placeholder="预算 (USD)" /><br />
+      <textarea id="notes" placeholder="特殊需求（餐饮、宗教、体力等）"></textarea><br />
+      <button onclick="generatePlan()">立即生成计划</button>
+    </div>
+
+    <div id="result" class="result-box"></div>
+  </main>
+
+  <footer>© 2025 Katris Merrio | Cloudflare 全栈版本</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
