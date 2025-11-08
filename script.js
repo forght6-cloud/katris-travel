@@ -45,3 +45,4 @@ async function generatePlan() {
     result.innerHTML = "⚠️ 请求失败，请检查 Worker 地址或网络。";
   }
 }
+
