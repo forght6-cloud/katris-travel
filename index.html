@@ -7,26 +7,104 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="splash" id="splash">
+    <div class="splash-content">
+      <div class="splash-logo">✈️</div>
+      <h2>Katris Travel AI</h2>
+      <p>为你生成灵感满满的旅行方案</p>
+      <div class="splash-bar"></div>
+    </div>
+  </div>
+
   <header>
-    <h1>🌍 Katris Travel AI</h1>
+    <div class="brand">
+      <h1>🌍 Katris Travel AI</h1>
+      <span class="pill">Beta</span>
+    </div>
+    <nav class="nav">
+      <button class="ghost">行程概览</button>
+      <button class="ghost">酒店 & 餐厅</button>
+      <button class="ghost">预算报告</button>
+    </nav>
   </header>
 
   <main>
-    <h2>AI 智能旅行规划</h2>
-    <p>请输入旅行信息：</p>
+    <section class="hero">
+      <div>
+        <h2>AI 智能旅行规划</h2>
+        <p>输入关键词或完整旅行描述，智能识别需求、推荐酒店与餐厅，并生成预算与祝福语。</p>
+        <div class="chip-group">
+          <span class="chip">多语言计划</span>
+          <span class="chip">预算分析</span>
+          <span class="chip">行程分页互动</span>
+          <span class="chip">丝滑开屏动画</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <h3>即刻体验</h3>
+        <p>填写下方信息，或直接粘贴你的旅行计划。</p>
+        <div class="stats">
+          <div>
+            <strong>98%</strong>
+            <span>推荐匹配率</span>
+          </div>
+          <div>
+            <strong>5-10s</strong>
+            <span>响应速度</span>
+          </div>
+          <div>
+            <strong>24/7</strong>
+            <span>持续服务</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <div class="input-box">
-      <input id="from" placeholder="出发地" />
-      <input id="to" placeholder="目的地" /><br />
-      <input id="date" type="date" />
-      <input id="time" type="time" /><br />
-      <input id="people" type="number" min="1" value="1" placeholder="人数" />
-      <input id="budget" placeholder="预算 (USD)" /><br />
-      <textarea id="notes" placeholder="特殊需求（餐饮、宗教、体力等）"></textarea><br />
-      <button onclick="generatePlan()">立即生成计划</button>
-    </div>
+    <section class="input-section">
+      <div class="tabs">
+        <button class="tab active" data-tab="form">表单输入</button>
+        <button class="tab" data-tab="text">文本识别</button>
+      </div>
 
-    <div id="result" class="result-box"></div>
+      <div class="input-box">
+        <div class="tab-panel active" id="tab-form">
+          <div class="field-row">
+            <input id="from" placeholder="出发地" />
+            <input id="to" placeholder="目的地" />
+          </div>
+          <div class="field-row">
+            <input id="date" type="date" />
+            <input id="time" type="time" />
+          </div>
+          <div class="field-row">
+            <input id="people" type="number" min="1" value="1" placeholder="人数" />
+            <input id="budget" placeholder="预算 (USD)" />
+          </div>
+          <textarea id="notes" placeholder="特殊需求（餐饮、宗教、体力等）"></textarea>
+          <div class="action-row">
+            <button id="plan-button">立即生成计划</button>
+            <button class="secondary" id="sample-button">填充示例</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-text">
+          <textarea id="plan-text" placeholder="例如：我计划6月去京都，三天两夜，想体验温泉和素食餐厅...">
+          </textarea>
+          <div class="action-row">
+            <button id="recognize-button">识别文本并规划</button>
+            <button class="secondary" id="clear-button">清空内容</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="result-section">
+      <div class="result-header">
+        <h3>智能规划结果</h3>
+        <div class="pagination" id="pagination"></div>
+      </div>
+      <div id="result" class="result-box"></div>
+    </section>
   </main>
 
   <footer>© 2025 Katris Merrio | Cloudflare 全栈版本</footer>
