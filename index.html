@@ -1,36 +1,146 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Katris Travel AI</title>
+  <title>Katris Nordic Travel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>🌍 Katris Travel AI</h1>
+  <header class="topbar">
+    <div class="brand">Katris Nordic Travel</div>
+    <nav>
+      <a href="#flight">机票</a>
+      <a href="#hotel">酒店</a>
+      <a href="#map">地图</a>
+      <a href="#planner">行程助手</a>
+    </nav>
   </header>
 
-  <main>
-    <h2>AI 智能旅行规划</h2>
-    <p>请输入旅行信息：</p>
-
-    <div class="input-box">
-      <input id="from" placeholder="出发地" />
-      <input id="to" placeholder="目的地" /><br />
-      <input id="date" type="date" />
-      <input id="time" type="time" /><br />
-      <input id="people" type="number" min="1" value="1" placeholder="人数" />
-      <input id="budget" placeholder="预算 (USD)" /><br />
-      <textarea id="notes" placeholder="特殊需求（餐饮、宗教、体力等）"></textarea><br />
-      <button onclick="generatePlan()">立即生成计划</button>
+  <section class="hero">
+    <div class="hero-content">
+      <p class="eyebrow">灵感来自北欧旅游局官网风格</p>
+      <h1>一站式北欧旅行 UI 参考版</h1>
+      <p>先把关键功能页面搭好：查机票、查酒店、地图浏览、AI 行程入口。后续你给 API 后可直接接入。</p>
+      <div class="hero-actions">
+        <button class="btn-primary" data-jump="flight">开始搜索</button>
+        <button class="btn-ghost" data-jump="planner">体验行程助手</button>
+      </div>
     </div>
+  </section>
 
-    <div id="result" class="result-box"></div>
+  <main class="container">
+    <section class="storyboard" id="inspiration">
+      <div class="section-title">
+        <h2>📸 北欧目的地图块</h2>
+        <p>强化视觉表达：每个图文卡片按图:字 = 6:4 排版，先做内容参考，后面可接 CMS / API 动态渲染。</p>
+      </div>
+
+      <article class="story-card">
+        <div class="story-image" style="background-image:url('https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1400&q=80');"></div>
+        <div class="story-text">
+          <p class="tag">Norway · Fjord</p>
+          <h3>挪威峡湾慢旅行</h3>
+          <p>峡湾游船、山地铁路和海边小镇串联成 4 日经典线，适合第一次到北欧的用户。</p>
+        </div>
+      </article>
+
+      <article class="story-card">
+        <div class="story-image" style="background-image:url('https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&fit=crop&w=1400&q=80');"></div>
+        <div class="story-text">
+          <p class="tag">Finland · Aurora</p>
+          <h3>芬兰极光玻璃屋</h3>
+          <p>结合雪地活动与温泉体验，适配冬季高需求人群，可与酒店筛选联动推荐。</p>
+        </div>
+      </article>
+
+      <article class="story-card">
+        <div class="story-image" style="background-image:url('https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1400&q=80');"></div>
+        <div class="story-text">
+          <p class="tag">Iceland · Ring Road</p>
+          <h3>冰岛环岛公路之旅</h3>
+          <p>瀑布、火山、黑沙滩路线可直接落到地图模块里做 POI 打点与自驾线路展示。</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="search-panel" id="flight">
+      <div class="panel-head">
+        <h2>🔎 旅行搜索中心</h2>
+        <div class="tabs" role="tablist" aria-label="搜索类型切换">
+          <button class="tab-btn active" data-tab="flight" role="tab" aria-selected="true">机票</button>
+          <button class="tab-btn" data-tab="hotel" role="tab" aria-selected="false">酒店</button>
+        </div>
+      </div>
+
+      <div class="tab-content active" data-panel="flight">
+        <form id="flightForm" class="form-grid">
+          <label>出发城市<input name="from" placeholder="例如：上海" required /></label>
+          <label>到达城市<input name="to" placeholder="例如：奥斯陆" required /></label>
+          <label>出发日期<input name="departDate" type="date" required /></label>
+          <label>返程日期<input name="returnDate" type="date" /></label>
+          <label>乘客人数<input name="passengers" type="number" min="1" value="1" required /></label>
+          <label>舱位
+            <select name="cabin">
+              <option>经济舱</option>
+              <option>超级经济舱</option>
+              <option>商务舱</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary full">搜索机票</button>
+        </form>
+      </div>
+
+      <div class="tab-content" data-panel="hotel" id="hotel">
+        <form id="hotelForm" class="form-grid">
+          <label>目的地<input name="city" placeholder="例如：赫尔辛基" required /></label>
+          <label>入住日期<input name="checkIn" type="date" required /></label>
+          <label>离店日期<input name="checkOut" type="date" required /></label>
+          <label>房间数<input name="rooms" type="number" min="1" value="1" required /></label>
+          <label>住客人数<input name="guests" type="number" min="1" value="2" required /></label>
+          <label>偏好
+            <select name="style">
+              <option>市中心</option>
+              <option>设计酒店</option>
+              <option>极光玻璃屋</option>
+              <option>高性价比</option>
+            </select>
+          </label>
+          <button type="submit" class="btn-primary full">搜索酒店</button>
+        </form>
+      </div>
+
+      <div id="searchResult" class="result-box muted">结果区域（目前为 UI 演示，待接入 API）</div>
+    </section>
+
+    <section class="map-section" id="map">
+      <div>
+        <h2>🗺️ 北欧地图探索</h2>
+        <p>可用于展示景点聚合、路线、酒店位置和机场交通。现在先用可视化占位，后续接高德/Mapbox/Google Maps API。</p>
+      </div>
+      <div class="map-placeholder">
+        <span>Map View Placeholder</span>
+      </div>
+    </section>
+
+    <section class="planner" id="planner">
+      <h2>✨ AI 行程助手</h2>
+      <p>保留你原来的核心能力，后续可组合机票/酒店数据自动生成完整路线。</p>
+      <div class="planner-box">
+        <input id="from" placeholder="出发地" />
+        <input id="to" placeholder="目的地" />
+        <input id="date" type="date" />
+        <textarea id="notes" placeholder="偏好（亲子/摄影/轻徒步/预算）"></textarea>
+        <button class="btn-primary" onclick="generatePlan()">生成 AI 行程草案</button>
+      </div>
+      <div id="result" class="result-box"></div>
+    </section>
   </main>
 
-  <footer>© 2025 Katris Merrio | Cloudflare 全栈版本</footer>
-
+  <footer>© 2026 Katris Travel · Nordic UI Concept</footer>
   <script src="script.js"></script>
 </body>
 </html>

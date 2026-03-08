@@ -1,48 +1,86 @@
+function switchTab(name) {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    const active = btn.dataset.tab === name;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
+  });
+
+  document.querySelectorAll(".tab-content").forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.panel === name);
+  });
+}
+
+function renderMockResult(type, payload) {
+  const output = document.getElementById("searchResult");
+
+  if (type === "flight") {
+    output.innerHTML = `
+      <h3>机票搜索结果（演示）</h3>
+      <p><strong>${payload.from}</strong> → <strong>${payload.to}</strong>，${payload.departDate}</p>
+      <ul>
+        <li>北欧航空 SK998 · 12h 45m · 参考价 ¥4,820</li>
+        <li>芬兰航空 AY088 · 13h 10m · 参考价 ¥5,160</li>
+      </ul>
+      <p class="muted">* 当前为静态演示数据，接入 API 后替换为真实查询结果。</p>
+    `;
+    return;
+  }
+
+  output.innerHTML = `
+    <h3>酒店搜索结果（演示）</h3>
+    <p><strong>${payload.city}</strong> · ${payload.checkIn} 至 ${payload.checkOut}</p>
+    <ul>
+      <li>Harbor Nordic Hotel · 9.1 分 · ¥1,080/晚</li>
+      <li>Snowlight Design Stay · 8.8 分 · ¥860/晚</li>
+    </ul>
+    <p class="muted">* 当前为静态演示数据，接入 API 后替换为真实查询结果。</p>
+  `;
+}
+
 async function generatePlan() {
   const from = document.getElementById("from").value.trim();
   const to = document.getElementById("to").value.trim();
   const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-  const people = document.getElementById("people").value;
-  const budget = document.getElementById("budget").value;
-  const notes = document.getElementById("notes").value;
+  const notes = document.getElementById("notes").value.trim();
   const result = document.getElementById("result");
 
-  if (!from || !to || !date || !time) {
-    alert("请填写完整信息");
+  if (!from || !to || !date) {
+    alert("请先填写出发地、目的地和日期");
     return;
   }
 
-  result.innerHTML = "🧭 正在生成旅行计划，请稍候...";
-
-  const userPrompt = `
-你是一名专业旅行规划师，请根据以下条件生成详细计划：
-出发地：${from}
-目的地：${to}
-日期：${date} ${time}
-人数：${people}
-预算：${budget}
-说明：${notes}
-输出格式：按小时列出每日行程，附带景点链接。
-`;
-
-  try {
-    const res = await fetch("https://openai-proxy.forght-6.workers.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: "你是 Katris Travel AI 旅行助手，输出详细行程" },
-          { role: "user", content: userPrompt }
-        ]
-      })
-    });
-
-    const data = await res.json();
-    result.innerHTML = `<h3>🗺️ 旅行计划</h3><pre>${data.choices?.[0]?.message?.content || "生成失败"}</pre>`;
-  } catch (e) {
-    result.innerHTML = "⚠️ 请求失败，请检查 Worker 地址或网络。";
-  }
+  result.innerHTML = `
+    <h3>AI 行程草案（示例）</h3>
+    <p><strong>${date}</strong> 从 <strong>${from}</strong> 前往 <strong>${to}</strong>。</p>
+    <ol>
+      <li>上午：抵达后入住酒店，周边轻松步行。</li>
+      <li>下午：城市地标 + 博物馆路线，配合公共交通。</li>
+      <li>晚上：本地特色餐厅 + 夜景路线。</li>
+    </ol>
+    <p class="muted">偏好备注：${notes || "无"}。后续接入 API 后可生成完整多日计划。</p>
+  `;
 }
 
+document.querySelectorAll(".tab-btn").forEach((button) => {
+  button.addEventListener("click", () => switchTab(button.dataset.tab));
+});
+
+document.getElementById("flightForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderMockResult("flight", Object.fromEntries(new FormData(event.target).entries()));
+});
+
+document.getElementById("hotelForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  renderMockResult("hotel", Object.fromEntries(new FormData(event.target).entries()));
+});
+
+document.querySelectorAll("[data-jump]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = document.getElementById(button.dataset.jump);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (button.dataset.jump === "flight") {
+      switchTab("flight");
+    }
+  });
+});
