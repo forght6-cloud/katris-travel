@@ -15,12 +15,54 @@ const DEFAULT_PLANNER_STATE = {
   pillars: ["Scenery", "Quiet stays"],
 };
 
+const CITY_CATALOG = [
+  "Amsterdam",
+  "Athens",
+  "Bangkok",
+  "Barcelona",
+  "Bergen",
+  "Berlin",
+  "Brussels",
+  "Budapest",
+  "Copenhagen",
+  "Dublin",
+  "Edinburgh",
+  "Florence",
+  "Geneva",
+  "Helsinki",
+  "Hong Kong",
+  "Istanbul",
+  "Kyoto",
+  "Lisbon",
+  "London",
+  "Los Angeles",
+  "Madrid",
+  "Milan",
+  "Munich",
+  "New York",
+  "Nice",
+  "Oslo",
+  "Paris",
+  "Prague",
+  "Reykjavik",
+  "Rome",
+  "Seoul",
+  "Singapore",
+  "Stockholm",
+  "Tallinn",
+  "Tokyo",
+  "Venice",
+  "Vienna",
+  "Zurich",
+];
+
 const appState = {
   planner: { ...DEFAULT_PLANNER_STATE },
   assistant: {
     messages: [{ ...INITIAL_ASSISTANT_MESSAGE }],
   },
   selectedRegion: "fjord",
+  analysis: null,
 };
 
 const regionDescriptions = {
@@ -37,6 +79,7 @@ function initializeHomepage() {
   bindAssistant();
   renderPlannerPreview();
   renderAssistantThread();
+  renderAnalysisResults(null);
 }
 
 function bindScrollButtons() {
@@ -71,17 +114,33 @@ function bindPlannerForm() {
   const resetButton = document.getElementById("reset-planner");
 
   plannerForm.addEventListener("input", syncPlannerStateFromForm);
-  plannerForm.addEventListener("submit", (event) => {
+  plannerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     syncPlannerStateFromForm();
-    renderPlannerPreview();
+    setPlannerLoadingState(true);
+
+    try {
+      const inputText = appState.planner.notes || buildFallbackItineraryText();
+      const result = await analyzeTripPlan(inputText);
+      appState.analysis = result;
+      renderPlannerPreview();
+      renderAnalysisResults(result);
+      sendAssistantMessage(result.summary);
+    } catch (error) {
+      renderAnalysisResults({ error: "Unable to analyze the itinerary right now. Please review the itinerary text and try again." });
+      console.error(error);
+    } finally {
+      setPlannerLoadingState(false);
+    }
   });
 
   resetButton.addEventListener("click", () => {
     plannerForm.reset();
     resetPlannerState();
     syncPlannerFormFromState();
+    appState.analysis = null;
     renderPlannerPreview();
+    renderAnalysisResults(null);
   });
 }
 
@@ -169,6 +228,365 @@ function buildPlaceholderTimeline({ destination, timingText, priorities }) {
   ];
 }
 
+function parseItinerary(text) {
+  const lines = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const stops = [];
+
+  lines.forEach((line) => {
+    const date = extractDate(line);
+    const cities = extractCities(line);
+
+    cities.forEach((city, index) => {
+      const previousStop = stops[stops.length - 1];
+      if (previousStop && previousStop.city.toLowerCase() === city.toLowerCase()) {
+        if (!previousStop.date && date && index === 0) {
+          previousStop.date = date;
+        }
+        return;
+      }
+
+      stops.push({
+        city,
+        date: index === 0 ? date : null,
+      });
+    });
+  });
+
+  return { stops };
+}
+
+function extractCities(text) {
+  const catalogMatches = CITY_CATALOG
+    .map((city) => ({
+      city,
+      index: text.toLowerCase().search(new RegExp(`\\b${escapeRegExp(city.toLowerCase())}\\b`, "i")),
+    }))
+    .filter((match) => match.index >= 0)
+    .sort((a, b) => a.index - b.index)
+    .map((match) => match.city);
+
+  if (catalogMatches.length) {
+    return dedupeCities(catalogMatches);
+  }
+
+  return dedupeCities(extractCapitalizedCities(text));
+}
+
+function extractCapitalizedCities(text) {
+  const candidates = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
+  const blockedWords = new Set(["Example", "Day", "Trip", "Flight", "Hotel", "Train", "Metro"]);
+
+  return candidates.filter((candidate) => !blockedWords.has(candidate));
+}
+
+function dedupeCities(cities) {
+  const seen = new Set();
+  return cities.filter((city) => {
+    const key = city.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function extractDate(text) {
+  const isoMatch = text.match(/\b(\d{4}[-/]\d{2}[-/]\d{2})\b/);
+  if (isoMatch) {
+    return normalizeDate(isoMatch[1]);
+  }
+
+  const longDateMatch = text.match(
+    /\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:,\s*\d{4})?/i,
+  );
+  if (longDateMatch) {
+    return normalizeDate(longDateMatch[0]);
+  }
+
+  const reverseDateMatch = text.match(/\b\d{1,2}\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+\d{4})?/i);
+  if (reverseDateMatch) {
+    return normalizeDate(reverseDateMatch[0]);
+  }
+
+  return null;
+}
+
+function normalizeDate(dateText) {
+  const currentYear = new Date().getFullYear();
+  const candidate = dateText.includes("/") ? dateText.replace(/\//g, "-") : dateText;
+  const candidateWithYear = /\d{4}/.test(candidate) ? candidate : `${candidate} ${currentYear}`;
+  const parsed = new Date(candidateWithYear);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString().slice(0, 10);
+}
+
+function buildFallbackItineraryText() {
+  const fallbackDestination = appState.planner.to || formatRegionName(appState.selectedRegion);
+  const fallbackDate = appState.planner.date ? `${appState.planner.date}-01` : "";
+  return [fallbackDate, fallbackDestination].filter(Boolean).join(" ").trim();
+}
+
+async function searchFlights(origin, destination, date) {
+  const safeDate = date || getFallbackTravelDate();
+  const basePrice = 180 + destination.length * 9 + origin.length * 4;
+
+  return [
+    {
+      airline: "Nordic Air",
+      departure: "08:30",
+      arrival: "10:45",
+      price: basePrice,
+      currency: "EUR",
+      origin,
+      destination,
+      date: safeDate,
+    },
+    {
+      airline: "Aurora Connect",
+      departure: "14:15",
+      arrival: "16:40",
+      price: basePrice + 45,
+      currency: "EUR",
+      origin,
+      destination,
+      date: safeDate,
+    },
+  ];
+}
+
+async function searchHotels(city, date) {
+  const safeDate = date || getFallbackTravelDate();
+  const basePrice = 120 + city.length * 6;
+
+  return [
+    {
+      name: `${city} Harbour Hotel`,
+      rating: 4.6,
+      price: basePrice,
+      currency: "EUR",
+      city,
+      date: safeDate,
+    },
+    {
+      name: `${city} Light Stay`,
+      rating: 4.4,
+      price: basePrice + 28,
+      currency: "EUR",
+      city,
+      date: safeDate,
+    },
+  ];
+}
+
+function generateTransportLinks(city) {
+  const encodedCity = encodeURIComponent(city);
+
+  return {
+    metro: `https://www.google.com/maps/search/${encodedCity}+metro/`,
+    uber: `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${encodedCity}`,
+    train: `https://www.google.com/maps/search/${encodedCity}+train+station/`,
+  };
+}
+
+async function analyzeTripPlan(inputText) {
+  const parsed = parseItinerary(inputText);
+  let stops = parsed.stops;
+
+  if (!stops.length) {
+    const fallbackCity = appState.planner.to || formatRegionName(appState.selectedRegion);
+    stops = [{ city: fallbackCity, date: getFallbackTravelDate() }];
+  }
+
+  const normalizedStops = stops.map((stop, index) => ({
+    city: stop.city,
+    date: stop.date || deriveStopDate(index),
+  }));
+
+  const flights = [];
+  const hotels = [];
+  const transport = [];
+
+  for (let index = 0; index < normalizedStops.length; index += 1) {
+    const stop = normalizedStops[index];
+    const hotelOptions = await searchHotels(stop.city, stop.date);
+    const transportLinks = generateTransportLinks(stop.city);
+
+    hotels.push({
+      city: stop.city,
+      date: stop.date,
+      options: hotelOptions,
+    });
+
+    transport.push({
+      city: stop.city,
+      links: transportLinks,
+    });
+
+    const origin = index === 0 ? appState.planner.from : normalizedStops[index - 1]?.city;
+    if (origin && origin !== stop.city) {
+      const flightOptions = await searchFlights(origin, stop.city, stop.date);
+      flights.push({
+        origin,
+        destination: stop.city,
+        date: stop.date,
+        options: flightOptions,
+      });
+    }
+  }
+
+  const result = {
+    stops: normalizedStops,
+    flights,
+    hotels,
+    transport,
+  };
+
+  result.summary = buildTripSummary(result);
+  return result;
+}
+
+function deriveStopDate(index) {
+  const baseDate = getFallbackTravelDate();
+  const candidate = new Date(baseDate);
+  candidate.setDate(candidate.getDate() + index * 2);
+  return candidate.toISOString().slice(0, 10);
+}
+
+function getFallbackTravelDate() {
+  if (appState.planner.date) {
+    return `${appState.planner.date}-01`;
+  }
+
+  const today = new Date();
+  return today.toISOString().slice(0, 10);
+}
+
+function buildTripSummary(result) {
+  const route = result.stops.map((stop) => `${stop.city}${stop.date ? ` (${stop.date})` : ""}`).join(" → ");
+  return `Planner update: ${result.stops.length} stop${result.stops.length > 1 ? "s" : ""} analyzed. Route: ${route}. ${result.flights.length} flight segment${result.flights.length !== 1 ? "s" : ""}, ${result.hotels.length} hotel lookup${result.hotels.length !== 1 ? "s" : ""}, and local transport links are ready.`;
+}
+
+function renderAnalysisResults(result) {
+  const container = document.getElementById("analysis-results");
+
+  if (!result) {
+    container.innerHTML = '<p class="analysis-empty">Analyze an itinerary to see flights, hotels, transport, and summary.</p>';
+    return;
+  }
+
+  if (result.error) {
+    container.innerHTML = `<p class="analysis-empty">${escapeHtml(result.error)}</p>`;
+    return;
+  }
+
+  const summaryList = result.stops
+    .map((stop) => `<li><strong>${escapeHtml(stop.city)}</strong><span>${escapeHtml(stop.date || "Date flexible")}</span></li>`)
+    .join("");
+
+  const flightsMarkup = result.flights.length
+    ? result.flights
+        .map(
+          (segment) => `
+            <div class="analysis-block">
+              <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+              ${segment.options
+                .map(
+                  (flight) => `
+                    <article class="analysis-item">
+                      <div>
+                        <strong>${escapeHtml(flight.airline)}</strong>
+                        <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
+                      </div>
+                      <span>${flight.price} ${escapeHtml(flight.currency)}</span>
+                    </article>
+                  `,
+                )
+                .join("")}
+            </div>
+          `,
+        )
+        .join("")
+    : '<p class="analysis-empty">No flight segment was required for this itinerary.</p>';
+
+  const hotelsMarkup = result.hotels
+    .map(
+      (entry) => `
+        <div class="analysis-block">
+          <h5>${escapeHtml(entry.city)}</h5>
+          ${entry.options
+            .map(
+              (hotel) => `
+                <article class="analysis-item">
+                  <div>
+                    <strong>${escapeHtml(hotel.name)}</strong>
+                    <p>Rating ${hotel.rating} · ${escapeHtml(hotel.date)}</p>
+                  </div>
+                  <span>${hotel.price} ${escapeHtml(hotel.currency)}</span>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      `,
+    )
+    .join("");
+
+  const transportMarkup = result.transport
+    .map(
+      (entry) => `
+        <div class="analysis-block">
+          <h5>${escapeHtml(entry.city)}</h5>
+          <div class="transport-links">
+            <a href="${escapeHtml(entry.links.metro)}" target="_blank" rel="noreferrer">Metro</a>
+            <a href="${escapeHtml(entry.links.uber)}" target="_blank" rel="noreferrer">Uber</a>
+            <a href="${escapeHtml(entry.links.train)}" target="_blank" rel="noreferrer">Train</a>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+
+  container.innerHTML = `
+    <section class="analysis-section">
+      <h4>Summary</h4>
+      <p>${escapeHtml(result.summary)}</p>
+      <ul class="summary-stops">${summaryList}</ul>
+    </section>
+    <section class="analysis-section">
+      <h4>Flights</h4>
+      ${flightsMarkup}
+    </section>
+    <section class="analysis-section">
+      <h4>Hotels</h4>
+      ${hotelsMarkup}
+    </section>
+    <section class="analysis-section">
+      <h4>Transport</h4>
+      ${transportMarkup}
+    </section>
+  `;
+}
+
+function setPlannerLoadingState(isLoading) {
+  const button = document.getElementById("analyze-planner");
+  const container = document.getElementById("analysis-results");
+
+  button.disabled = isLoading;
+  button.textContent = isLoading ? "Analyzing..." : "Analyze itinerary";
+  container.setAttribute("aria-busy", String(isLoading));
+
+  if (isLoading) {
+    container.innerHTML = '<p class="analysis-empty">Analyzing itinerary, searching travel options, and preparing transport links...</p>';
+  }
+}
+
 function bindAssistant() {
   const assistantForm = document.getElementById("assistant-form");
   const assistantInput = document.getElementById("assistant-input");
@@ -195,6 +613,15 @@ function bindAssistant() {
   });
 }
 
+function sendAssistantMessage(summary) {
+  const lastMessage = appState.assistant.messages[appState.assistant.messages.length - 1];
+  if (lastMessage && lastMessage.role === "system" && lastMessage.content === summary) {
+    return;
+  }
+
+  addAssistantMessage("system", summary);
+}
+
 function addAssistantMessage(role, content) {
   appState.assistant.messages.push({ role, content });
   renderAssistantThread();
@@ -208,13 +635,19 @@ function renderAssistantThread() {
     const article = document.createElement("article");
     article.className = `message ${message.role}`;
     article.innerHTML = `
-      <p class="message-label">${message.role === "assistant" ? "Katris Assistant" : "You"}</p>
-      <p>${message.content}</p>
+      <p class="message-label">${getMessageLabel(message.role)}</p>
+      <p>${escapeHtml(message.content)}</p>
     `;
     thread.appendChild(article);
   });
 
   thread.scrollTop = thread.scrollHeight;
+}
+
+function getMessageLabel(role) {
+  if (role === "assistant") return "Katris Assistant";
+  if (role === "system") return "Planner Summary";
+  return "You";
 }
 
 function handleAssistantPlaceholder(userMessage) {
@@ -228,6 +661,7 @@ function getPlannerPayload() {
   return {
     ...appState.planner,
     region: appState.selectedRegion,
+    analysis: appState.analysis,
     assistantMessages: [...appState.assistant.messages],
   };
 }
@@ -264,6 +698,19 @@ function formatMonth(value) {
 
   const date = new Date(Number(year), Number(month) - 1);
   return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(date);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 document.addEventListener("DOMContentLoaded", initializeHomepage);
