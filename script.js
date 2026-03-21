@@ -56,6 +56,47 @@ const CITY_CATALOG = [
   "Zurich",
 ];
 
+const AIRPORT_CODE_MAP = {
+  Amsterdam: "AMS",
+  Athens: "ATH",
+  Bangkok: "BKK",
+  Barcelona: "BCN",
+  Bergen: "BGO",
+  Berlin: "BER",
+  Brussels: "BRU",
+  Budapest: "BUD",
+  Copenhagen: "CPH",
+  Dublin: "DUB",
+  Edinburgh: "EDI",
+  Florence: "FLR",
+  Geneva: "GVA",
+  Helsinki: "HEL",
+  "Hong Kong": "HKG",
+  Istanbul: "IST",
+  Kyoto: "KIX",
+  Lisbon: "LIS",
+  London: "LON",
+  "Los Angeles": "LAX",
+  Madrid: "MAD",
+  Milan: "MIL",
+  Munich: "MUC",
+  "New York": "NYC",
+  Nice: "NCE",
+  Oslo: "OSL",
+  Paris: "PAR",
+  Prague: "PRG",
+  Reykjavik: "KEF",
+  Rome: "ROM",
+  Seoul: "SEL",
+  Singapore: "SIN",
+  Stockholm: "STO",
+  Tallinn: "TLL",
+  Tokyo: "TYO",
+  Venice: "VCE",
+  Vienna: "VIE",
+  Zurich: "ZRH",
+};
+
 const appState = {
   planner: { ...DEFAULT_PLANNER_STATE },
   assistant: {
@@ -402,31 +443,83 @@ function buildFallbackItineraryText() {
 }
 
 async function searchFlights(origin, destination, date) {
+  const originCode = resolveAirportCode(origin);
+  const destinationCode = resolveAirportCode(destination);
   const safeDate = date || getFallbackTravelDate();
-  const basePrice = 180 + destination.length * 9 + origin.length * 4;
+  const adults = Number(appState.planner.people) || 1;
 
-  return [
-    {
-      airline: "Nordic Air",
-      departure: "08:30",
-      arrival: "10:45",
-      price: basePrice,
-      currency: "EUR",
-      origin,
-      destination,
-      date: safeDate,
-    },
-    {
-      airline: "Aurora Connect",
-      departure: "14:15",
-      arrival: "16:40",
-      price: basePrice + 45,
-      currency: "EUR",
-      origin,
-      destination,
-      date: safeDate,
-    },
-  ];
+  if (!originCode || !destinationCode) {
+    return {
+      status: "error",
+      options: [],
+      message: "Flight search temporarily unavailable",
+    };
+  }
+
+  try {
+    const response = await fetch("/api/flights/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        origin: originCode,
+        destination: destinationCode,
+        departDate: safeDate,
+        adults,
+      }),
+    });
+
+    if (!response.ok) {
+      return {
+        status: "error",
+        options: [],
+        message: "Flight search temporarily unavailable",
+      };
+    }
+
+    const data = await response.json();
+    const offers = Array.isArray(data.offers) ? data.offers : [];
+
+    if (!offers.length) {
+      return {
+        status: "empty",
+        options: [],
+        message: "No flights found for this route",
+      };
+    }
+
+    const options = offers.map((offer) => {
+      const firstItinerary = offer.itineraries?.[0] || { segments: [] };
+      const firstSegment = firstItinerary.segments?.[0] || {};
+      const lastSegment = firstItinerary.segments?.[firstItinerary.segments.length - 1] || firstSegment;
+      const carrier = offer.carriers?.[0];
+
+      return {
+        airline: carrier?.name || carrier?.code || "Amadeus Offer",
+        departure: formatTime(firstSegment.departureAt),
+        arrival: formatTime(lastSegment.arrivalAt),
+        price: offer.price?.total || 0,
+        currency: offer.price?.currency || "EUR",
+        origin,
+        destination,
+        date: safeDate,
+      };
+    });
+
+    return {
+      status: "success",
+      options,
+      message: "",
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      status: "error",
+      options: [],
+      message: "Flight search temporarily unavailable",
+    };
+  }
 }
 
 async function searchHotels(city, date) {
@@ -499,12 +592,14 @@ async function analyzeTripPlan(inputText) {
 
     const origin = index === 0 ? appState.planner.from : normalizedStops[index - 1]?.city;
     if (origin && origin !== stop.city) {
-      const flightOptions = await searchFlights(origin, stop.city, stop.date);
+      const flightResult = await searchFlights(origin, stop.city, stop.date);
       flights.push({
         origin,
         destination: stop.city,
         date: stop.date,
-        options: flightOptions,
+        status: flightResult.status,
+        message: flightResult.message,
+        options: flightResult.options,
       });
     }
   }
@@ -560,8 +655,26 @@ function renderAnalysisResults(result) {
 
   const flightsMarkup = result.flights.length
     ? result.flights
-        .map(
-          (segment) => `
+        .map((segment) => {
+          if (segment.status === "error") {
+            return `
+              <div class="analysis-block">
+                <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+                <p class="analysis-empty">Flight search temporarily unavailable</p>
+              </div>
+            `;
+          }
+
+          if (segment.status === "empty") {
+            return `
+              <div class="analysis-block">
+                <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+                <p class="analysis-empty">No flights found for this route</p>
+              </div>
+            `;
+          }
+
+          return `
             <div class="analysis-block">
               <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
               ${segment.options
@@ -578,8 +691,8 @@ function renderAnalysisResults(result) {
                 )
                 .join("")}
             </div>
-          `,
-        )
+          `;
+        })
         .join("")
     : '<p class="analysis-empty">No flight segment was required for this itinerary.</p>';
 
@@ -774,6 +887,36 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function resolveAirportCode(value) {
+  if (!value) return null;
+
+  const trimmedValue = value.trim();
+  const directMatch = Object.entries(AIRPORT_CODE_MAP).find(
+    ([city]) => city.toLowerCase() === trimmedValue.toLowerCase(),
+  );
+
+  if (directMatch) {
+    return directMatch[1];
+  }
+
+  if (/^[A-Za-z]{3}$/.test(trimmedValue)) {
+    return trimmedValue.toUpperCase();
+  }
+
+  return null;
+}
+
+function formatTime(value) {
+  if (!value) return "--:--";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
 }
 
 function escapeRegExp(value) {
