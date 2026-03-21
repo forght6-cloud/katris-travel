@@ -30,8 +30,19 @@
       <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
     </header>
 
+    <nav class="page-pagination" aria-label="Section pagination">
+      <button class="pagination-arrow" id="pagination-prev" type="button">Previous</button>
+      <ul class="pagination-list">
+        <li><button class="pagination-link is-active" type="button" data-section-target="#overview" aria-current="page">1</button></li>
+        <li><button class="pagination-link" type="button" data-section-target="#destinations">2</button></li>
+        <li><button class="pagination-link" type="button" data-section-target="#planner">3</button></li>
+        <li><button class="pagination-link" type="button" data-section-target="#assistant">4</button></li>
+      </ul>
+      <button class="pagination-arrow" id="pagination-next" type="button">Next</button>
+    </nav>
+
     <main id="top">
-      <section class="hero-section">
+      <section class="hero-section" id="overview">
         <div class="hero-copy">
           <p class="eyebrow">Nordic Minimal Nature</p>
           <h1>Explore still landscapes, luminous skies, and thoughtful Nordic travel.</h1>
@@ -171,8 +182,8 @@
                 <input id="to" name="to" placeholder="Bergen" autocomplete="off" />
               </label>
               <label>
-                <span>Travel month</span>
-                <input id="date" name="date" type="month" />
+                <span>Travel date</span>
+                <input id="date" name="date" type="date" />
               </label>
               <label>
                 <span>Trip length</span>
