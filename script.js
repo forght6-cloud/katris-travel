@@ -72,14 +72,18 @@ const regionDescriptions = {
   aurora: "Volcanic textures, northern skies, and winter-light experiences with room for wonder.",
 };
 
+const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant"];
+
 function initializeHomepage() {
   bindScrollButtons();
+  bindPaginationNavigation();
   bindDestinationCards();
   bindPlannerForm();
   bindAssistant();
   renderPlannerPreview();
   renderAssistantThread();
   renderAnalysisResults(null);
+  updatePaginationState();
 }
 
 function bindScrollButtons() {
@@ -89,6 +93,70 @@ function bindScrollButtons() {
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
+}
+
+function bindPaginationNavigation() {
+  const sectionButtons = document.querySelectorAll(".pagination-link");
+  const previousButton = document.getElementById("pagination-prev");
+  const nextButton = document.getElementById("pagination-next");
+
+  sectionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      scrollToSection(button.dataset.sectionTarget);
+    });
+  });
+
+  previousButton.addEventListener("click", () => {
+    const currentIndex = getCurrentSectionIndex();
+    scrollToSection(SECTION_SELECTORS[Math.max(0, currentIndex - 1)]);
+  });
+
+  nextButton.addEventListener("click", () => {
+    const currentIndex = getCurrentSectionIndex();
+    scrollToSection(SECTION_SELECTORS[Math.min(SECTION_SELECTORS.length - 1, currentIndex + 1)]);
+  });
+
+  window.addEventListener("scroll", updatePaginationState, { passive: true });
+  window.addEventListener("resize", updatePaginationState);
+}
+
+function scrollToSection(selector) {
+  const target = document.querySelector(selector);
+  target?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function getCurrentSectionIndex() {
+  const anchor = window.scrollY + 220;
+  let currentIndex = 0;
+
+  SECTION_SELECTORS.forEach((selector, index) => {
+    const section = document.querySelector(selector);
+    if (section && section.offsetTop <= anchor) {
+      currentIndex = index;
+    }
+  });
+
+  return currentIndex;
+}
+
+function updatePaginationState() {
+  const currentIndex = getCurrentSectionIndex();
+  const sectionButtons = document.querySelectorAll(".pagination-link");
+  const previousButton = document.getElementById("pagination-prev");
+  const nextButton = document.getElementById("pagination-next");
+
+  sectionButtons.forEach((button, index) => {
+    const isActive = index === currentIndex;
+    button.classList.toggle("is-active", isActive);
+    if (isActive) {
+      button.setAttribute("aria-current", "page");
+    } else {
+      button.removeAttribute("aria-current");
+    }
+  });
+
+  previousButton.disabled = currentIndex === 0;
+  nextButton.disabled = currentIndex === SECTION_SELECTORS.length - 1;
 }
 
 function bindDestinationCards() {
@@ -329,7 +397,7 @@ function normalizeDate(dateText) {
 
 function buildFallbackItineraryText() {
   const fallbackDestination = appState.planner.to || formatRegionName(appState.selectedRegion);
-  const fallbackDate = appState.planner.date ? `${appState.planner.date}-01` : "";
+  const fallbackDate = appState.planner.date || "";
   return [fallbackDate, fallbackDestination].filter(Boolean).join(" ").trim();
 }
 
@@ -461,7 +529,7 @@ function deriveStopDate(index) {
 
 function getFallbackTravelDate() {
   if (appState.planner.date) {
-    return `${appState.planner.date}-01`;
+    return appState.planner.date;
   }
 
   const today = new Date();
@@ -693,11 +761,10 @@ function formatRegionName(region) {
 }
 
 function formatMonth(value) {
-  const [year, month] = value.split("-");
-  if (!year || !month) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
 
-  const date = new Date(Number(year), Number(month) - 1);
-  return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en", { month: "long", day: "numeric", year: "numeric" }).format(date);
 }
 
 function escapeHtml(value) {
