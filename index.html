@@ -154,8 +154,8 @@
           <p class="eyebrow">Homepage planning scaffold</p>
           <h2>Shape a future itinerary with a calm, guided planner.</h2>
           <p>
-            This step only establishes the UI, front-end state, and integration hooks needed for later AI and
-            itinerary functionality.
+            This step establishes the UI, front-end state, simple itinerary analysis, and integration hooks needed
+            for later AI and itinerary functionality.
           </p>
         </div>
 
@@ -199,11 +199,11 @@
             </div>
 
             <label class="full-width">
-              <span>Travel notes</span>
+              <span>Itinerary outline</span>
               <textarea
                 id="notes"
                 name="notes"
-                placeholder="Slow pace, scenic rail, coastal sauna stays, local design hotels..."
+                placeholder="Example:\n2026-06-01 Paris\n2026-06-04 Rome\n2026-06-07 Stockholm"
               ></textarea>
             </label>
 
@@ -217,7 +217,7 @@
             </fieldset>
 
             <div class="planner-actions">
-              <button class="primary-button" type="submit">Preview itinerary concept</button>
+              <button class="primary-button" id="analyze-planner" type="submit">Analyze itinerary</button>
               <button class="ghost-button" type="button" id="reset-planner">Reset</button>
             </div>
           </form>
@@ -252,6 +252,13 @@
                   <span>Day 3+</span>
                   <p>Placeholder itinerary cards remain intentionally flexible for future parsing logic.</p>
                 </article>
+              </div>
+            </div>
+
+            <div class="preview-card analysis-card">
+              <p class="eyebrow">Travel options</p>
+              <div id="analysis-results" class="analysis-results">
+                <p class="analysis-empty">Analyze an itinerary to see flights, hotels, transport, and summary.</p>
               </div>
             </div>
           </aside>
