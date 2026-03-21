@@ -1,35 +1,319 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Katris Travel AI</title>
+  <title>Katris Travel AI | Nordic Escapes</title>
+  <meta
+    name="description"
+    content="A calm Nordic-inspired travel homepage with itinerary planning and assistant scaffolding for future AI-guided journeys."
+  />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>🌍 Katris Travel AI</h1>
-  </header>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Katris Travel AI home">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span class="brand-copy">
+          <strong>Katris Travel AI</strong>
+          <span>Nordic journeys shaped with calm intelligence</span>
+        </span>
+      </a>
 
-  <main>
-    <h2>AI 智能旅行规划</h2>
-    <p>请输入旅行信息：</p>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="#destinations">Destinations</a>
+        <a href="#planner">Plan</a>
+        <a href="#assistant">Assistant</a>
+      </nav>
 
-    <div class="input-box">
-      <input id="from" placeholder="出发地" />
-      <input id="to" placeholder="目的地" /><br />
-      <input id="date" type="date" />
-      <input id="time" type="time" /><br />
-      <input id="people" type="number" min="1" value="1" placeholder="人数" />
-      <input id="budget" placeholder="预算 (USD)" /><br />
-      <textarea id="notes" placeholder="特殊需求（餐饮、宗教、体力等）"></textarea><br />
-      <button onclick="generatePlan()">立即生成计划</button>
-    </div>
+      <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
+    </header>
 
-    <div id="result" class="result-box"></div>
-  </main>
+    <main id="top">
+      <section class="hero-section">
+        <div class="hero-copy">
+          <p class="eyebrow">Nordic Minimal Nature</p>
+          <h1>Explore still landscapes, luminous skies, and thoughtful Nordic travel.</h1>
+          <p class="hero-text">
+            A calm travel homepage designed to inspire exploration across fjords, forests, coastal villages,
+            and northern light routes—while preparing the foundation for AI-guided planning.
+          </p>
 
-  <footer>© 2025 Katris Merrio | Cloudflare 全栈版本</footer>
+          <div class="hero-actions">
+            <button class="primary-button" type="button" data-scroll-target="#planner">Build a journey</button>
+            <button class="secondary-button" type="button" data-scroll-target="#assistant">Meet the assistant</button>
+          </div>
+
+          <dl class="hero-stats" aria-label="Highlights">
+            <div>
+              <dt>4</dt>
+              <dd>signature regions</dd>
+            </div>
+            <div>
+              <dt>Calm</dt>
+              <dd>atmosphere first</dd>
+            </div>
+            <div>
+              <dt>Future-ready</dt>
+              <dd>AI planning scaffolding</dd>
+            </div>
+          </dl>
+        </div>
+
+        <aside class="hero-panel" aria-label="Featured Nordic inspiration">
+          <div class="hero-image-card northern-lights">
+            <div class="image-overlay">
+              <span>Featured escape</span>
+              <strong>Lofoten &amp; Arctic coast</strong>
+              <p>Glass-water harbors, mountain silhouettes, and slow scenic discovery.</p>
+            </div>
+          </div>
+
+          <div class="season-card">
+            <p class="eyebrow">Seasonal rhythm</p>
+            <h2>Designed for light, weather, and quiet movement.</h2>
+            <ul>
+              <li><span aria-hidden="true"></span>Summer coastlines and midnight sun</li>
+              <li><span aria-hidden="true"></span>Autumn forests and design-led stays</li>
+              <li><span aria-hidden="true"></span>Winter aurora routes and soft snow landscapes</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+
+      <section class="inspiration-strip" aria-label="Travel atmosphere highlights">
+        <article>
+          <p class="eyebrow">Landscape</p>
+          <h3>Wide horizons</h3>
+          <p>Large visual storytelling and open breathing room shape the mood before any planning begins.</p>
+        </article>
+        <article>
+          <p class="eyebrow">Interface</p>
+          <h3>Minimal by default</h3>
+          <p>Quiet surfaces, elegant spacing, and understated controls keep attention on the destination.</p>
+        </article>
+        <article>
+          <p class="eyebrow">Journey</p>
+          <h3>Exploration first</h3>
+          <p>Discovery flows from inspiration into planning without feeling transactional or crowded.</p>
+        </article>
+      </section>
+
+      <section class="destinations-section" id="destinations">
+        <div class="section-heading">
+          <p class="eyebrow">Nordic landscapes</p>
+          <h2>Start with a region that matches your pace.</h2>
+          <p>
+            The homepage introduces a curated set of destination moods so future planning can branch into
+            richer AI recommendations without redesigning the experience.
+          </p>
+        </div>
+
+        <div class="destination-grid" role="list" aria-label="Destination moods">
+          <button class="destination-card is-active" type="button" data-region="fjord" aria-pressed="true">
+            <span class="destination-visual fjord" aria-hidden="true"></span>
+            <span class="destination-copy">
+              <span class="eyebrow">Norway</span>
+              <span class="destination-title">Fjord Quiet</span>
+              <span>Steep water inlets, ferry crossings, and design-forward cabins near reflective blue water.</span>
+            </span>
+          </button>
+
+          <button class="destination-card" type="button" data-region="forest" aria-pressed="false">
+            <span class="destination-visual forest" aria-hidden="true"></span>
+            <span class="destination-copy">
+              <span class="eyebrow">Sweden</span>
+              <span class="destination-title">Forest Retreat</span>
+              <span>Pine-lined lakes, sauna rituals, and soft contemporary hospitality nested in woodland calm.</span>
+            </span>
+          </button>
+
+          <button class="destination-card" type="button" data-region="coast" aria-pressed="false">
+            <span class="destination-visual coast" aria-hidden="true"></span>
+            <span class="destination-copy">
+              <span class="eyebrow">Denmark</span>
+              <span class="destination-title">Coastal Simplicity</span>
+              <span>Sea light, cycling towns, gallery stops, and elegant slow days framed by the shoreline.</span>
+            </span>
+          </button>
+
+          <button class="destination-card" type="button" data-region="aurora" aria-pressed="false">
+            <span class="destination-visual aurora" aria-hidden="true"></span>
+            <span class="destination-copy">
+              <span class="eyebrow">Iceland &amp; Lapland</span>
+              <span class="destination-title">Aurora Horizon</span>
+              <span>Volcanic textures, snowy silence, and evening routes designed around the northern sky.</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="planner-section" id="planner">
+        <div class="section-heading">
+          <p class="eyebrow">Homepage planning scaffold</p>
+          <h2>Shape a future itinerary with a calm, guided planner.</h2>
+          <p>
+            This step only establishes the UI, front-end state, and integration hooks needed for later AI and
+            itinerary functionality.
+          </p>
+        </div>
+
+        <div class="planner-layout">
+          <form class="planner-form" id="planner-form">
+            <div class="form-grid">
+              <label>
+                <span>Departure</span>
+                <input id="from" name="from" placeholder="New York" autocomplete="off" />
+              </label>
+              <label>
+                <span>Destination</span>
+                <input id="to" name="to" placeholder="Bergen" autocomplete="off" />
+              </label>
+              <label>
+                <span>Travel month</span>
+                <input id="date" name="date" type="month" />
+              </label>
+              <label>
+                <span>Trip length</span>
+                <select id="tripLength" name="tripLength">
+                  <option value="3 nights">3 nights</option>
+                  <option value="5 nights">5 nights</option>
+                  <option value="7 nights" selected>7 nights</option>
+                  <option value="10+ nights">10+ nights</option>
+                </select>
+              </label>
+              <label>
+                <span>Travelers</span>
+                <input id="people" name="people" type="number" min="1" value="2" />
+              </label>
+              <label>
+                <span>Budget style</span>
+                <select id="budget" name="budget">
+                  <option value="Balanced" selected>Balanced</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Luxury">Luxury</option>
+                  <option value="Flexible">Flexible</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="full-width">
+              <span>Travel notes</span>
+              <textarea
+                id="notes"
+                name="notes"
+                placeholder="Slow pace, scenic rail, coastal sauna stays, local design hotels..."
+              ></textarea>
+            </label>
+
+            <fieldset class="travel-pillars">
+              <legend>Trip priorities</legend>
+              <label><input type="checkbox" name="pillars" value="Scenery" checked />Scenery</label>
+              <label><input type="checkbox" name="pillars" value="Quiet stays" checked />Quiet stays</label>
+              <label><input type="checkbox" name="pillars" value="Local culture" />Local culture</label>
+              <label><input type="checkbox" name="pillars" value="Wellness" />Wellness</label>
+              <label><input type="checkbox" name="pillars" value="Rail or ferry" />Rail or ferry</label>
+            </fieldset>
+
+            <div class="planner-actions">
+              <button class="primary-button" type="submit">Preview itinerary concept</button>
+              <button class="ghost-button" type="button" id="reset-planner">Reset</button>
+            </div>
+          </form>
+
+          <aside class="planner-preview" aria-live="polite">
+            <div class="preview-card">
+              <p class="eyebrow">Itinerary preview</p>
+              <h3 id="preview-title">A seven-night Nordic reset.</h3>
+              <p id="preview-summary">
+                Build a trip concept to see a placeholder overview here. In a later step, AI-generated itinerary
+                structure can plug into this panel.
+              </p>
+              <ul id="preview-pillars" class="preview-pillars">
+                <li>Scenery-led routing</li>
+                <li>Quiet stays</li>
+                <li>Future AI suggestions</li>
+              </ul>
+            </div>
+
+            <div class="preview-card timeline-card">
+              <p class="eyebrow">Scaffolded flow</p>
+              <div id="timeline-output" class="timeline-output">
+                <article>
+                  <span>Day 1</span>
+                  <p>Arrival, gentle check-in, and a waterfront evening walk.</p>
+                </article>
+                <article>
+                  <span>Day 2</span>
+                  <p>Scenic movement through landscape highlights with room for later AI detail.</p>
+                </article>
+                <article>
+                  <span>Day 3+</span>
+                  <p>Placeholder itinerary cards remain intentionally flexible for future parsing logic.</p>
+                </article>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="assistant-section" id="assistant">
+        <div class="section-heading compact">
+          <p class="eyebrow">AI assistant scaffold</p>
+          <h2>Ask for travel guidance without wiring the final model yet.</h2>
+          <p>
+            The assistant below stores conversational state and demonstrates the future interaction pattern while
+            keeping API integration deferred.
+          </p>
+        </div>
+
+        <div class="assistant-layout">
+          <div class="assistant-panel">
+            <div class="assistant-status">
+              <span class="status-dot" aria-hidden="true"></span>
+              <p>Assistant ready in placeholder mode</p>
+            </div>
+
+            <div id="assistant-thread" class="assistant-thread" aria-live="polite">
+              <article class="message assistant">
+                <p class="message-label">Katris Assistant</p>
+                <p>
+                  I can collect your preferences and prepare for future AI itinerary generation. Ask about seasons,
+                  atmosphere, or route ideas.
+                </p>
+              </article>
+            </div>
+
+            <form id="assistant-form" class="assistant-form">
+              <label class="sr-only" for="assistant-input">Ask the travel assistant</label>
+              <textarea
+                id="assistant-input"
+                rows="3"
+                placeholder="Example: I want a quiet 7-night trip with fjords, scenic trains, and warm design hotels."
+              ></textarea>
+              <div class="assistant-actions">
+                <button class="primary-button" type="submit">Send prompt</button>
+                <button class="ghost-button" type="button" id="clear-assistant">Clear</button>
+              </div>
+            </form>
+          </div>
+
+          <aside class="assistant-sidebar">
+            <div class="preview-card">
+              <p class="eyebrow">Integration hooks</p>
+              <h3>Prepared for future services</h3>
+              <ul class="hook-list">
+                <li><strong>AI Request Hook</strong><span><code>requestAiPlan(state)</code> placeholder</span></li>
+                <li><strong>Parser Hook</strong><span><code>parseItineraryDraft(response)</code> placeholder</span></li>
+                <li><strong>Booking Hook</strong><span><code>prepareBookingPayload(plan)</code> placeholder</span></li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>
