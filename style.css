@@ -687,6 +687,107 @@ textarea {
   text-transform: uppercase;
 }
 
+.analysis-results {
+  display: grid;
+  gap: 18px;
+}
+
+.analysis-section + .analysis-section {
+  padding-top: 18px;
+  border-top: 1px solid rgba(49, 91, 86, 0.08);
+}
+
+.analysis-section h4,
+.analysis-block h5 {
+  margin: 0 0 10px;
+  font-family: Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+.analysis-section h4 {
+  font-size: 1.2rem;
+}
+
+.analysis-block + .analysis-block {
+  margin-top: 16px;
+}
+
+.analysis-item,
+.summary-stops li,
+.transport-links a {
+  border: 1px solid rgba(49, 91, 86, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.analysis-item,
+.summary-stops li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+.analysis-item + .analysis-item {
+  margin-top: 10px;
+}
+
+.analysis-item p,
+.analysis-section p,
+.summary-stops span {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.summary-stops {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.summary-stops strong,
+.analysis-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.transport-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.transport-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  color: var(--accent-deep);
+  text-decoration: none;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.transport-links a:hover,
+.transport-links a:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(49, 91, 86, 0.24);
+  background: rgba(220, 232, 227, 0.8);
+}
+
+.analysis-empty {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(49, 91, 86, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+}
+
 .assistant-panel {
   display: flex;
   flex-direction: column;
@@ -720,6 +821,11 @@ textarea {
 
 .message.assistant {
   background: rgba(255, 255, 255, 0.74);
+}
+
+.message.system {
+  background: rgba(220, 232, 227, 0.68);
+  border-color: rgba(49, 91, 86, 0.18);
 }
 
 .message.user {
