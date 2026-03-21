@@ -203,6 +203,79 @@ textarea {
   transform: translateY(-2px);
 }
 
+.page-pagination {
+  position: sticky;
+  top: 102px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(248, 251, 250, 0.82);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 28px rgba(23, 42, 38, 0.08);
+}
+
+.pagination-list {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pagination-arrow,
+.pagination-link {
+  border: 1px solid rgba(49, 91, 86, 0.14);
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--text);
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.pagination-arrow {
+  padding: 10px 16px;
+  border-radius: 999px;
+}
+
+.pagination-link {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.pagination-link.is-active,
+.pagination-link[aria-current="page"] {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 10px 22px rgba(49, 91, 86, 0.18);
+}
+
+.pagination-arrow:hover,
+.pagination-link:hover,
+.pagination-arrow:focus-visible,
+.pagination-link:focus-visible {
+  transform: translateY(-1px);
+}
+
+.pagination-arrow:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+#overview,
+#destinations,
+#planner,
+#assistant {
+  scroll-margin-top: 180px;
+}
+
 .hero-section,
 .inspiration-strip,
 .destinations-section,
@@ -902,6 +975,12 @@ textarea {
     border-radius: 28px;
   }
 
+  .page-pagination {
+    top: 124px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .hero-copy {
     padding: 38px;
   }
@@ -926,6 +1005,12 @@ textarea {
 
   .site-nav {
     flex-wrap: wrap;
+  }
+
+  .pagination-list {
+    order: -1;
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-stats,
