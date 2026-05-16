@@ -2,6 +2,7 @@ declare const process: { env: Record<string, string | undefined> };
 
 const AMADEUS_TEST_BASE_URL = "https://test.api.amadeus.com";
 const AMADEUS_PRODUCTION_BASE_URL = "https://api.amadeus.com";
+const AVIATIONSTACK_FLIGHTS_URL = "https://api.aviationstack.com/v1/flights";
 
 type Carrier = {
   code: string;
@@ -13,6 +14,7 @@ type NormalizedOffer = {
   price: {
     total: number;
     currency: string;
+    label?: string;
   };
   itineraries: Array<{
     duration: string;
@@ -120,6 +122,71 @@ async function searchFlights(token: string, params: FlightSearchParams, baseUrl:
   return response.json();
 }
 
+async function searchAviationstackFlights(apiKey: string, params: FlightSearchParams) {
+  const requestUrl = new URL(AVIATIONSTACK_FLIGHTS_URL);
+  requestUrl.searchParams.set("access_key", apiKey);
+  requestUrl.searchParams.set("dep_iata", params.origin);
+  requestUrl.searchParams.set("arr_iata", params.destination);
+  requestUrl.searchParams.set("limit", "6");
+
+  const response = await fetch(requestUrl.toString());
+  const data = await response.json();
+
+  if (!response.ok || data.error) {
+    throw new Error(`Aviationstack flight search error: ${JSON.stringify(data.error || data)}`);
+  }
+
+  return data;
+}
+
+function normalizeAviationstackOffer(flight: any, index: number, params: FlightSearchParams): NormalizedOffer {
+  const airlineCode = flight.airline?.iata || flight.airline?.icao || flight.flight?.iata || "LIVE";
+  const airlineName = flight.airline?.name || airlineCode;
+  const departureAt = flight.departure?.scheduled || flight.departure?.estimated || "";
+  const arrivalAt = flight.arrival?.scheduled || flight.arrival?.estimated || "";
+
+  return {
+    id: flight.flight?.iata || flight.flight?.icao || `aviationstack-${params.origin}-${params.destination}-${index + 1}`,
+    price: {
+      total: 0,
+      currency: "STATUS",
+      label: "Live status",
+    },
+    itineraries: [
+      {
+        duration: "",
+        segments: [
+          {
+            from: flight.departure?.iata || params.origin,
+            to: flight.arrival?.iata || params.destination,
+            departureAt,
+            arrivalAt,
+          },
+        ],
+      },
+    ],
+    carriers: [
+      {
+        code: airlineCode,
+        name: airlineName,
+      },
+    ],
+  };
+}
+
+async function getAviationstackOffers(params: FlightSearchParams): Promise<NormalizedOffer[]> {
+  const apiKey = process.env.AVIATIONSTACK_API_KEY;
+
+  if (!apiKey) {
+    return [];
+  }
+
+  const response = await searchAviationstackFlights(apiKey, params);
+  return (response.data || [])
+    .filter((flight: any) => flight.departure?.iata && flight.arrival?.iata)
+    .map((flight: any, index: number) => normalizeAviationstackOffer(flight, index, params));
+}
+
 function addMinutes(date: Date, minutes: number) {
   const candidate = new Date(date);
   candidate.setMinutes(candidate.getMinutes() + minutes);
@@ -190,6 +257,21 @@ export default async function handler(req: any, res: any) {
   };
   const clientId = process.env.AMADEUS_CLIENT_ID;
   const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
+
+  try {
+    const aviationstackOffers = await getAviationstackOffers(searchParams);
+
+    if (aviationstackOffers.length) {
+      res.status(200).json({
+        offers: aviationstackOffers,
+        provider: "aviationstack",
+        warning: "Aviationstack provides flight status and schedule data, not ticket prices.",
+      });
+      return;
+    }
+  } catch (error: any) {
+    console.error(error?.message || error);
+  }
 
   if (!clientId || !clientSecret) {
     res.status(200).json({

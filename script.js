@@ -501,6 +501,7 @@ async function searchFlights(origin, destination, date) {
         arrival: formatTime(lastSegment.arrivalAt),
         price: offer.price?.total || 0,
         currency: offer.price?.currency || "EUR",
+        priceLabel: offer.price?.label || formatPriceLabel(offer.price),
         origin,
         destination,
         date: safeDate,
@@ -685,7 +686,7 @@ function renderAnalysisResults(result) {
                         <strong>${escapeHtml(flight.airline)}</strong>
                         <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
                       </div>
-                      <span>${flight.price} ${escapeHtml(flight.currency)}</span>
+                      <span>${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</span>
                     </article>
                   `,
                 )
@@ -917,6 +918,18 @@ function formatTime(value) {
   }
 
   return new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
+}
+
+function formatPriceLabel(price) {
+  if (price?.label) {
+    return price.label;
+  }
+
+  if (price?.currency === "STATUS") {
+    return "Live status";
+  }
+
+  return `${price?.total || 0} ${price?.currency || "EUR"}`;
 }
 
 function escapeRegExp(value) {
