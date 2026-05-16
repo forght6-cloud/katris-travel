@@ -35,6 +35,47 @@ type FlightSearchParams = {
   adults: number;
 };
 
+const AIRPORT_CODE_MAP: Record<string, string> = {
+  Amsterdam: "AMS",
+  Athens: "ATH",
+  Bangkok: "BKK",
+  Barcelona: "BCN",
+  Bergen: "BGO",
+  Berlin: "BER",
+  Brussels: "BRU",
+  Budapest: "BUD",
+  Copenhagen: "CPH",
+  Dublin: "DUB",
+  Edinburgh: "EDI",
+  Florence: "FLR",
+  Geneva: "GVA",
+  Helsinki: "HEL",
+  "Hong Kong": "HKG",
+  Istanbul: "IST",
+  Kyoto: "KIX",
+  Lisbon: "LIS",
+  London: "LHR",
+  "Los Angeles": "LAX",
+  Madrid: "MAD",
+  Milan: "MXP",
+  Munich: "MUC",
+  "New York": "JFK",
+  Nice: "NCE",
+  Oslo: "OSL",
+  Paris: "CDG",
+  Prague: "PRG",
+  Reykjavik: "KEF",
+  Rome: "FCO",
+  Seoul: "ICN",
+  Singapore: "SIN",
+  Stockholm: "ARN",
+  Tallinn: "TLL",
+  Tokyo: "HND",
+  Venice: "VCE",
+  Vienna: "VIE",
+  Zurich: "ZRH",
+};
+
 const MOCK_CARRIERS: Carrier[] = [
   { code: "SK", name: "Scandinavian Airlines" },
   { code: "AY", name: "Finnair" },
@@ -181,6 +222,10 @@ async function getAviationstackOffers(params: FlightSearchParams): Promise<Norma
     return [];
   }
 
+  if (params.departDate !== getTodayDate()) {
+    throw new Error("Aviationstack free plan only supports current flight status in this integration.");
+  }
+
   const response = await searchAviationstackFlights(apiKey, params);
   return (response.data || [])
     .filter((flight: any) => flight.departure?.iata && flight.arrival?.iata)
@@ -197,6 +242,25 @@ function buildDateTime(departDate: string, hour: number, minute = 0) {
   const paddedHour = String(hour).padStart(2, "0");
   const paddedMinute = String(minute).padStart(2, "0");
   return new Date(`${departDate}T${paddedHour}:${paddedMinute}:00`);
+}
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function resolveAirportCode(value: unknown) {
+  if (!value) return "";
+
+  const trimmedValue = String(value).trim();
+  const directMatch = Object.entries(AIRPORT_CODE_MAP).find(
+    ([city]) => city.toLowerCase() === trimmedValue.toLowerCase(),
+  );
+
+  if (directMatch) {
+    return directMatch[1];
+  }
+
+  return trimmedValue.toUpperCase();
 }
 
 function createMockOffers(params: FlightSearchParams): NormalizedOffer[] {
@@ -250,13 +314,14 @@ export default async function handler(req: any, res: any) {
   }
 
   const searchParams = {
-    origin: String(origin).toUpperCase(),
-    destination: String(destination).toUpperCase(),
+    origin: resolveAirportCode(origin),
+    destination: resolveAirportCode(destination),
     departDate: String(departDate),
     adults: Number(adults) || 1,
   };
   const clientId = process.env.AMADEUS_CLIENT_ID;
   const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
+  const providerWarnings: string[] = [];
 
   try {
     const aviationstackOffers = await getAviationstackOffers(searchParams);
@@ -270,14 +335,14 @@ export default async function handler(req: any, res: any) {
       return;
     }
   } catch (error: any) {
-    console.error(error?.message || error);
+    providerWarnings.push(error?.message || "Aviationstack search failed.");
   }
 
   if (!clientId || !clientSecret) {
     res.status(200).json({
       offers: createMockOffers(searchParams),
       provider: "mock",
-      warning: "Amadeus credentials are not configured",
+      warning: [...providerWarnings, "Amadeus credentials are not configured"].join(" "),
     });
     return;
   }
@@ -295,7 +360,7 @@ export default async function handler(req: any, res: any) {
       res.status(200).json({
         offers: createMockOffers(searchParams),
         provider: "mock",
-        warning: "No Amadeus offers returned; mock offers returned",
+        warning: [...providerWarnings, "No Amadeus offers returned; mock offers returned"].join(" "),
       });
       return;
     }
@@ -305,7 +370,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({
       offers: createMockOffers(searchParams),
       provider: "mock",
-      warning: "Flight search failed; mock offers returned",
+      warning: [...providerWarnings, "Flight search failed; mock offers returned"].join(" "),
       details: error?.message || "Unknown error",
     });
   }

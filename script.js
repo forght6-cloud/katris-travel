@@ -75,23 +75,23 @@ const AIRPORT_CODE_MAP = {
   Istanbul: "IST",
   Kyoto: "KIX",
   Lisbon: "LIS",
-  London: "LON",
+  London: "LHR",
   "Los Angeles": "LAX",
   Madrid: "MAD",
-  Milan: "MIL",
+  Milan: "MXP",
   Munich: "MUC",
-  "New York": "NYC",
+  "New York": "JFK",
   Nice: "NCE",
   Oslo: "OSL",
-  Paris: "PAR",
+  Paris: "CDG",
   Prague: "PRG",
   Reykjavik: "KEF",
-  Rome: "ROM",
-  Seoul: "SEL",
+  Rome: "FCO",
+  Seoul: "ICN",
   Singapore: "SIN",
-  Stockholm: "STO",
+  Stockholm: "ARN",
   Tallinn: "TLL",
-  Tokyo: "TYO",
+  Tokyo: "HND",
   Venice: "VCE",
   Vienna: "VIE",
   Zurich: "ZRH",
@@ -511,7 +511,8 @@ async function searchFlights(origin, destination, date) {
     return {
       status: "success",
       options,
-      message: "",
+      provider: data.provider || "unknown",
+      message: data.warning || "",
     };
   } catch (error) {
     console.error(error);
@@ -600,6 +601,7 @@ async function analyzeTripPlan(inputText) {
         date: stop.date,
         status: flightResult.status,
         message: flightResult.message,
+        provider: flightResult.provider,
         options: flightResult.options,
       });
     }
@@ -678,6 +680,7 @@ function renderAnalysisResults(result) {
           return `
             <div class="analysis-block">
               <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+              ${renderProviderNotice(segment)}
               ${segment.options
                 .map(
                   (flight) => `
@@ -767,6 +770,17 @@ function setPlannerLoadingState(isLoading) {
   if (isLoading) {
     container.innerHTML = '<p class="analysis-empty">Analyzing itinerary, searching travel options, and preparing transport links...</p>';
   }
+}
+
+function renderProviderNotice(segment) {
+  if (!segment.provider && !segment.message) {
+    return "";
+  }
+
+  const providerLabel = segment.provider ? `Provider: ${segment.provider}` : "Provider status";
+  const message = segment.message || "";
+
+  return `<p class="analysis-empty">${escapeHtml(providerLabel)}${message ? ` · ${escapeHtml(message)}` : ""}</p>`;
 }
 
 function bindAssistant() {
