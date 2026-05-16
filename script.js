@@ -545,6 +545,88 @@ async function searchHotels(city, date) {
       city,
       date: safeDate,
     },
+    {
+      name: `${city} Grand Design Hotel`,
+      rating: 4.7,
+      price: basePrice + 46,
+      currency: "EUR",
+      city,
+      date: safeDate,
+    },
+    {
+      name: `${city} Garden Residence`,
+      rating: 4.5,
+      price: basePrice + 18,
+      currency: "EUR",
+      city,
+      date: safeDate,
+    },
+    {
+      name: `${city} Central Suites`,
+      rating: 4.3,
+      price: basePrice + 34,
+      currency: "EUR",
+      city,
+      date: safeDate,
+    },
+  ];
+}
+
+function generateAttractions(city) {
+  return [
+    {
+      name: `${city} Old Quarter`,
+      category: "Culture",
+      summary: "A walkable starting point for architecture, cafés, and first-day orientation.",
+    },
+    {
+      name: `${city} Waterfront`,
+      category: "Scenery",
+      summary: "A calm route for sunset, photographs, and low-pressure exploration.",
+    },
+    {
+      name: `${city} Design Museum`,
+      category: "Design",
+      summary: "A weather-proof cultural anchor with strong local context.",
+    },
+    {
+      name: `${city} Market Hall`,
+      category: "Food",
+      summary: "Good for casual lunch, local produce, and flexible pacing.",
+    },
+    {
+      name: `${city} Lookout Route`,
+      category: "Landscape",
+      summary: "A scenic afternoon route with room for rest stops.",
+    },
+  ];
+}
+
+function buildDailyPlan(stop, index, priorities) {
+  const city = stop.city;
+
+  return [
+    {
+      day: `Day ${index * 2 + 1}`,
+      theme: `${city} arrival and orientation`,
+      items: [
+        { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for airport, rail, or hotel transfer." },
+        { time: "Midday", title: "Neighbourhood lunch", detail: "Start close to the hotel with a simple local meal." },
+        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and bookmark cafés, galleries, and shops." },
+        { time: "Evening", title: `${city} Waterfront`, detail: "End with an easy scenic walk and dinner reservation." },
+      ],
+    },
+    {
+      day: `Day ${index * 2 + 2}`,
+      theme: `${city} culture, food, and scenery`,
+      items: [
+        { time: "Morning", title: `${city} Design Museum`, detail: "Use the morning for a high-quality cultural anchor." },
+        { time: "Midday", title: `${city} Market Hall`, detail: "Plan lunch around local vendors and seasonal produce." },
+        { time: "Afternoon", title: `${city} Lookout Route`, detail: `Shape the scenic block around ${priorities.join(", ").toLowerCase()}.` },
+        { time: "Late afternoon", title: "Hotel reset", detail: "Leave time for spa, reading, or recovery before dinner." },
+        { time: "Evening", title: "Reservation-led dinner", detail: "Choose a restaurant near the next morning's departure path." },
+      ],
+    },
   ];
 }
 
@@ -574,17 +656,31 @@ async function analyzeTripPlan(inputText) {
 
   const flights = [];
   const hotels = [];
+  const attractions = [];
+  const dailyPlans = [];
   const transport = [];
 
   for (let index = 0; index < normalizedStops.length; index += 1) {
     const stop = normalizedStops[index];
     const hotelOptions = await searchHotels(stop.city, stop.date);
+    const attractionOptions = generateAttractions(stop.city);
+    const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars);
     const transportLinks = generateTransportLinks(stop.city);
 
     hotels.push({
       city: stop.city,
       date: stop.date,
       options: hotelOptions,
+    });
+
+    attractions.push({
+      city: stop.city,
+      options: attractionOptions,
+    });
+
+    dailyPlans.push({
+      city: stop.city,
+      days: dayPlanOptions,
     });
 
     transport.push({
@@ -611,6 +707,8 @@ async function analyzeTripPlan(inputText) {
     stops: normalizedStops,
     flights,
     hotels,
+    attractions,
+    dailyPlans,
     transport,
   };
 
@@ -636,7 +734,10 @@ function getFallbackTravelDate() {
 
 function buildTripSummary(result) {
   const route = result.stops.map((stop) => `${stop.city}${stop.date ? ` (${stop.date})` : ""}`).join(" → ");
-  return `Planner update: ${result.stops.length} stop${result.stops.length > 1 ? "s" : ""} analyzed. Route: ${route}. ${result.flights.length} flight segment${result.flights.length !== 1 ? "s" : ""}, ${result.hotels.length} hotel lookup${result.hotels.length !== 1 ? "s" : ""}, and local transport links are ready.`;
+  const hotelCount = result.hotels.reduce((total, entry) => total + entry.options.length, 0);
+  const attractionCount = result.attractions.reduce((total, entry) => total + entry.options.length, 0);
+  const dayCount = result.dailyPlans.reduce((total, entry) => total + entry.days.length, 0);
+  return `Planner update: ${result.stops.length} stop${result.stops.length > 1 ? "s" : ""} analyzed. Route: ${route}. ${result.flights.length} flight segment${result.flights.length !== 1 ? "s" : ""}, ${hotelCount} hotel options, ${attractionCount} attractions, ${dayCount} day plan${dayCount !== 1 ? "s" : ""}, and local transport links are ready.`;
 }
 
 function renderAnalysisResults(result) {
@@ -723,6 +824,59 @@ function renderAnalysisResults(result) {
     )
     .join("");
 
+  const attractionsMarkup = result.attractions
+    .map(
+      (entry) => `
+        <div class="analysis-block">
+          <h5>${escapeHtml(entry.city)}</h5>
+          ${entry.options
+            .map(
+              (attraction) => `
+                <article class="analysis-item">
+                  <div>
+                    <strong>${escapeHtml(attraction.name)}</strong>
+                    <p>${escapeHtml(attraction.category)} · ${escapeHtml(attraction.summary)}</p>
+                  </div>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      `,
+    )
+    .join("");
+
+  const dailyPlansMarkup = result.dailyPlans
+    .map(
+      (entry) => `
+        <div class="analysis-block">
+          <h5>${escapeHtml(entry.city)}</h5>
+          ${entry.days
+            .map(
+              (day) => `
+                <article class="day-plan">
+                  <strong>${escapeHtml(day.day)} · ${escapeHtml(day.theme)}</strong>
+                  <ol>
+                    ${day.items
+                      .map(
+                        (item) => `
+                          <li>
+                            <span>${escapeHtml(item.time)}</span>
+                            <p><strong>${escapeHtml(item.title)}</strong> ${escapeHtml(item.detail)}</p>
+                          </li>
+                        `,
+                      )
+                      .join("")}
+                  </ol>
+                </article>
+              `,
+            )
+            .join("")}
+        </div>
+      `,
+    )
+    .join("");
+
   const transportMarkup = result.transport
     .map(
       (entry) => `
@@ -751,6 +905,14 @@ function renderAnalysisResults(result) {
     <section class="analysis-section">
       <h4>Hotels</h4>
       ${hotelsMarkup}
+    </section>
+    <section class="analysis-section">
+      <h4>Attractions</h4>
+      ${attractionsMarkup}
+    </section>
+    <section class="analysis-section">
+      <h4>Daily Plan</h4>
+      ${dailyPlansMarkup}
     </section>
     <section class="analysis-section">
       <h4>Transport</h4>
@@ -788,7 +950,7 @@ function bindAssistant() {
   const assistantInput = document.getElementById("assistant-input");
   const clearAssistantButton = document.getElementById("clear-assistant");
 
-  assistantForm.addEventListener("submit", (event) => {
+  assistantForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const value = assistantInput.value.trim();
 
@@ -798,9 +960,17 @@ function bindAssistant() {
 
     addAssistantMessage("user", value);
     assistantInput.value = "";
+    setAssistantLoadingState(true);
 
-    const placeholderResponse = handleAssistantPlaceholder(value);
-    addAssistantMessage("assistant", placeholderResponse);
+    try {
+      const response = await handleAssistantPrompt(value);
+      addAssistantMessage("assistant", response);
+    } catch (error) {
+      console.error(error);
+      addAssistantMessage("assistant", "I could not generate a full plan right now. Please try again with a destination, date, and trip length.");
+    } finally {
+      setAssistantLoadingState(false);
+    }
   });
 
   clearAssistantButton.addEventListener("click", () => {
@@ -846,11 +1016,19 @@ function getMessageLabel(role) {
   return "You";
 }
 
-function handleAssistantPlaceholder(userMessage) {
+async function handleAssistantPrompt(userMessage) {
   const plannerState = getPlannerPayload();
-  requestAiPlan(plannerState);
+  const aiResponse = await requestAiPlan({
+    planner: plannerState,
+    message: userMessage,
+  });
+  const parsed = parseItineraryDraft(aiResponse);
 
-  return `Placeholder response: I noted your request about "${userMessage}" and will be ready to turn it into itinerary suggestions once AI integration is connected. Right now I can preserve preferences, destination tone, and planning context.`;
+  if (parsed.plan) {
+    return formatAiPlanMessage(parsed.plan, parsed.provider, parsed.warning);
+  }
+
+  return "I captured your request, but the AI planning service did not return a usable plan.";
 }
 
 function getPlannerPayload() {
@@ -862,14 +1040,53 @@ function getPlannerPayload() {
   };
 }
 
-function requestAiPlan(state) {
-  console.info("AI request placeholder", state);
-  return Promise.resolve({ status: "placeholder" });
+async function requestAiPlan(state) {
+  const response = await fetch("/api/ai/plan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(state),
+  });
+
+  if (!response.ok) {
+    throw new Error("AI planning request failed");
+  }
+
+  return response.json();
 }
 
 function parseItineraryDraft(response) {
-  console.info("Itinerary parser placeholder", response);
-  return { segments: [] };
+  return {
+    provider: response.provider || "unknown",
+    warning: response.warning || "",
+    plan: response.plan || null,
+  };
+}
+
+function formatAiPlanMessage(plan, provider, warning) {
+  const citySummaries = (plan.cities || [])
+    .map((city) => {
+      const hotelCount = city.hotels?.length || 0;
+      const attractionCount = city.attractions?.length || 0;
+      const dayCount = city.days?.length || 0;
+      return `${city.city}: ${hotelCount} hotels, ${attractionCount} attractions, ${dayCount} planned days`;
+    })
+    .join(" | ");
+
+  const bookingNotes = (plan.bookingNotes || []).slice(0, 3).join(" ");
+  const providerText = provider === "gemini" ? "Gemini" : "structured fallback";
+  const warningText = warning ? ` ${warning}` : "";
+
+  return `${plan.title || "Travel plan"} (${providerText}). ${plan.summary || ""} ${citySummaries}. ${bookingNotes}${warningText}`;
+}
+
+function setAssistantLoadingState(isLoading) {
+  const assistantForm = document.getElementById("assistant-form");
+  const button = assistantForm.querySelector(".primary-button");
+
+  button.disabled = isLoading;
+  button.textContent = isLoading ? "Planning..." : "Send prompt";
 }
 
 function prepareBookingPayload(plan) {
