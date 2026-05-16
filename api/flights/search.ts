@@ -3,6 +3,7 @@ declare const process: { env: Record<string, string | undefined> };
 const AMADEUS_TEST_BASE_URL = "https://test.api.amadeus.com";
 const AMADEUS_PRODUCTION_BASE_URL = "https://api.amadeus.com";
 const AVIATIONSTACK_FLIGHTS_URL = "https://api.aviationstack.com/v1/flights";
+const HASDATA_GOOGLE_FLIGHTS_URL = "https://api.hasdata.com/scrape/google/flights";
 
 type Carrier = {
   code: string;
@@ -161,6 +162,98 @@ async function searchFlights(token: string, params: FlightSearchParams, baseUrl:
   }
 
   return response.json();
+}
+
+async function searchHasDataFlights(apiKey: string, params: FlightSearchParams) {
+  const requestUrl = new URL(HASDATA_GOOGLE_FLIGHTS_URL);
+  requestUrl.searchParams.set("departureId", params.origin);
+  requestUrl.searchParams.set("arrivalId", params.destination);
+  requestUrl.searchParams.set("outboundDate", params.departDate);
+  requestUrl.searchParams.set("type", "oneWay");
+  requestUrl.searchParams.set("adults", String(params.adults || 1));
+  requestUrl.searchParams.set("currency", "EUR");
+
+  const response = await fetch(requestUrl.toString(), {
+    headers: {
+      "x-api-key": apiKey,
+    },
+  });
+  const responseText = await response.text();
+
+  if (!responseText.trim()) {
+    throw new Error("HasData returned an empty response for this route.");
+  }
+
+  let data: any;
+
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error("HasData returned an unreadable response for this route.");
+  }
+
+  if (!response.ok || data.error || data.requestMetadata?.status === "error") {
+    throw new Error(`HasData flight search error: ${JSON.stringify(data.error || data.requestMetadata || data)}`);
+  }
+
+  return data;
+}
+
+function normalizeHasDataOffer(option: any, index: number, params: FlightSearchParams): NormalizedOffer {
+  const flights = Array.isArray(option.flights) ? option.flights : [];
+  const firstFlight = flights[0] || {};
+  const airlineName = firstFlight.airline || "Google Flights";
+  const flightNumber = firstFlight.flightNumber || `HASDATA-${index + 1}`;
+
+  return {
+    id: `${flightNumber}-${index + 1}`,
+    price: {
+      total: Number(option.price || 0),
+      currency: "EUR",
+    },
+    itineraries: [
+      {
+        duration: option.totalDuration ? `PT${option.totalDuration}M` : "",
+        segments: flights.map((flight: any) => ({
+          from: flight.departureAirport?.id || params.origin,
+          to: flight.arrivalAirport?.id || params.destination,
+          departureAt: parseHasDataDateTime(flight.departureAirport?.time),
+          arrivalAt: parseHasDataDateTime(flight.arrivalAirport?.time),
+        })),
+      },
+    ],
+    carriers: [
+      {
+        code: String(flightNumber).split(" ")[0] || "GF",
+        name: airlineName,
+      },
+    ],
+  };
+}
+
+function parseHasDataDateTime(value: unknown) {
+  if (!value) {
+    return "";
+  }
+
+  const normalized = String(value).replace(" ", "T");
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? normalized : parsed.toISOString();
+}
+
+async function getHasDataOffers(params: FlightSearchParams): Promise<NormalizedOffer[]> {
+  const apiKey = process.env.HASDATA_API_KEY;
+
+  if (!apiKey) {
+    return [];
+  }
+
+  const response = await searchHasDataFlights(apiKey, params);
+  const options = [...(response.bestFlights || []), ...(response.otherFlights || [])];
+  return options
+    .filter((option: any) => option.price && Array.isArray(option.flights) && option.flights.length)
+    .slice(0, 6)
+    .map((option: any, index: number) => normalizeHasDataOffer(option, index, params));
 }
 
 async function searchAviationstackFlights(apiKey: string, params: FlightSearchParams) {
@@ -322,6 +415,20 @@ export default async function handler(req: any, res: any) {
   const clientId = process.env.AMADEUS_CLIENT_ID;
   const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
   const providerWarnings: string[] = [];
+
+  try {
+    const hasDataOffers = await getHasDataOffers(searchParams);
+
+    if (hasDataOffers.length) {
+      res.status(200).json({
+        offers: hasDataOffers,
+        provider: "hasdata",
+      });
+      return;
+    }
+  } catch (error: any) {
+    providerWarnings.push(error?.message || "HasData flight search failed.");
+  }
 
   try {
     const aviationstackOffers = await getAviationstackOffers(searchParams);
