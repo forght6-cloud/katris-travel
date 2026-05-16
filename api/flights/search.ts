@@ -1,7 +1,7 @@
 declare const process: { env: Record<string, string | undefined> };
 
-const AMADEUS_AUTH_URL = "https://test.api.amadeus.com/v1/security/oauth2/token";
-const AMADEUS_FLIGHT_SEARCH_URL = "https://test.api.amadeus.com/v2/shopping/flight-offers";
+const AMADEUS_TEST_BASE_URL = "https://test.api.amadeus.com";
+const AMADEUS_PRODUCTION_BASE_URL = "https://api.amadeus.com";
 
 type Carrier = {
   code: string;
@@ -25,6 +25,20 @@ type NormalizedOffer = {
   }>;
   carriers: Carrier[];
 };
+
+type FlightSearchParams = {
+  origin: string;
+  destination: string;
+  departDate: string;
+  adults: number;
+};
+
+const MOCK_CARRIERS: Carrier[] = [
+  { code: "SK", name: "Scandinavian Airlines" },
+  { code: "AY", name: "Finnair" },
+  { code: "KL", name: "KLM" },
+  { code: "LH", name: "Lufthansa" },
+];
 
 function normalizeOffer(offer: any, carriersDictionary: Record<string, string>): NormalizedOffer {
   const carrierCodes = Array.from(
@@ -57,8 +71,12 @@ function normalizeOffer(offer: any, carriersDictionary: Record<string, string>):
   };
 }
 
-async function getAccessToken(clientId: string, clientSecret: string) {
-  const tokenResponse = await fetch(AMADEUS_AUTH_URL, {
+function getAmadeusBaseUrl() {
+  return process.env.AMADEUS_ENV === "production" ? AMADEUS_PRODUCTION_BASE_URL : AMADEUS_TEST_BASE_URL;
+}
+
+async function getAccessToken(clientId: string, clientSecret: string, baseUrl: string) {
+  const tokenResponse = await fetch(`${baseUrl}/v1/security/oauth2/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -79,8 +97,8 @@ async function getAccessToken(clientId: string, clientSecret: string) {
   return tokenData.access_token as string;
 }
 
-async function searchFlights(token: string, params: { origin: string; destination: string; departDate: string; adults: number }) {
-  const requestUrl = new URL(AMADEUS_FLIGHT_SEARCH_URL);
+async function searchFlights(token: string, params: FlightSearchParams, baseUrl: string) {
+  const requestUrl = new URL(`${baseUrl}/v2/shopping/flight-offers`);
   requestUrl.searchParams.set("originLocationCode", params.origin);
   requestUrl.searchParams.set("destinationLocationCode", params.destination);
   requestUrl.searchParams.set("departureDate", params.departDate);
@@ -102,17 +120,58 @@ async function searchFlights(token: string, params: { origin: string; destinatio
   return response.json();
 }
 
+function addMinutes(date: Date, minutes: number) {
+  const candidate = new Date(date);
+  candidate.setMinutes(candidate.getMinutes() + minutes);
+  return candidate;
+}
+
+function buildDateTime(departDate: string, hour: number, minute = 0) {
+  const paddedHour = String(hour).padStart(2, "0");
+  const paddedMinute = String(minute).padStart(2, "0");
+  return new Date(`${departDate}T${paddedHour}:${paddedMinute}:00`);
+}
+
+function createMockOffers(params: FlightSearchParams): NormalizedOffer[] {
+  const routeSeed = params.origin.charCodeAt(0) + params.destination.charCodeAt(0);
+  const basePrice = 180 + routeSeed + params.adults * 35;
+  const schedules = [
+    { departHour: 8, departMinute: 20, durationHours: 2, durationMinutes: 15, carrier: MOCK_CARRIERS[0] },
+    { departHour: 12, departMinute: 45, durationHours: 3, durationMinutes: 5, carrier: MOCK_CARRIERS[1] },
+    { departHour: 18, departMinute: 10, durationHours: 2, durationMinutes: 40, carrier: MOCK_CARRIERS[2] },
+  ];
+
+  return schedules.map((schedule, index) => {
+    const departure = buildDateTime(params.departDate, schedule.departHour, schedule.departMinute);
+    const arrival = addMinutes(departure, schedule.durationHours * 60 + schedule.durationMinutes);
+
+    return {
+      id: `mock-${params.origin}-${params.destination}-${params.departDate}-${index + 1}`,
+      price: {
+        total: basePrice + index * 42,
+        currency: "EUR",
+      },
+      itineraries: [
+        {
+          duration: `PT${schedule.durationHours}H${schedule.durationMinutes}M`,
+          segments: [
+            {
+              from: params.origin,
+              to: params.destination,
+              departureAt: departure.toISOString(),
+              arrivalAt: arrival.toISOString(),
+            },
+          ],
+        },
+      ],
+      carriers: [schedule.carrier],
+    };
+  });
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  const clientId = process.env.AMADEUS_CLIENT_ID;
-  const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    res.status(500).json({ error: "Amadeus credentials are not configured" });
     return;
   }
 
@@ -123,23 +182,48 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  try {
-    const accessToken = await getAccessToken(clientId, clientSecret);
-    const amadeusResponse = await searchFlights(accessToken, {
-      origin,
-      destination,
-      departDate,
-      adults: Number(adults) || 1,
+  const searchParams = {
+    origin: String(origin).toUpperCase(),
+    destination: String(destination).toUpperCase(),
+    departDate: String(departDate),
+    adults: Number(adults) || 1,
+  };
+  const clientId = process.env.AMADEUS_CLIENT_ID;
+  const clientSecret = process.env.AMADEUS_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    res.status(200).json({
+      offers: createMockOffers(searchParams),
+      provider: "mock",
+      warning: "Amadeus credentials are not configured",
     });
+    return;
+  }
+
+  try {
+    const baseUrl = getAmadeusBaseUrl();
+    const accessToken = await getAccessToken(clientId, clientSecret, baseUrl);
+    const amadeusResponse = await searchFlights(accessToken, searchParams, baseUrl);
 
     const offers = (amadeusResponse.data || []).map((offer: any) =>
       normalizeOffer(offer, amadeusResponse.dictionaries?.carriers || {}),
     );
 
-    res.status(200).json({ offers });
+    if (!offers.length) {
+      res.status(200).json({
+        offers: createMockOffers(searchParams),
+        provider: "mock",
+        warning: "No Amadeus offers returned; mock offers returned",
+      });
+      return;
+    }
+
+    res.status(200).json({ offers, provider: "amadeus", environment: process.env.AMADEUS_ENV || "test" });
   } catch (error: any) {
-    res.status(502).json({
-      error: "Flight search failed",
+    res.status(200).json({
+      offers: createMockOffers(searchParams),
+      provider: "mock",
+      warning: "Flight search failed; mock offers returned",
       details: error?.message || "Unknown error",
     });
   }
