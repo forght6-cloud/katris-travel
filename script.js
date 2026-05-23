@@ -1,7 +1,7 @@
 const INITIAL_ASSISTANT_MESSAGE = {
   role: "assistant",
   content:
-    "I can collect your preferences and prepare for future AI itinerary generation. Ask about seasons, atmosphere, or route ideas.",
+    "I can turn your preferences into a structured itinerary with flights, places, hotels, and booking notes. Ask about seasons, atmosphere, or route ideas.",
 };
 
 const DEFAULT_PLANNER_STATE = {
@@ -328,7 +328,7 @@ function buildPlaceholderTimeline({ destination, timingText, priorities }) {
     },
     {
       day: "Explore",
-      copy: `Shape a core day around ${priorities.join(", ").toLowerCase()} while leaving room for future AI-generated recommendations.`,
+      copy: `Shape a core day around ${priorities.join(", ").toLowerCase()} while leaving room for AI-generated recommendations.`,
     },
     {
       day: "Flow",
@@ -502,6 +502,7 @@ async function searchFlights(origin, destination, date) {
         price: offer.price?.total || 0,
         currency: offer.price?.currency || "EUR",
         priceLabel: offer.price?.label || formatPriceLabel(offer.price),
+        bookingUrl: offer.bookingUrl || "",
         origin,
         destination,
         date: safeDate,
@@ -572,32 +573,75 @@ async function searchHotels(city, date) {
   ];
 }
 
-function generateAttractions(city) {
+async function searchAttractions(city) {
+  try {
+    const response = await fetch("/api/places/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        city,
+        limit: 5,
+      }),
+    });
+
+    if (!response.ok) {
+      return generateAttractions(city, "Places API temporarily unavailable");
+    }
+
+    const data = await response.json();
+    const places = Array.isArray(data.places) ? data.places : [];
+
+    if (!places.length) {
+      return generateAttractions(city, data.warning || "Geoapify returned no places for this city");
+    }
+
+    return places.map((place) => ({
+      name: place.name,
+      category: place.category || "Local place",
+      summary: place.summary || place.address || "Geoapify place recommendation.",
+      address: place.address || "",
+      mapsUrl: place.mapsUrl || "",
+      provider: data.provider || "geoapify",
+    }));
+  } catch (error) {
+    console.error(error);
+    return generateAttractions(city, "Places API temporarily unavailable");
+  }
+}
+
+function generateAttractions(city, warning = "") {
   return [
     {
       name: `${city} Old Quarter`,
       category: "Culture",
       summary: "A walkable starting point for architecture, cafés, and first-day orientation.",
+      warning,
     },
     {
       name: `${city} Waterfront`,
       category: "Scenery",
       summary: "A calm route for sunset, photographs, and low-pressure exploration.",
+      warning,
     },
     {
       name: `${city} Design Museum`,
       category: "Design",
       summary: "A weather-proof cultural anchor with strong local context.",
+      warning,
     },
     {
       name: `${city} Market Hall`,
       category: "Food",
       summary: "Good for casual lunch, local produce, and flexible pacing.",
+      warning,
     },
     {
       name: `${city} Lookout Route`,
       category: "Landscape",
       summary: "A scenic afternoon route with room for rest stops.",
+      warning,
     },
   ];
 }
@@ -663,7 +707,7 @@ async function analyzeTripPlan(inputText) {
   for (let index = 0; index < normalizedStops.length; index += 1) {
     const stop = normalizedStops[index];
     const hotelOptions = await searchHotels(stop.city, stop.date);
-    const attractionOptions = generateAttractions(stop.city);
+    const attractionOptions = await searchAttractions(stop.city);
     const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars);
     const transportLinks = generateTransportLinks(stop.city);
 
@@ -786,11 +830,12 @@ function renderAnalysisResults(result) {
                 .map(
                   (flight) => `
                     <article class="analysis-item">
-                      <div>
-                        <strong>${escapeHtml(flight.airline)}</strong>
-                        <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
-                      </div>
+                  <div>
+                    <strong>${escapeHtml(flight.airline)}</strong>
+                    <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
+                  </div>
                       <span>${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</span>
+                      ${flight.bookingUrl ? `<a class="analysis-link" href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Search fare</a>` : ""}
                     </article>
                   `,
                 )
@@ -835,8 +880,9 @@ function renderAnalysisResults(result) {
                 <article class="analysis-item">
                   <div>
                     <strong>${escapeHtml(attraction.name)}</strong>
-                    <p>${escapeHtml(attraction.category)} · ${escapeHtml(attraction.summary)}</p>
+                    <p>${escapeHtml(attraction.category)} · ${escapeHtml(attraction.summary)}${attraction.warning ? ` · ${escapeHtml(attraction.warning)}` : ""}</p>
                   </div>
+                  ${attraction.mapsUrl ? `<a class="analysis-link" href="${escapeHtml(attraction.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
                 </article>
               `,
             )
@@ -1090,7 +1136,7 @@ function setAssistantLoadingState(isLoading) {
 }
 
 function prepareBookingPayload(plan) {
-  console.info("Booking orchestration placeholder", plan);
+  console.info("Booking orchestration payload", plan);
   return { bookingItems: [] };
 }
 

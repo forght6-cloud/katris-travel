@@ -6,7 +6,7 @@
   <title>Katris Travel AI | Nordic Escapes</title>
   <meta
     name="description"
-    content="A calm Nordic-inspired travel homepage with itinerary planning and assistant scaffolding for future AI-guided journeys."
+    content="A calm Nordic-inspired travel homepage with itinerary planning, live flight search, real place data, and AI-guided journeys."
   />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -48,7 +48,7 @@
           <h1>Explore still landscapes, luminous skies, and thoughtful Nordic travel.</h1>
           <p class="hero-text">
             A calm travel homepage designed to inspire exploration across fjords, forests, coastal villages,
-            and northern light routes—while preparing the foundation for AI-guided planning.
+              and northern light routes—while connecting live travel data to AI-guided planning.
           </p>
 
           <div class="hero-actions">
@@ -67,7 +67,7 @@
             </div>
             <div>
               <dt>Future-ready</dt>
-              <dd>AI planning scaffolding</dd>
+              <dd>AI planning hooks</dd>
             </div>
           </dl>
         </div>
@@ -116,8 +116,8 @@
           <p class="eyebrow">Nordic landscapes</p>
           <h2>Start with a region that matches your pace.</h2>
           <p>
-            The homepage introduces a curated set of destination moods so future planning can branch into
-            richer AI recommendations without redesigning the experience.
+            The homepage introduces a curated set of destination moods so planning can branch into richer
+            AI recommendations, flight options, and place data.
           </p>
         </div>
 
@@ -162,11 +162,11 @@
 
       <section class="planner-section" id="planner">
         <div class="section-heading">
-          <p class="eyebrow">Homepage planning scaffold</p>
-          <h2>Shape a future itinerary with a calm, guided planner.</h2>
+          <p class="eyebrow">Live planning workspace</p>
+          <h2>Shape an itinerary with a calm, guided planner.</h2>
           <p>
-            This step establishes the UI, front-end state, simple itinerary analysis, and integration hooks needed
-            for later AI and itinerary functionality.
+            This planner combines front-end itinerary parsing with live flight search, place lookup, and AI-ready
+            planning responses.
           </p>
         </div>
 
@@ -238,13 +238,12 @@
               <p class="eyebrow">Itinerary preview</p>
               <h3 id="preview-title">A seven-night Nordic reset.</h3>
               <p id="preview-summary">
-                Build a trip concept to see a placeholder overview here. In a later step, AI-generated itinerary
-                structure can plug into this panel.
+                Build a trip concept to see itinerary structure, travel options, and partner-ready booking paths.
               </p>
               <ul id="preview-pillars" class="preview-pillars">
                 <li>Scenery-led routing</li>
                 <li>Quiet stays</li>
-                <li>Future AI suggestions</li>
+                <li>AI suggestions</li>
               </ul>
             </div>
 
@@ -257,11 +256,11 @@
                 </article>
                 <article>
                   <span>Day 2</span>
-                  <p>Scenic movement through landscape highlights with room for later AI detail.</p>
+                  <p>Scenic movement through landscape highlights with room for AI-generated detail.</p>
                 </article>
                 <article>
                   <span>Day 3+</span>
-                  <p>Placeholder itinerary cards remain intentionally flexible for future parsing logic.</p>
+                  <p>Itinerary cards adapt as route parsing and live travel options return.</p>
                 </article>
               </div>
             </div>
@@ -278,11 +277,11 @@
 
       <section class="assistant-section" id="assistant">
         <div class="section-heading compact">
-          <p class="eyebrow">AI assistant scaffold</p>
-          <h2>Ask for travel guidance without wiring the final model yet.</h2>
+          <p class="eyebrow">AI assistant</p>
+          <h2>Ask for structured travel guidance and route ideas.</h2>
           <p>
-            The assistant below stores conversational state and demonstrates the future interaction pattern while
-            keeping API integration deferred.
+            The assistant stores conversational state and calls the planning endpoint, with a structured fallback
+            when the selected AI provider is unavailable.
           </p>
         </div>
 
@@ -290,14 +289,14 @@
           <div class="assistant-panel">
             <div class="assistant-status">
               <span class="status-dot" aria-hidden="true"></span>
-              <p>Assistant ready in placeholder mode</p>
+              <p>Assistant ready with planning endpoint</p>
             </div>
 
             <div id="assistant-thread" class="assistant-thread" aria-live="polite">
               <article class="message assistant">
                 <p class="message-label">Katris Assistant</p>
                 <p>
-                  I can collect your preferences and prepare for future AI itinerary generation. Ask about seasons,
+                  I can turn your preferences into a structured itinerary. Ask about seasons,
                   atmosphere, or route ideas.
                 </p>
               </article>
@@ -320,11 +319,11 @@
           <aside class="assistant-sidebar">
             <div class="preview-card">
               <p class="eyebrow">Integration hooks</p>
-              <h3>Prepared for future services</h3>
+              <h3>Connected services</h3>
               <ul class="hook-list">
                 <li><strong>AI Request Hook</strong><span><code>requestAiPlan(state)</code> Gemini-ready endpoint</span></li>
                 <li><strong>Parser Hook</strong><span><code>parseItineraryDraft(response)</code> structured JSON</span></li>
-                <li><strong>Booking Hook</strong><span><code>prepareBookingPayload(plan)</code> partner-ready payload</span></li>
+                <li><strong>Booking Hook</strong><span><code>prepareBookingPayload(plan)</code> Travelpayouts-ready payload</span></li>
               </ul>
             </div>
           </aside>

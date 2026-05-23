@@ -17,6 +17,7 @@ type NormalizedOffer = {
     currency: string;
     label?: string;
   };
+  bookingUrl?: string;
   itineraries: Array<{
     duration: string;
     segments: Array<{
@@ -84,7 +85,11 @@ const MOCK_CARRIERS: Carrier[] = [
   { code: "LH", name: "Lufthansa" },
 ];
 
-function normalizeOffer(offer: any, carriersDictionary: Record<string, string>): NormalizedOffer {
+function normalizeOffer(
+  offer: any,
+  carriersDictionary: Record<string, string>,
+  params: FlightSearchParams,
+): NormalizedOffer {
   const carrierCodes = Array.from(
     new Set(
       (offer.itineraries || []).flatMap((itinerary: any) =>
@@ -99,6 +104,7 @@ function normalizeOffer(offer: any, carriersDictionary: Record<string, string>):
       total: Number(offer.price?.total || 0),
       currency: offer.price?.currency || "EUR",
     },
+    bookingUrl: buildAviasalesSearchUrl(params),
     itineraries: (offer.itineraries || []).map((itinerary: any) => ({
       duration: itinerary.duration || "",
       segments: (itinerary.segments || []).map((segment: any) => ({
@@ -211,6 +217,7 @@ function normalizeHasDataOffer(option: any, index: number, params: FlightSearchP
       total: Number(option.price || 0),
       currency: "EUR",
     },
+    bookingUrl: buildAviasalesSearchUrl(params),
     itineraries: [
       {
         duration: option.totalDuration ? `PT${option.totalDuration}M` : "",
@@ -286,6 +293,7 @@ function normalizeAviationstackOffer(flight: any, index: number, params: FlightS
       currency: "STATUS",
       label: "Live status",
     },
+    bookingUrl: buildAviasalesSearchUrl(params),
     itineraries: [
       {
         duration: "",
@@ -375,6 +383,7 @@ function createMockOffers(params: FlightSearchParams): NormalizedOffer[] {
         total: basePrice + index * 42,
         currency: "EUR",
       },
+      bookingUrl: buildAviasalesSearchUrl(params),
       itineraries: [
         {
           duration: `PT${schedule.durationHours}H${schedule.durationMinutes}M`,
@@ -391,6 +400,28 @@ function createMockOffers(params: FlightSearchParams): NormalizedOffer[] {
       carriers: [schedule.carrier],
     };
   });
+}
+
+function buildAviasalesSearchUrl(params: FlightSearchParams) {
+  const marker = process.env.TRAVELPAYOUTS_MARKER;
+
+  if (!marker || !params.origin || !params.destination || !params.departDate) {
+    return "";
+  }
+
+  const requestUrl = new URL("https://search.aviasales.com/flights/");
+  requestUrl.searchParams.set("origin_iata", params.origin);
+  requestUrl.searchParams.set("destination_iata", params.destination);
+  requestUrl.searchParams.set("depart_date", params.departDate);
+  requestUrl.searchParams.set("adults", String(params.adults || 1));
+  requestUrl.searchParams.set("children", "0");
+  requestUrl.searchParams.set("infants", "0");
+  requestUrl.searchParams.set("trip_class", "0");
+  requestUrl.searchParams.set("currency", "EUR");
+  requestUrl.searchParams.set("locale", "en");
+  requestUrl.searchParams.set("oneway", "1");
+  requestUrl.searchParams.set("marker", marker);
+  return requestUrl.toString();
 }
 
 export default async function handler(req: any, res: any) {
@@ -460,7 +491,7 @@ export default async function handler(req: any, res: any) {
     const amadeusResponse = await searchFlights(accessToken, searchParams, baseUrl);
 
     const offers = (amadeusResponse.data || []).map((offer: any) =>
-      normalizeOffer(offer, amadeusResponse.dictionaries?.carriers || {}),
+      normalizeOffer(offer, amadeusResponse.dictionaries?.carriers || {}, searchParams),
     );
 
     if (!offers.length) {
