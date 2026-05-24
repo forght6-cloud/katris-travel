@@ -10,7 +10,7 @@ const DEFAULT_PLANNER_STATE = {
   date: "",
   tripLength: "7 nights",
   people: 2,
-  budget: "Balanced",
+  budget: "",
   notes: "",
   pillars: ["Scenery", "Quiet stays"],
 };
@@ -28,6 +28,7 @@ const CITY_CATALOG = [
   "Dublin",
   "Edinburgh",
   "Florence",
+  "Frankfurt",
   "Geneva",
   "Helsinki",
   "Hong Kong",
@@ -69,6 +70,7 @@ const AIRPORT_CODE_MAP = {
   Dublin: "DUB",
   Edinburgh: "EDI",
   Florence: "FLR",
+  Frankfurt: "FRA",
   Geneva: "GVA",
   Helsinki: "HEL",
   "Hong Kong": "HKG",
@@ -105,6 +107,7 @@ const appState = {
   aiProgressTimer: null,
   selectedRegion: "fjord",
   analysis: null,
+  currentSectionIndex: 0,
 };
 
 const regionDescriptions = {
@@ -117,11 +120,14 @@ const regionDescriptions = {
 const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant"];
 
 function initializeHomepage() {
+  appState.currentSectionIndex = getInitialSectionIndex();
   bindScrollButtons();
+  bindAnchorNavigation();
   bindPaginationNavigation();
   bindDestinationCards();
   bindPlannerForm();
   bindAssistant();
+  applySectionVisibility();
   renderPlannerPreview();
   renderAssistantThread();
   renderAnalysisResults(null);
@@ -131,8 +137,22 @@ function initializeHomepage() {
 function bindScrollButtons() {
   document.querySelectorAll("[data-scroll-target]").forEach((button) => {
     button.addEventListener("click", () => {
-      const target = document.querySelector(button.dataset.scrollTarget);
-      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      navigateToSection(button.dataset.scrollTarget);
+    });
+  });
+}
+
+function bindAnchorNavigation() {
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", (event) => {
+      const selector = normalizeSectionSelector(anchor.getAttribute("href"));
+
+      if (!selector) {
+        return;
+      }
+
+      event.preventDefault();
+      navigateToSection(selector);
     });
   });
 }
@@ -144,30 +164,99 @@ function bindPaginationNavigation() {
 
   sectionButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      scrollToSection(button.dataset.sectionTarget);
+      navigateToSection(button.dataset.sectionTarget);
     });
   });
 
   previousButton.addEventListener("click", () => {
     const currentIndex = getCurrentSectionIndex();
-    scrollToSection(SECTION_SELECTORS[Math.max(0, currentIndex - 1)]);
+    navigateToSection(SECTION_SELECTORS[Math.max(0, currentIndex - 1)]);
   });
 
   nextButton.addEventListener("click", () => {
     const currentIndex = getCurrentSectionIndex();
-    scrollToSection(SECTION_SELECTORS[Math.min(SECTION_SELECTORS.length - 1, currentIndex + 1)]);
+    navigateToSection(SECTION_SELECTORS[Math.min(SECTION_SELECTORS.length - 1, currentIndex + 1)]);
   });
 
   window.addEventListener("scroll", updatePaginationState, { passive: true });
-  window.addEventListener("resize", updatePaginationState);
+  window.addEventListener("resize", () => {
+    applySectionVisibility();
+    updatePaginationState();
+  });
+  window.addEventListener("hashchange", () => {
+    const selector = normalizeSectionSelector(window.location.hash);
+    if (selector) {
+      navigateToSection(selector, { updateHash: false });
+    }
+  });
 }
 
-function scrollToSection(selector) {
+function navigateToSection(rawSelector, options = {}) {
+  const selector = normalizeSectionSelector(rawSelector);
+  const { updateHash = true } = options;
+
+  if (!selector) {
+    return;
+  }
+
+  const targetIndex = SECTION_SELECTORS.indexOf(selector);
+
+  if (isWindowNavigationMode()) {
+    appState.currentSectionIndex = targetIndex;
+    applySectionVisibility();
+    updatePaginationState();
+
+    if (updateHash) {
+      window.history.replaceState(null, "", selector);
+    }
+
+    return;
+  }
+
+  appState.currentSectionIndex = targetIndex;
   const target = document.querySelector(selector);
   target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  updatePaginationState();
+}
+
+function normalizeSectionSelector(rawSelector) {
+  if (!rawSelector || rawSelector === "#top") {
+    return "#overview";
+  }
+
+  return SECTION_SELECTORS.includes(rawSelector) ? rawSelector : null;
+}
+
+function getInitialSectionIndex() {
+  const selector = normalizeSectionSelector(window.location.hash);
+  return selector ? SECTION_SELECTORS.indexOf(selector) : 0;
+}
+
+function isWindowNavigationMode() {
+  return window.matchMedia("(min-width: 761px)").matches;
+}
+
+function applySectionVisibility() {
+  const isWindowMode = isWindowNavigationMode();
+  document.body.classList.toggle("is-window-mode", isWindowMode);
+
+  SECTION_SELECTORS.forEach((selector, index) => {
+    const section = document.querySelector(selector);
+    if (!section) {
+      return;
+    }
+
+    const isCurrent = index === appState.currentSectionIndex;
+    section.classList.toggle("is-current", isCurrent);
+    section.toggleAttribute("hidden", isWindowMode && !isCurrent);
+  });
 }
 
 function getCurrentSectionIndex() {
+  if (isWindowNavigationMode()) {
+    return appState.currentSectionIndex;
+  }
+
   const anchor = window.scrollY + 220;
   let currentIndex = 0;
 
@@ -301,9 +390,10 @@ function renderPlannerPreview() {
   const destination = to || formatRegionName(appState.selectedRegion);
   const departureText = from ? `departing from ${from}` : "with departure details to be confirmed";
   const timingText = date ? `starting ${formatMonth(date)}` : "timed for the season that suits your pace";
+  const budgetText = budget ? `with a ${budget} budget` : "with budget to be confirmed";
 
   title.textContent = `${tripLength} in ${destination} for ${people} traveler${people > 1 ? "s" : ""}.`;
-  summary.textContent = `${departureText}, this ${budget.toLowerCase()} concept is ${timingText}. ${regionDescriptions[appState.selectedRegion]}${notes ? ` Notes captured: ${notes}` : ""}`;
+  summary.textContent = `${departureText}, ${budgetText}, this concept is ${timingText}. ${regionDescriptions[appState.selectedRegion]}${notes ? ` Notes captured: ${notes}` : ""}`;
 
   pillars.innerHTML = "";
   priorities.forEach((item) => {

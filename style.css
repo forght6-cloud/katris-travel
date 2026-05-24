@@ -26,6 +26,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 104px;
 }
 
 body {
@@ -306,8 +307,15 @@ textarea {
 
 main {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   margin-top: 18px;
+  scroll-snap-type: y mandatory;
+}
+
+body.is-window-mode main {
+  display: block;
+  min-height: calc(100dvh - 112px);
+  scroll-snap-type: none;
 }
 
 .hero-section,
@@ -316,11 +324,75 @@ main {
 .assistant-section {
   position: relative;
   overflow: hidden;
-  min-height: min(820px, calc(100vh - 112px));
+  height: calc(100vh - 112px);
+  min-height: 720px;
+  max-height: 940px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 253, 247, 0.9);
   box-shadow: var(--shadow);
+  scroll-margin-top: 104px;
+  scroll-snap-align: start;
+}
+
+body.is-window-mode .hero-section,
+body.is-window-mode .destinations-section,
+body.is-window-mode .planner-section,
+body.is-window-mode .assistant-section {
+  height: calc(100dvh - 112px);
+  min-height: 0;
+  max-height: none;
+  scroll-margin-top: 0;
+  animation: windowReveal 280ms ease-out both;
+}
+
+body.is-window-mode main > [hidden] {
+  display: none !important;
+}
+
+body.is-window-mode .inspiration-strip {
+  display: none;
+}
+
+body.is-window-mode .destinations-section,
+body.is-window-mode .planner-section,
+body.is-window-mode .assistant-section {
+  overflow: auto;
+}
+
+body.is-window-mode .hero-section {
+  grid-template-columns: minmax(0, 0.86fr) minmax(340px, 0.72fr);
+}
+
+body.is-window-mode .hero-copy {
+  padding: clamp(28px, 4vw, 48px);
+}
+
+body.is-window-mode .hero-copy h1 {
+  max-width: 720px;
+  font-size: clamp(3rem, 5.4vw, 5.7rem);
+  line-height: 1;
+}
+
+body.is-window-mode .hero-text {
+  margin-top: 18px;
+  font-size: 1.04rem;
+}
+
+body.is-window-mode .hero-actions {
+  margin-top: 20px;
+}
+
+@keyframes windowReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-section {
@@ -362,7 +434,7 @@ main {
   flex-direction: column;
   justify-content: space-between;
   gap: 28px;
-  min-height: 720px;
+  min-height: 0;
   padding: clamp(28px, 6vw, 72px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -631,6 +703,13 @@ h5 {
   padding: clamp(22px, 4vw, 46px);
 }
 
+.destinations-section,
+.planner-section,
+.assistant-section {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .destinations-section {
   background:
     linear-gradient(90deg, rgba(255, 253, 247, 0.94), rgba(255, 253, 247, 0.78)),
@@ -686,7 +765,7 @@ h5 {
   grid-template-columns: minmax(0, 0.72fr) minmax(320px, 0.5fr);
   gap: 28px;
   align-items: end;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
 .section-heading.compact {
@@ -704,7 +783,7 @@ h5 {
 
 .section-heading h2 {
   max-width: 850px;
-  font-size: clamp(2.7rem, 5vw, 5.8rem);
+  font-size: clamp(2.4rem, 4.2vw, 4.9rem);
 }
 
 .section-heading p:last-child {
@@ -728,7 +807,7 @@ h5 {
 
 .destination-card {
   display: grid;
-  min-height: 520px;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
   text-align: left;
@@ -745,7 +824,7 @@ h5 {
 }
 
 .destination-visual {
-  min-height: 300px;
+  min-height: 230px;
   background-size: cover;
   background-position: center;
 }
@@ -778,11 +857,14 @@ h5 {
   z-index: 1;
   display: grid;
   gap: 18px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .planner-layout {
   grid-template-columns: minmax(340px, 0.66fr) minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
 }
 
 .planner-layout::before {
@@ -808,14 +890,35 @@ h5 {
 }
 
 .planner-form {
-  position: sticky;
-  top: 108px;
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.departure-budget-group {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(148px, 0.42fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.departure-field {
+  min-width: 0;
+}
+
+.budget-field {
+  align-self: end;
+}
+
+.budget-field input {
+  min-height: 40px;
 }
 
 label,
@@ -905,6 +1008,10 @@ textarea:focus {
 .planner-preview {
   display: grid;
   gap: 14px;
+  align-content: start;
+  max-height: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 
 .preview-card {
@@ -1163,7 +1270,9 @@ textarea:focus {
 
 .assistant-panel,
 .assistant-sidebar {
-  min-height: 560px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .assistant-panel {
@@ -1421,6 +1530,7 @@ textarea:focus {
   .destinations-section,
   .planner-section,
   .assistant-section {
+    height: auto;
     min-height: auto;
   }
 
@@ -1447,8 +1557,19 @@ textarea:focus {
   .hero-stats,
   .inspiration-strip,
   .destination-grid,
-  .form-grid {
+  .form-grid,
+  .departure-budget-group {
     grid-template-columns: 1fr;
+  }
+
+  .planner-layout,
+  .assistant-layout,
+  .planner-preview,
+  .planner-form,
+  .assistant-panel,
+  .assistant-sidebar {
+    max-height: none;
+    overflow: visible;
   }
 
   .destination-card {

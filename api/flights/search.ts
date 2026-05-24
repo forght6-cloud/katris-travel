@@ -50,6 +50,7 @@ const AIRPORT_CODE_MAP: Record<string, string> = {
   Dublin: "DUB",
   Edinburgh: "EDI",
   Florence: "FLR",
+  Frankfurt: "FRA",
   Geneva: "GVA",
   Helsinki: "HEL",
   "Hong Kong": "HKG",

@@ -174,13 +174,19 @@
         <div class="planner-layout">
           <form class="planner-form" id="planner-form">
             <div class="form-grid">
-              <label>
-                <span>Departure</span>
-                <input id="from" name="from" placeholder="New York" autocomplete="off" />
-              </label>
+              <div class="departure-budget-group">
+                <label class="departure-field">
+                  <span>Departure</span>
+                  <input id="from" name="from" placeholder="London" autocomplete="off" />
+                </label>
+                <label class="budget-field">
+                  <span>Budget</span>
+                  <input id="budget" name="budget" placeholder="800 bucks" autocomplete="off" />
+                </label>
+              </div>
               <label>
                 <span>Destination</span>
-                <input id="to" name="to" placeholder="Bergen" autocomplete="off" />
+                <input id="to" name="to" placeholder="Frankfurt" autocomplete="off" />
               </label>
               <label>
                 <span>Travel date</span>
@@ -193,20 +199,12 @@
                   <option value="5 nights">5 nights</option>
                   <option value="7 nights" selected>7 nights</option>
                   <option value="10+ nights">10+ nights</option>
+                  <option value="2 weeks">2 weeks</option>
                 </select>
               </label>
               <label>
                 <span>Travelers</span>
                 <input id="people" name="people" type="number" min="1" value="2" />
-              </label>
-              <label>
-                <span>Budget style</span>
-                <select id="budget" name="budget">
-                  <option value="Balanced" selected>Balanced</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Luxury">Luxury</option>
-                  <option value="Flexible">Flexible</option>
-                </select>
               </label>
             </div>
 
