@@ -829,6 +829,30 @@ textarea {
   background: rgba(220, 232, 227, 0.8);
 }
 
+.analysis-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hotel-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.hotel-item .analysis-actions {
+  justify-content: flex-start;
+}
+
+.hotel-item > span {
+  justify-self: start;
+  color: var(--accent-deep);
+  font-weight: 700;
+}
+
 .analysis-item + .analysis-item {
   margin-top: 10px;
 }

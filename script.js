@@ -527,50 +527,113 @@ async function searchFlights(origin, destination, date) {
 
 async function searchHotels(city, date) {
   const safeDate = date || getFallbackTravelDate();
-  const basePrice = 120 + city.length * 6;
 
-  return [
-    {
-      name: `${city} Harbour Hotel`,
-      rating: 4.6,
-      price: basePrice,
-      currency: "EUR",
+  try {
+    const response = await fetch("/api/hotels/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        city,
+        date: safeDate,
+        limit: 5,
+      }),
+    });
+
+    if (!response.ok) {
+      return generateExternalHotelLinks(city, safeDate, "Hotel search temporarily unavailable");
+    }
+
+    const data = await response.json();
+    const hotels = Array.isArray(data.hotels) ? data.hotels : [];
+
+    if (!hotels.length) {
+      return generateExternalHotelLinks(city, safeDate, data.warning || "Hotel search returned no results");
+    }
+
+    return hotels.map((hotel) => ({
+      name: hotel.name,
+      rating: hotel.rating || "External rating",
+      rateLabel: hotel.rateLabel || "Search live rates",
+      address: hotel.address || city,
       city,
-      date: safeDate,
-    },
-    {
-      name: `${city} Light Stay`,
-      rating: 4.4,
-      price: basePrice + 28,
-      currency: "EUR",
-      city,
-      date: safeDate,
-    },
-    {
-      name: `${city} Grand Design Hotel`,
-      rating: 4.7,
-      price: basePrice + 46,
-      currency: "EUR",
-      city,
-      date: safeDate,
-    },
-    {
-      name: `${city} Garden Residence`,
-      rating: 4.5,
-      price: basePrice + 18,
-      currency: "EUR",
-      city,
-      date: safeDate,
-    },
-    {
-      name: `${city} Central Suites`,
-      rating: 4.3,
-      price: basePrice + 34,
-      currency: "EUR",
-      city,
-      date: safeDate,
-    },
+      date: hotel.date || safeDate,
+      bookingUrl: hotel.bookingUrl || buildBookingSearchUrl(hotel.name, city, safeDate),
+      googleHotelsUrl: hotel.googleHotelsUrl || buildGoogleHotelsUrl(hotel.name, city, safeDate),
+      tripadvisorUrl: hotel.tripadvisorUrl || buildTripadvisorUrl(hotel.name, city),
+      mapsUrl: hotel.mapsUrl || buildGoogleMapsSearchUrl(hotel.name, city),
+      provider: data.provider || "hotel-search",
+      warning: data.warning || "",
+    }));
+  } catch (error) {
+    console.error(error);
+    return generateExternalHotelLinks(city, safeDate, "Hotel search temporarily unavailable");
+  }
+}
+
+function generateExternalHotelLinks(city, date, warning = "") {
+  const names = [
+    `${city} Central Hotel`,
+    `${city} Boutique Stay`,
+    `${city} Garden Residence`,
+    `${city} Harbour Hotel`,
+    `${city} Design Suites`,
   ];
+
+  return names.map((name) => ({
+    name,
+    rating: "External rating",
+    rateLabel: "Search live rates",
+    address: city,
+    city,
+    date,
+    bookingUrl: buildBookingSearchUrl(name, city, date),
+    googleHotelsUrl: buildGoogleHotelsUrl(name, city, date),
+    tripadvisorUrl: buildTripadvisorUrl(name, city),
+    mapsUrl: buildGoogleMapsSearchUrl(name, city),
+    provider: "fallback",
+    warning,
+  }));
+}
+
+function buildBookingSearchUrl(name, city, date) {
+  const requestUrl = new URL("https://www.booking.com/searchresults.html");
+  requestUrl.searchParams.set("ss", `${name}, ${city}`);
+  requestUrl.searchParams.set("checkin", date);
+  requestUrl.searchParams.set("checkout", getCheckoutDate(date));
+  requestUrl.searchParams.set("group_adults", String(Number(appState.planner.people) || 2));
+  requestUrl.searchParams.set("no_rooms", "1");
+  requestUrl.searchParams.set("group_children", "0");
+  return requestUrl.toString();
+}
+
+function buildGoogleHotelsUrl(name, city, date) {
+  const requestUrl = new URL("https://www.google.com/travel/hotels");
+  requestUrl.searchParams.set("q", `${name} ${city}`);
+  requestUrl.searchParams.set("checkin", date);
+  requestUrl.searchParams.set("checkout", getCheckoutDate(date));
+  requestUrl.searchParams.set("adults", String(Number(appState.planner.people) || 2));
+  return requestUrl.toString();
+}
+
+function buildTripadvisorUrl(name, city) {
+  return `https://www.tripadvisor.com/Search?q=${encodeURIComponent(`${name} ${city}`)}`;
+}
+
+function buildGoogleMapsSearchUrl(name, city) {
+  return `https://www.google.com/maps/search/${encodeURIComponent(`${name} ${city}`)}`;
+}
+
+function getCheckoutDate(checkinDate) {
+  const parsed = new Date(`${checkinDate}T00:00:00Z`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return checkinDate;
+  }
+
+  parsed.setUTCDate(parsed.getUTCDate() + 1);
+  return parsed.toISOString().slice(0, 10);
 }
 
 async function searchAttractions(city) {
@@ -854,12 +917,17 @@ function renderAnalysisResults(result) {
           ${entry.options
             .map(
               (hotel) => `
-                <article class="analysis-item">
+                <article class="analysis-item hotel-item">
                   <div>
                     <strong>${escapeHtml(hotel.name)}</strong>
-                    <p>Rating ${hotel.rating} · ${escapeHtml(hotel.date)}</p>
+                    <p>${escapeHtml(hotel.rating)} · ${escapeHtml(hotel.date)}${hotel.address ? ` · ${escapeHtml(hotel.address)}` : ""}${hotel.warning ? ` · ${escapeHtml(hotel.warning)}` : ""}</p>
                   </div>
-                  <span>${hotel.price} ${escapeHtml(hotel.currency)}</span>
+                  <span>${escapeHtml(hotel.rateLabel || "Search live rates")}</span>
+                  <div class="analysis-actions">
+                    ${hotel.bookingUrl ? `<a class="analysis-link" href="${escapeHtml(hotel.bookingUrl)}" target="_blank" rel="noreferrer">Book externally</a>` : ""}
+                    ${hotel.googleHotelsUrl ? `<a class="analysis-link" href="${escapeHtml(hotel.googleHotelsUrl)}" target="_blank" rel="noreferrer">Google Hotels</a>` : ""}
+                    ${hotel.mapsUrl ? `<a class="analysis-link" href="${escapeHtml(hotel.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
+                  </div>
                 </article>
               `,
             )
@@ -1121,7 +1189,14 @@ function formatAiPlanMessage(plan, provider, warning) {
     .join(" | ");
 
   const bookingNotes = (plan.bookingNotes || []).slice(0, 3).join(" ");
-  const providerText = provider === "gemini" ? "Gemini" : "structured fallback";
+  const providerLabels = {
+    openrouter: "OpenRouter",
+    mistral: "Mistral",
+    groq: "Groq",
+    gemini: "Gemini",
+    fallback: "structured fallback",
+  };
+  const providerText = providerLabels[provider] || provider || "structured fallback";
   const warningText = warning ? ` ${warning}` : "";
 
   return `${plan.title || "Travel plan"} (${providerText}). ${plan.summary || ""} ${citySummaries}. ${bookingNotes}${warningText}`;

@@ -1,7 +1,11 @@
 declare const process: { env: Record<string, string | undefined> };
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+type AiProvider = {
+  name: string;
+  key?: string;
+  model: string;
+  run: (prompt: string, provider: AiProvider) => Promise<any>;
+};
 
 function buildPrompt(payload: any) {
   return `
@@ -13,6 +17,7 @@ Requirements:
 - For each day, include 3 to 5 planned items.
 - Keep plans practical, calm, premium, and bookable.
 - Include flight context when available, but do not invent ticketing guarantees.
+- Hotel recommendations can be confirmed on Katris, but final payment may happen through external booking links.
 
 Input state:
 ${JSON.stringify(payload, null, 2)}
@@ -49,15 +54,15 @@ function buildFallbackPlan(payload: any) {
     return {
       city,
       hotels: [
-        { name: `${city} Grand Design Hotel`, style: "Design", reason: "A polished base near dining and transit." },
-        { name: `${city} Harbour View Stay`, style: "Waterfront", reason: "Calm views and easy evening walks." },
-        { name: `${city} Boutique House`, style: "Boutique", reason: "A smaller property with local character." },
-        { name: `${city} Garden Residence`, style: "Quiet luxury", reason: "Good for slower mornings and recovery time." },
-        { name: `${city} Central Suites`, style: "Convenient", reason: "Practical access for day trips and airport transfers." },
+        { name: `${city} Central Hotel`, style: "External booking", reason: "Confirm preference in Katris, then open live rates externally." },
+        { name: `${city} Boutique Stay`, style: "Boutique", reason: "A smaller property style for local character and calmer pacing." },
+        { name: `${city} Garden Residence`, style: "Quiet stay", reason: "Good for recovery time and slower mornings." },
+        { name: `${city} Harbour Hotel`, style: "Scenic", reason: "Useful when the trip prioritizes views and low-friction evenings." },
+        { name: `${city} Design Suites`, style: "Design", reason: "A polished option for a premium travel mood." },
       ],
       attractions: [
         { name: `${city} Old Quarter`, category: "Culture", reason: "A compact first walk with orientation value." },
-        { name: `${city} Waterfront`, category: "Scenery", reason: "Best for soft light, cafés, and low-friction exploration." },
+        { name: `${city} Waterfront`, category: "Scenery", reason: "Best for soft light, cafes, and low-friction exploration." },
         { name: `${city} Design Museum`, category: "Design", reason: "A strong indoor anchor for weather-proof planning." },
         { name: `${city} Market Hall`, category: "Food", reason: "Useful for local snacks and casual lunches." },
         { name: `${city} Lookout Route`, category: "Landscape", reason: "A scenic way to end the afternoon." },
@@ -69,8 +74,8 @@ function buildFallbackPlan(payload: any) {
           items: [
             { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for transport and check-in." },
             { time: "Midday", title: "Neighbourhood lunch", detail: "Choose a nearby local restaurant before heavy sightseeing." },
-            { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafés or galleries for later." },
-            { time: "Evening", title: "Waterfront dinner", detail: "Use the evening for a scenic, low-effort meal." },
+            { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafes or galleries for later." },
+            { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
           ],
         },
         {
@@ -80,7 +85,7 @@ function buildFallbackPlan(payload: any) {
             { time: "Morning", title: `${city} Design Museum`, detail: "Start with an indoor cultural anchor." },
             { time: "Midday", title: `${city} Market Hall`, detail: "Build lunch around local vendors and seasonal produce." },
             { time: "Afternoon", title: `${city} Lookout Route`, detail: "Plan a scenic route with photo stops and rest time." },
-            { time: "Evening", title: "Quiet hotel reset", detail: "Leave room for spa, reading, or a calm bar reservation." },
+            { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
           ],
         },
       ],
@@ -93,10 +98,153 @@ function buildFallbackPlan(payload: any) {
     cities,
     bookingNotes: [
       "Flight prices are live only when the HasData provider returns results.",
-      "Hotel and attraction picks are planning recommendations until connected to booking partners.",
-      "Add a Gemini API key to replace fallback recommendations with model-generated plans.",
+      "Hotels are shortlisted in Katris and paid through external booking links until a contracted hotel API is approved.",
+      "Set OPENROUTER_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, or a working GEMINI_API_KEY to use a live AI provider.",
     ],
   };
+}
+
+function getPreferredProviderName() {
+  return (process.env.AI_PROVIDER || "auto").trim().toLowerCase();
+}
+
+function getProviders(): AiProvider[] {
+  return [
+    {
+      name: "openrouter",
+      key: process.env.OPENROUTER_API_KEY,
+      model: process.env.OPENROUTER_MODEL || "openrouter/auto",
+      run: runOpenRouter,
+    },
+    {
+      name: "mistral",
+      key: process.env.MISTRAL_API_KEY,
+      model: process.env.MISTRAL_MODEL || "mistral-small-latest",
+      run: runMistral,
+    },
+    {
+      name: "groq",
+      key: process.env.GROQ_API_KEY,
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      run: runGroq,
+    },
+    {
+      name: "gemini",
+      key: process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      run: runGemini,
+    },
+  ];
+}
+
+function getProviderQueue() {
+  const preferred = getPreferredProviderName();
+  const providers = getProviders();
+
+  if (preferred === "auto") {
+    return providers;
+  }
+
+  const selected = providers.find((provider) => provider.name === preferred);
+  return selected ? [selected, ...providers.filter((provider) => provider.name !== preferred)] : providers;
+}
+
+async function runOpenRouter(prompt: string, provider: AiProvider) {
+  return runOpenAiCompatibleChat({
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    key: provider.key || "",
+    model: provider.model,
+    prompt,
+    headers: {
+      "HTTP-Referer": "https://katris-travel-pearl.vercel.app",
+      "X-Title": "Katris Travel AI",
+    },
+  });
+}
+
+async function runMistral(prompt: string, provider: AiProvider) {
+  return runOpenAiCompatibleChat({
+    url: "https://api.mistral.ai/v1/chat/completions",
+    key: provider.key || "",
+    model: provider.model,
+    prompt,
+  });
+}
+
+async function runGroq(prompt: string, provider: AiProvider) {
+  return runOpenAiCompatibleChat({
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    key: provider.key || "",
+    model: provider.model,
+    prompt,
+  });
+}
+
+async function runOpenAiCompatibleChat(options: {
+  url: string;
+  key: string;
+  model: string;
+  prompt: string;
+  headers?: Record<string, string>;
+}) {
+  const response = await fetch(options.url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${options.key}`,
+      ...(options.headers || {}),
+    },
+    body: JSON.stringify({
+      model: options.model,
+      messages: [
+        {
+          role: "user",
+          content: options.prompt,
+        },
+      ],
+      temperature: 0.6,
+      response_format: { type: "json_object" },
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || data?.message || "AI provider request failed.");
+  }
+
+  const text = data?.choices?.[0]?.message?.content || "";
+  return parseJsonFromText(text);
+}
+
+async function runGemini(prompt: string, provider: AiProvider) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": provider.key || "",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.6,
+      },
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Gemini request failed.");
+  }
+
+  return parseJsonFromText(extractGeminiText(data));
 }
 
 function extractGeminiText(data: any) {
@@ -115,57 +263,27 @@ export default async function handler(req: any, res: any) {
   }
 
   const payload = req.body || {};
-  const apiKey = process.env.GEMINI_API_KEY;
+  const prompt = buildPrompt(payload);
+  const failures: string[] = [];
 
-  if (!apiKey) {
-    res.status(200).json({
-      provider: "fallback",
-      plan: buildFallbackPlan(payload),
-      warning: "GEMINI_API_KEY is not configured; fallback planning engine returned structured recommendations.",
-    });
-    return;
-  }
-
-  try {
-    const response = await fetch(GEMINI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: buildPrompt(payload) }],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.6,
-        },
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      res.status(200).json({
-        provider: "fallback",
-        plan: buildFallbackPlan(payload),
-        warning: data?.error?.message || "Gemini request failed; fallback planning engine returned structured recommendations.",
-      });
-      return;
+  for (const provider of getProviderQueue()) {
+    if (!provider.key) {
+      failures.push(`${provider.name}: API key is not configured`);
+      continue;
     }
 
-    const text = extractGeminiText(data);
-    const plan = parseJsonFromText(text);
-    res.status(200).json({ provider: "gemini", plan });
-  } catch (error: any) {
-    res.status(200).json({
-      provider: "fallback",
-      plan: buildFallbackPlan(payload),
-      warning: error?.message || "AI planning failed; fallback planning engine returned structured recommendations.",
-    });
+    try {
+      const plan = await provider.run(prompt, provider);
+      res.status(200).json({ provider: provider.name, model: provider.model, plan });
+      return;
+    } catch (error: any) {
+      failures.push(`${provider.name}: ${error?.message || "request failed"}`);
+    }
   }
+
+  res.status(200).json({
+    provider: "fallback",
+    plan: buildFallbackPlan(payload),
+    warning: `Live AI provider unavailable; fallback planning engine returned structured recommendations. ${failures.join(" | ")}`,
+  });
 }
