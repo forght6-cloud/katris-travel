@@ -189,6 +189,7 @@ async function runOpenAiCompatibleChat(options: {
 }) {
   const response = await fetch(options.url, {
     method: "POST",
+    signal: getTimeoutSignal(),
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${options.key}`,
@@ -220,6 +221,7 @@ async function runOpenAiCompatibleChat(options: {
 async function runGemini(prompt: string, provider: AiProvider) {
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent`, {
     method: "POST",
+    signal: getTimeoutSignal(),
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": provider.key || "",
@@ -245,6 +247,10 @@ async function runGemini(prompt: string, provider: AiProvider) {
   }
 
   return parseJsonFromText(extractGeminiText(data));
+}
+
+function getTimeoutSignal() {
+  return AbortSignal.timeout(18000);
 }
 
 function extractGeminiText(data: any) {

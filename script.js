@@ -102,6 +102,7 @@ const appState = {
   assistant: {
     messages: [{ ...INITIAL_ASSISTANT_MESSAGE }],
   },
+  aiProgressTimer: null,
   selectedRegion: "fjord",
   analysis: null,
 };
@@ -1205,9 +1206,50 @@ function formatAiPlanMessage(plan, provider, warning) {
 function setAssistantLoadingState(isLoading) {
   const assistantForm = document.getElementById("assistant-form");
   const button = assistantForm.querySelector(".primary-button");
+  const progress = document.getElementById("assistant-progress");
+  const progressBar = document.getElementById("assistant-progress-bar");
+  const progressStep = document.getElementById("assistant-progress-step");
 
   button.disabled = isLoading;
   button.textContent = isLoading ? "Planning..." : "Send prompt";
+
+  if (!progress || !progressBar || !progressStep) {
+    return;
+  }
+
+  if (appState.aiProgressTimer) {
+    window.clearInterval(appState.aiProgressTimer);
+    appState.aiProgressTimer = null;
+  }
+
+  if (!isLoading) {
+    progress.classList.remove("is-active");
+    progress.setAttribute("aria-hidden", "true");
+    progressBar.style.width = "0%";
+    progressStep.textContent = "Calling AI provider";
+    return;
+  }
+
+  const steps = [
+    "Calling OpenRouter",
+    "Waiting for structured JSON",
+    "Trying fallback provider if needed",
+    "Shaping hotels, routes, and booking notes",
+  ];
+  let progressValue = 12;
+  let stepIndex = 0;
+
+  progress.classList.add("is-active");
+  progress.setAttribute("aria-hidden", "false");
+  progressBar.style.width = `${progressValue}%`;
+  progressStep.textContent = steps[stepIndex];
+
+  appState.aiProgressTimer = window.setInterval(() => {
+    progressValue = Math.min(progressValue + 11, 92);
+    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+    progressBar.style.width = `${progressValue}%`;
+    progressStep.textContent = steps[stepIndex];
+  }, 1100);
 }
 
 function prepareBookingPayload(plan) {
