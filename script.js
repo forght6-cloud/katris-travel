@@ -1117,7 +1117,7 @@ function renderAssistantThread() {
     article.className = `message ${message.role}`;
     article.innerHTML = `
       <p class="message-label">${getMessageLabel(message.role)}</p>
-      <p>${escapeHtml(message.content)}</p>
+      <p>${formatMessageContent(message.content)}</p>
     `;
     thread.appendChild(article);
   });
@@ -1199,8 +1199,35 @@ function formatAiPlanMessage(plan, provider, warning) {
   };
   const providerText = providerLabels[provider] || provider || "structured fallback";
   const warningText = warning ? ` ${warning}` : "";
+  const sections = formatAiSections(plan.uiSections);
+
+  if (sections) {
+    return `${plan.title || "Travel plan"} (${providerText}).\n${plan.summary || ""}\n\n${sections}${warningText ? `\n\n${warningText}` : ""}`;
+  }
 
   return `${plan.title || "Travel plan"} (${providerText}). ${plan.summary || ""} ${citySummaries}. ${bookingNotes}${warningText}`;
+}
+
+function formatAiSections(sections) {
+  if (!sections || typeof sections !== "object") {
+    return "";
+  }
+
+  const orderedKeys = [
+    "travelOverview",
+    "dailyPlan",
+    "budgetAdvice",
+    "transportAndHotels",
+    "internalSearchParams",
+    "shortVideoKeywords",
+    "ticketTextParsing",
+    "risks",
+  ];
+
+  return orderedKeys
+    .map((key) => sections[key])
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function setAssistantLoadingState(isLoading) {
@@ -1282,6 +1309,10 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function formatMessageContent(value) {
+  return escapeHtml(value).replace(/\n/g, "<br>");
 }
 
 function resolveAirportCode(value) {
