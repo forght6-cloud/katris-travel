@@ -962,6 +962,7 @@ function renderAnalysisResults(result) {
             return `
               <div class="analysis-block">
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+                ${renderProviderNotice(segment)}
                 <p class="analysis-empty">Flight search temporarily unavailable</p>
               </div>
             `;
@@ -971,6 +972,7 @@ function renderAnalysisResults(result) {
             return `
               <div class="analysis-block">
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
+                ${renderProviderNotice(segment)}
                 <p class="analysis-empty">No flights found for this route</p>
               </div>
             `;
@@ -1169,7 +1171,7 @@ function bindAssistant() {
 
     try {
       const response = await handleAssistantPrompt(value);
-      addAssistantMessage("assistant", response);
+      addAssistantResultMessage(response);
     } catch (error) {
       console.error(error);
       addAssistantMessage("assistant", "I could not generate a full plan right now. Please try again with a destination, date, and trip length.");
@@ -1198,6 +1200,15 @@ function addAssistantMessage(role, content) {
   renderAssistantThread();
 }
 
+function addAssistantResultMessage(result) {
+  appState.assistant.messages.push({
+    role: "assistant",
+    content: result.message,
+    result,
+  });
+  renderAssistantThread();
+}
+
 function renderAssistantThread() {
   const thread = document.getElementById("assistant-thread");
   thread.innerHTML = "";
@@ -1207,7 +1218,7 @@ function renderAssistantThread() {
     article.className = `message ${message.role}`;
     article.innerHTML = `
       <p class="message-label">${getMessageLabel(message.role)}</p>
-      <p>${formatMessageContent(message.content)}</p>
+      ${message.result ? renderAssistantResult(message.result) : `<p>${formatMessageContent(message.content)}</p>`}
     `;
     thread.appendChild(article);
   });
@@ -1222,18 +1233,105 @@ function getMessageLabel(role) {
 }
 
 async function handleAssistantPrompt(userMessage) {
+  syncPlannerStateFromForm();
+  applyAssistantPromptToPlanner(userMessage);
+  syncPlannerFormFromState();
+  renderPlannerPreview();
+
+  const analysis = await analyzeTripPlan(buildAssistantItineraryText(userMessage));
+  appState.analysis = analysis;
+  renderAnalysisResults(analysis);
+
   const plannerState = getPlannerPayload();
   const aiResponse = await requestAiPlan({
     planner: plannerState,
     message: userMessage,
+    analysis,
   });
   const parsed = parseItineraryDraft(aiResponse);
 
   if (parsed.plan) {
-    return formatAiPlanMessage(parsed.plan, parsed.provider, parsed.warning);
+    return {
+      message: formatAiPlanMessage(parsed.plan, parsed.provider, parsed.warning),
+      plan: parsed.plan,
+      provider: parsed.provider,
+      warning: parsed.warning,
+      analysis,
+    };
   }
 
-  return "I captured your request, but the AI planning service did not return a usable plan.";
+  return {
+    message: "I captured your request, but the AI planning service did not return a usable plan. I prepared the live search cards from the trip data instead.",
+    plan: null,
+    provider: parsed.provider,
+    warning: parsed.warning,
+    analysis,
+  };
+}
+
+function applyAssistantPromptToPlanner(userMessage) {
+  const inferred = inferPlannerFieldsFromMessage(userMessage);
+  appState.planner = {
+    ...appState.planner,
+    from: inferred.from || appState.planner.from,
+    to: inferred.to || appState.planner.to,
+    date: inferred.date || appState.planner.date,
+    tripLength: inferred.tripLength || appState.planner.tripLength,
+    people: inferred.people || appState.planner.people,
+    budget: inferred.budget || appState.planner.budget,
+    notes: mergePlannerNotes(appState.planner.notes, userMessage),
+  };
+}
+
+function inferPlannerFieldsFromMessage(message) {
+  const cities = extractCities(message);
+  const routeMatch = message.match(/\bfrom\s+([A-Za-z\s]+?)\s+(?:to|→|-)\s+([A-Za-z\s]+?)(?:\s+(?:for|on|from|with|\d|no\b|$)|[,.]|$)/i)
+    || message.match(/\b([A-Za-z\s]+?)\s+(?:to|→|-)\s+([A-Za-z\s]+?)(?:\s+(?:for|on|from|with|\d|no\b|$)|[,.]|$)/i);
+  const peopleMatch = message.match(/\b(\d+)\s*(?:person|people|traveler|travelers|adult|adults)\b/i);
+  const budgetMatch = message.match(/\b(?:budget\s*)?(\d[\d,]*(?:\.\d+)?)\s*(?:bucks?|burks?|usd|eur|gbp|rmb|cny|dollars?|euros?)\b/i);
+  const tripLengthMatch = message.match(/\b(\d+)\s*(?:weeks?|wks?)\b/i) || message.match(/\b(\d+)\s*(?:days?|nights?)\b/i);
+  const date = extractDate(message);
+
+  const routeFrom = routeMatch ? findKnownCity(routeMatch[1]) : "";
+  const routeTo = routeMatch ? findKnownCity(routeMatch[2]) : "";
+  const from = routeFrom || (cities.length > 1 ? cities[0] : "");
+  const to = routeTo || (cities.length > 1 ? cities[1] : cities[0] || "");
+
+  return {
+    from,
+    to,
+    date,
+    tripLength: tripLengthMatch ? `${tripLengthMatch[1]} ${/week/i.test(tripLengthMatch[0]) ? "weeks" : "nights"}` : "",
+    people: peopleMatch ? Number(peopleMatch[1]) : null,
+    budget: budgetMatch ? budgetMatch[0].replace(/^budget\s*/i, "").trim() : "",
+  };
+}
+
+function findKnownCity(value) {
+  const text = value.trim().toLowerCase();
+  return CITY_CATALOG.find((city) => text.includes(city.toLowerCase())) || "";
+}
+
+function mergePlannerNotes(existingNotes, userMessage) {
+  if (!existingNotes) {
+    return userMessage;
+  }
+
+  return existingNotes.includes(userMessage) ? existingNotes : `${existingNotes}\n${userMessage}`;
+}
+
+function buildAssistantItineraryText(userMessage) {
+  const origin = (appState.planner.from || "").toLowerCase();
+  const messageCities = extractCities(userMessage).filter((city) => city.toLowerCase() !== origin);
+  const destinationStops = messageCities.length ? messageCities : [appState.planner.to].filter(Boolean);
+
+  if (destinationStops.length) {
+    return destinationStops
+      .map((city, index) => (index === 0 ? [appState.planner.date, city].filter(Boolean).join(" ") : city))
+      .join("\n");
+  }
+
+  return userMessage;
 }
 
 function getPlannerPayload() {
@@ -1318,6 +1416,202 @@ function formatAiSections(sections) {
     .map((key) => sections[key])
     .filter(Boolean)
     .join("\n\n");
+}
+
+function renderAssistantResult(result) {
+  const plan = result.plan || {};
+  const analysis = result.analysis || {};
+  const providerLabel = getAiProviderLabel(result.provider);
+  const statusItems = buildAssistantStatusItems(result);
+
+  return `
+    <div class="assistant-result">
+      <div class="assistant-result-head">
+        <div>
+          <strong>${escapeHtml(plan.title || "Travel execution plan")}</strong>
+          <p>${escapeHtml(plan.summary || "Structured itinerary, live-search context, and booking paths are ready.")}</p>
+        </div>
+        <span>${escapeHtml(providerLabel)}</span>
+      </div>
+      ${result.warning ? `<p class="assistant-warning">${escapeHtml(result.warning)}</p>` : ""}
+      <div class="assistant-status-grid">
+        ${statusItems.map((item) => `<span><strong>${escapeHtml(item.label)}</strong>${escapeHtml(item.value)}</span>`).join("")}
+      </div>
+      ${renderAssistantPlanSections(plan.uiSections)}
+      ${renderAssistantBookingCards(analysis)}
+    </div>
+  `;
+}
+
+function renderAssistantPlanSections(sections) {
+  if (!sections || typeof sections !== "object") {
+    return "";
+  }
+
+  const coreSections = [
+    ["travelOverview", "旅行总览"],
+    ["dailyPlan", "每日计划"],
+    ["budgetAdvice", "预算"],
+    ["transportAndHotels", "交通住宿"],
+    ["risks", "风险提醒"],
+  ];
+
+  return `
+    <div class="assistant-plan-sections">
+      ${coreSections
+        .map(([key, label]) => {
+          const text = sections[key];
+          return text ? `<section><h4>${escapeHtml(label)}</h4><p>${formatMessageContent(text)}</p></section>` : "";
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderAssistantBookingCards(analysis) {
+  if (!analysis || !analysis.stops) {
+    return "";
+  }
+
+  return `
+    <div class="assistant-booking-grid">
+      ${renderAssistantFlights(analysis.flights || [])}
+      ${renderAssistantHotels(analysis.hotels || [])}
+      ${renderAssistantAttractions(analysis.attractions || [])}
+    </div>
+  `;
+}
+
+function renderAssistantFlights(flights) {
+  const segments = flights.length ? flights : [];
+  if (!segments.length) {
+    return `<section class="assistant-booking-card"><h4>Flights</h4><p>No flight segment was required or origin is still missing.</p></section>`;
+  }
+
+  return `
+    <section class="assistant-booking-card">
+      <h4>Flights</h4>
+      ${segments
+        .map((segment) => {
+          const options = (segment.options || []).slice(0, 3);
+          return `
+            <div class="assistant-provider-row">
+              <strong>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</strong>
+              <span>${escapeHtml(formatDataStatus(segment.provider, segment.status, segment.message))}</span>
+            </div>
+            ${options.length
+              ? options
+                  .map(
+                    (flight) => `
+                      <article class="assistant-mini-item">
+                        <div>
+                          <strong>${escapeHtml(flight.airline)}</strong>
+                          <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</p>
+                        </div>
+                        ${flight.bookingUrl ? `<a href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Search fare</a>` : ""}
+                      </article>
+                    `,
+                  )
+                  .join("")
+              : `<p>${escapeHtml(segment.message || "No flight offers returned; use external search or adjust route/date.")}</p>`}
+          `;
+        })
+        .join("")}
+    </section>
+  `;
+}
+
+function renderAssistantHotels(hotels) {
+  const hotelOptions = hotels.flatMap((entry) => entry.options || []).slice(0, 5);
+
+  return `
+    <section class="assistant-booking-card">
+      <h4>Hotels</h4>
+      ${hotelOptions
+        .map(
+          (hotel) => `
+            <article class="assistant-mini-item">
+              <div>
+                <strong>${escapeHtml(hotel.name)}</strong>
+                <p>${escapeHtml(formatDataStatus(hotel.provider, "success", hotel.warning))}</p>
+              </div>
+              <div class="assistant-link-row">
+                ${hotel.bookingUrl ? `<a href="${escapeHtml(hotel.bookingUrl)}" target="_blank" rel="noreferrer">Book</a>` : ""}
+                ${hotel.googleHotelsUrl ? `<a href="${escapeHtml(hotel.googleHotelsUrl)}" target="_blank" rel="noreferrer">Rates</a>` : ""}
+              </div>
+            </article>
+          `,
+        )
+        .join("")}
+    </section>
+  `;
+}
+
+function renderAssistantAttractions(attractions) {
+  const placeOptions = attractions.flatMap((entry) => entry.options || []).slice(0, 5);
+
+  return `
+    <section class="assistant-booking-card">
+      <h4>Places</h4>
+      ${placeOptions
+        .map(
+          (place) => `
+            <article class="assistant-mini-item">
+              <div>
+                <strong>${escapeHtml(place.name)}</strong>
+                <p>${escapeHtml(place.category)} · ${escapeHtml(place.warning || place.summary || "Place lookup ready")}</p>
+              </div>
+              ${place.mapsUrl ? `<a href="${escapeHtml(place.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
+            </article>
+          `,
+        )
+        .join("")}
+    </section>
+  `;
+}
+
+function buildAssistantStatusItems(result) {
+  const analysis = result.analysis || {};
+  const flights = analysis.flights || [];
+  const hotels = analysis.hotels || [];
+  const attractions = analysis.attractions || [];
+
+  return [
+    { label: "AI", value: getAiProviderLabel(result.provider) },
+    { label: "Flights", value: summarizeProviderSet(flights.map((segment) => segment.provider || segment.status || "pending")) },
+    { label: "Hotels", value: summarizeProviderSet(hotels.flatMap((entry) => (entry.options || []).map((hotel) => hotel.provider || "external"))) },
+    { label: "Places", value: summarizeProviderSet(attractions.flatMap((entry) => (entry.options || []).map((place) => place.provider || "fallback"))) },
+  ];
+}
+
+function summarizeProviderSet(values) {
+  const filtered = values.filter(Boolean);
+  if (!filtered.length) {
+    return "not requested";
+  }
+
+  return Array.from(new Set(filtered)).slice(0, 3).join(" / ");
+}
+
+function getAiProviderLabel(provider) {
+  const labels = {
+    openrouter: "OpenRouter",
+    mistral: "Mistral",
+    groq: "Groq",
+    gemini: "Gemini",
+    fallback: "structured fallback",
+  };
+
+  return labels[provider] || provider || "structured fallback";
+}
+
+function formatDataStatus(provider, status, message = "") {
+  const providerText = provider || status || "external";
+  const normalized = providerText.toLowerCase();
+  const truthLabel = ["mock", "fallback", "external"].some((item) => normalized.includes(item))
+    ? "fallback / external"
+    : "provider data";
+  return message ? `${truthLabel}: ${providerText} · ${message}` : `${truthLabel}: ${providerText}`;
 }
 
 function setAssistantLoadingState(isLoading) {

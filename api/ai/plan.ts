@@ -4,7 +4,12 @@ type AiProvider = {
   name: string;
   key?: string;
   model: string;
-  run: (prompt: string, provider: AiProvider) => Promise<any>;
+  run: (prompt: PromptMessages, provider: AiProvider) => Promise<any>;
+};
+
+type PromptMessages = {
+  system: string;
+  user: string;
 };
 
 export const promptTemplate = {
@@ -225,8 +230,9 @@ export const promptTemplate = {
   `,
 };
 
-function buildPrompt(payload: any) {
-  return `
+function buildPrompt(payload: any): PromptMessages {
+  return {
+    system: `
 ${promptTemplate.system}
 
 Runtime rule:
@@ -237,6 +243,8 @@ Runtime rule:
 - For each day, include 3 to 5 planned items.
 - Hotel recommendations can be confirmed on Katris, but final payment may happen through external booking links.
 - Flight prices are real only when provider data is present in the input state; otherwise mark estimates as 推定.
+- Use the supplied analysis object as the source of truth for flights, hotels, places, transport, provider status, and external booking links.
+- If analysis provider status says fallback/mock/external, describe it transparently and never present it as live inventory.
 
 Base input template:
 ${promptTemplate.inputTemplate}
@@ -246,6 +254,9 @@ ${promptTemplate.outputTemplate}
 
 Hard constraints:
 ${promptTemplate.hardConstraints}
+`,
+    user: `
+User request and current site state:
 
 Input state:
 ${JSON.stringify(payload, null, 2)}
@@ -279,7 +290,8 @@ JSON schema:
     }
   ],
   "bookingNotes": ["string"]
-}`;
+}`,
+  };
 }
 
 function buildFallbackPlan(payload: any) {
@@ -407,7 +419,7 @@ function getProviderQueue() {
   return selected ? [selected, ...providers.filter((provider) => provider.name !== preferred)] : providers;
 }
 
-async function runOpenRouter(prompt: string, provider: AiProvider) {
+async function runOpenRouter(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://openrouter.ai/api/v1/chat/completions",
     key: provider.key || "",
@@ -420,7 +432,7 @@ async function runOpenRouter(prompt: string, provider: AiProvider) {
   });
 }
 
-async function runMistral(prompt: string, provider: AiProvider) {
+async function runMistral(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://api.mistral.ai/v1/chat/completions",
     key: provider.key || "",
@@ -429,7 +441,7 @@ async function runMistral(prompt: string, provider: AiProvider) {
   });
 }
 
-async function runGroq(prompt: string, provider: AiProvider) {
+async function runGroq(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: provider.key || "",
@@ -442,7 +454,7 @@ async function runOpenAiCompatibleChat(options: {
   url: string;
   key: string;
   model: string;
-  prompt: string;
+  prompt: PromptMessages;
   headers?: Record<string, string>;
 }) {
   const response = await fetch(options.url, {
@@ -457,8 +469,12 @@ async function runOpenAiCompatibleChat(options: {
       model: options.model,
       messages: [
         {
+          role: "system",
+          content: options.prompt.system,
+        },
+        {
           role: "user",
-          content: options.prompt,
+          content: options.prompt.user,
         },
       ],
       temperature: 0.6,
@@ -476,7 +492,7 @@ async function runOpenAiCompatibleChat(options: {
   return parseJsonFromText(text);
 }
 
-async function runGemini(prompt: string, provider: AiProvider) {
+async function runGemini(prompt: PromptMessages, provider: AiProvider) {
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent`, {
     method: "POST",
     signal: getTimeoutSignal(),
@@ -488,7 +504,7 @@ async function runGemini(prompt: string, provider: AiProvider) {
       contents: [
         {
           role: "user",
-          parts: [{ text: prompt }],
+          parts: [{ text: `${prompt.system}\n\n${prompt.user}` }],
         },
       ],
       generationConfig: {
