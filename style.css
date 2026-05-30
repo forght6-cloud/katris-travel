@@ -705,7 +705,8 @@ h5 {
 .analysis-item p,
 .summary-stops span,
 .assistant-status p,
-.hook-list span {
+.hook-list span,
+.destination-notes em {
   color: var(--muted);
   line-height: 1.6;
 }
@@ -1574,6 +1575,22 @@ textarea:focus {
   color: var(--forest);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.82em;
+}
+
+.destination-notes li {
+  grid-template-columns: minmax(96px, 0.38fr) minmax(0, 1fr);
+}
+
+.destination-notes strong {
+  color: var(--claude-ochre);
+  line-height: 1.2;
+}
+
+.destination-notes em {
+  display: block;
+  margin-top: 8px;
+  font-style: normal;
+  font-size: 0.82rem;
 }
 
 .sr-only {
