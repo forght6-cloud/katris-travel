@@ -1379,7 +1379,7 @@ textarea:focus {
   line-height: 1.5;
 }
 
-.assistant-result-head > span,
+.assistant-result-actions > span,
 .assistant-status-grid span,
 .assistant-provider-row span {
   flex: 0 0 auto;
@@ -1392,6 +1392,25 @@ textarea:focus {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.assistant-result-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.assistant-result-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(196, 111, 50, 0.36);
+  border-radius: var(--radius);
+  background: rgba(255, 243, 223, 0.72);
+  color: var(--claude-ochre);
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
 .assistant-warning {
@@ -1744,6 +1763,7 @@ textarea:focus {
   }
 
   .assistant-result-head,
+  .assistant-result-actions,
   .assistant-provider-row,
   .assistant-mini-item {
     align-items: flex-start;

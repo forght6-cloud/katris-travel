@@ -18,6 +18,18 @@ assert.match(
 );
 
 assert.match(
+  script,
+  /data-download-assistant-pdf/,
+  "Assistant result cards should include a PDF download control.",
+);
+
+assert.match(
+  script,
+  /function buildAssistantDownloadText/,
+  "Assistant should build a printable travel-plan document from the structured result.",
+);
+
+assert.match(
   aiPlan,
   /messages:\s*\[\s*\{[\s\S]*?role:\s*"system"[\s\S]*?\},\s*\{[\s\S]*?role:\s*"user"/,
   "AI provider calls should send separate system and user messages.",
@@ -89,6 +101,28 @@ assert.equal(twoWeekDays.length, 14, "Fallback planner should create one daily p
 assert.ok(
   twoWeekDays.every((day) => day.items.length >= 3 && day.items.length <= 5),
   "Every fallback day should include 3 to 5 executable items.",
+);
+
+const chicagoManchester = context.inferPlannerFieldsFromMessage(
+  "chicago to Manchester 800 Eur 2weeks 1person",
+);
+
+assert.deepEqual(
+  {
+    from: chicagoManchester.from,
+    to: chicagoManchester.to,
+    tripLength: chicagoManchester.tripLength,
+    people: chicagoManchester.people,
+    budget: chicagoManchester.budget,
+  },
+  {
+    from: "Chicago",
+    to: "Manchester",
+    tripLength: "2 weeks",
+    people: 1,
+    budget: "800 Eur",
+  },
+  "Assistant prompt parsing should not treat currency labels as destination cities.",
 );
 
 console.log("assistant contract ok");

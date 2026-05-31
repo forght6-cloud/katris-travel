@@ -24,6 +24,7 @@ const CITY_CATALOG = [
   "Berlin",
   "Brussels",
   "Budapest",
+  "Chicago",
   "Copenhagen",
   "Dublin",
   "Edinburgh",
@@ -38,6 +39,7 @@ const CITY_CATALOG = [
   "London",
   "Los Angeles",
   "Madrid",
+  "Manchester",
   "Milan",
   "Munich",
   "New York",
@@ -66,6 +68,7 @@ const AIRPORT_CODE_MAP = {
   Berlin: "BER",
   Brussels: "BRU",
   Budapest: "BUD",
+  Chicago: "ORD",
   Copenhagen: "CPH",
   Dublin: "DUB",
   Edinburgh: "EDI",
@@ -80,6 +83,7 @@ const AIRPORT_CODE_MAP = {
   London: "LHR",
   "Los Angeles": "LAX",
   Madrid: "MAD",
+  Manchester: "MAN",
   Milan: "MXP",
   Munich: "MUC",
   "New York": "JFK",
@@ -478,7 +482,7 @@ function extractCities(text) {
 
 function extractCapitalizedCities(text) {
   const candidates = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
-  const blockedWords = new Set(["Example", "Day", "Trip", "Flight", "Hotel", "Train", "Metro"]);
+  const blockedWords = new Set(["Example", "Day", "Trip", "Flight", "Hotel", "Train", "Metro", "Eur", "EUR", "Usd", "USD", "Gbp", "GBP"]);
 
   return candidates.filter((candidate) => !blockedWords.has(candidate));
 }
@@ -1219,6 +1223,7 @@ function bindAssistant() {
   const assistantForm = document.getElementById("assistant-form");
   const assistantInput = document.getElementById("assistant-input");
   const clearAssistantButton = document.getElementById("clear-assistant");
+  const assistantThread = document.getElementById("assistant-thread");
 
   assistantForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1246,6 +1251,19 @@ function bindAssistant() {
   clearAssistantButton.addEventListener("click", () => {
     appState.assistant.messages = [{ ...INITIAL_ASSISTANT_MESSAGE }];
     renderAssistantThread();
+  });
+
+  assistantThread.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-download-assistant-pdf]");
+    if (!button) {
+      return;
+    }
+
+    const resultIndex = Number(button.dataset.resultIndex);
+    const result = appState.assistant.messages[resultIndex]?.result;
+    if (result) {
+      downloadAssistantResultPdf(result);
+    }
   });
 }
 
@@ -1276,12 +1294,12 @@ function renderAssistantThread() {
   const thread = document.getElementById("assistant-thread");
   thread.innerHTML = "";
 
-  appState.assistant.messages.forEach((message) => {
+  appState.assistant.messages.forEach((message, index) => {
     const article = document.createElement("article");
     article.className = `message ${message.role}`;
     article.innerHTML = `
       <p class="message-label">${getMessageLabel(message.role)}</p>
-      ${message.result ? renderAssistantResult(message.result) : `<p>${formatMessageContent(message.content)}</p>`}
+      ${message.result ? renderAssistantResult(message.result, index) : `<p>${formatMessageContent(message.content)}</p>`}
     `;
     thread.appendChild(article);
   });
@@ -1481,7 +1499,7 @@ function formatAiSections(sections) {
     .join("\n\n");
 }
 
-function renderAssistantResult(result) {
+function renderAssistantResult(result, resultIndex = 0) {
   const plan = result.plan || {};
   const analysis = result.analysis || {};
   const providerLabel = getAiProviderLabel(result.provider);
@@ -1494,7 +1512,10 @@ function renderAssistantResult(result) {
           <strong>${escapeHtml(plan.title || "Travel execution plan")}</strong>
           <p>${escapeHtml(plan.summary || "Structured itinerary, live-search context, and booking paths are ready.")}</p>
         </div>
-        <span>${escapeHtml(providerLabel)}</span>
+        <div class="assistant-result-actions">
+          <span>${escapeHtml(providerLabel)}</span>
+          <button type="button" data-download-assistant-pdf data-result-index="${resultIndex}">Download PDF</button>
+        </div>
       </div>
       ${result.warning ? `<p class="assistant-warning">${escapeHtml(result.warning)}</p>` : ""}
       <div class="assistant-status-grid">
@@ -1504,6 +1525,139 @@ function renderAssistantResult(result) {
       ${renderAssistantBookingCards(analysis)}
     </div>
   `;
+}
+
+function downloadAssistantResultPdf(result) {
+  const title = result.plan?.title || "Katris Travel Plan";
+  const printableText = buildAssistantDownloadText(result);
+  const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=1100");
+
+  if (!printWindow) {
+    downloadAssistantResultTextFallback(title, printableText);
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${escapeHtml(title)}</title>
+        <style>
+          body {
+            margin: 40px;
+            color: #18201f;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.55;
+          }
+          h1 {
+            margin: 0 0 12px;
+            color: #c46f32;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 30px;
+            line-height: 1.08;
+          }
+          pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font: inherit;
+          }
+          @media print {
+            body { margin: 24mm; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(title)}</h1>
+        <pre>${escapeHtml(printableText)}</pre>
+        <script>
+          window.addEventListener("load", () => {
+            window.focus();
+            window.print();
+          });
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+function downloadAssistantResultTextFallback(title, text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${slugifyFileName(title)}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+}
+
+function buildAssistantDownloadText(result) {
+  const plan = result.plan || {};
+  const analysis = result.analysis || {};
+  const sections = plan.uiSections || {};
+  const lines = [
+    plan.title || "Katris Travel Plan",
+    plan.summary || "",
+    "",
+    `AI: ${getAiProviderLabel(result.provider)}`,
+    result.warning ? `Notice: ${result.warning}` : "",
+    "",
+    sections.travelOverview || "",
+    sections.dailyPlan || "",
+    sections.budgetAdvice || "",
+    sections.transportAndHotels || "",
+    sections.risks || "",
+    "",
+    "Flights",
+    ...buildDownloadFlightLines(analysis.flights || []),
+    "",
+    "Hotels",
+    ...buildDownloadHotelLines(analysis.hotels || []),
+    "",
+    "Places",
+    ...buildDownloadPlaceLines(analysis.attractions || []),
+  ];
+
+  return lines.filter((line) => line !== "").join("\n");
+}
+
+function buildDownloadFlightLines(flights) {
+  if (!flights.length) {
+    return ["No flight segment was required or origin is still missing."];
+  }
+
+  return flights.flatMap((segment) => [
+    `${segment.origin} -> ${segment.destination}: ${formatDataStatus(segment.provider, segment.status, segment.message)}`,
+    ...(segment.options || []).slice(0, 5).map((flight) => `- ${flight.airline}: ${flight.departure} - ${flight.arrival}, ${flight.priceLabel || `${flight.price} ${flight.currency}`}${flight.bookingUrl ? ` (${flight.bookingUrl})` : ""}`),
+  ]);
+}
+
+function buildDownloadHotelLines(hotels) {
+  const hotelOptions = hotels.flatMap((entry) => entry.options || []).slice(0, 8);
+  if (!hotelOptions.length) {
+    return ["No hotel options returned."];
+  }
+
+  return hotelOptions.map((hotel) => `- ${hotel.name}: ${hotel.rateLabel || "Search live rates"}${hotel.bookingUrl ? ` (${hotel.bookingUrl})` : ""}`);
+}
+
+function buildDownloadPlaceLines(attractions) {
+  const placeOptions = attractions.flatMap((entry) => entry.options || []).slice(0, 8);
+  if (!placeOptions.length) {
+    return ["No place options returned."];
+  }
+
+  return placeOptions.map((place) => `- ${place.name}: ${place.category}${place.mapsUrl ? ` (${place.mapsUrl})` : ""}`);
+}
+
+function slugifyFileName(value) {
+  return String(value || "katris-travel-plan")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "katris-travel-plan";
 }
 
 function renderAssistantPlanSections(sections) {
