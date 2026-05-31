@@ -632,7 +632,7 @@ async function searchHotels(city, date) {
       body: JSON.stringify({
         city,
         date: safeDate,
-        limit: 5,
+        limit: 8,
       }),
     });
 
@@ -674,6 +674,9 @@ function generateExternalHotelLinks(city, date, warning = "") {
     `${city} Garden Residence`,
     `${city} Harbour Hotel`,
     `${city} Design Suites`,
+    `${city} Station Hotel`,
+    `${city} Apartment Hotel`,
+    `${city} Spa Hotel`,
   ];
 
   return names.map((name) => ({
@@ -740,7 +743,7 @@ async function searchAttractions(city) {
       },
       body: JSON.stringify({
         city,
-        limit: 5,
+        limit: 8,
       }),
     });
 
@@ -799,6 +802,24 @@ function generateAttractions(city, warning = "") {
       name: `${city} Lookout Route`,
       category: "Landscape",
       summary: "A scenic afternoon route with room for rest stops.",
+      warning,
+    },
+    {
+      name: `${city} Art Gallery`,
+      category: "Art",
+      summary: "A slower indoor cultural block that keeps the plan useful in bad weather.",
+      warning,
+    },
+    {
+      name: `${city} Local Neighbourhood Walk`,
+      category: "Local life",
+      summary: "A less generic route for cafes, shops, side streets, and everyday texture.",
+      warning,
+    },
+    {
+      name: `${city} Evening Food Street`,
+      category: "Food",
+      summary: "A light evening option for dinner, snacks, and a low-pressure night walk.",
       warning,
     },
   ];
@@ -1739,7 +1760,7 @@ function renderAssistantFlights(flights) {
 }
 
 function renderAssistantHotels(hotels) {
-  const hotelOptions = hotels.flatMap((entry) => entry.options || []).slice(0, 5);
+  const hotelOptions = hotels.flatMap((entry) => entry.options || []).slice(0, 8);
 
   return `
     <section class="assistant-booking-card">
@@ -1765,7 +1786,7 @@ function renderAssistantHotels(hotels) {
 }
 
 function renderAssistantAttractions(attractions) {
-  const placeOptions = attractions.flatMap((entry) => entry.options || []).slice(0, 5);
+  const placeOptions = attractions.flatMap((entry) => entry.options || []).slice(0, 8);
 
   return `
     <section class="assistant-booking-card">

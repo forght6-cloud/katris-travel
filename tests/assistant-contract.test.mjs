@@ -35,6 +35,24 @@ assert.match(
   "AI provider calls should send separate system and user messages.",
 );
 
+assert.match(
+  aiPlan,
+  /at least 8 hotels and 8 attractions/,
+  "Strong assistant template should require richer hotel and place coverage.",
+);
+
+assert.match(
+  script,
+  /\/api\/hotels\/search[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 hotel options per city.",
+);
+
+assert.match(
+  script,
+  /\/api\/places\/search[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 place options per city.",
+);
+
 const context = {
   document: { addEventListener() {} },
   console,

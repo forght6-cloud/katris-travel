@@ -239,7 +239,8 @@ Runtime rule:
 - Return only valid JSON. Do not wrap the response in markdown.
 - Keep the JSON keys exactly as specified below so the website can render it.
 - Put the required Chinese output sections inside "uiSections".
-- For every city, include at least 5 hotels and 5 attractions.
+- For every city, include at least 8 hotels and 8 attractions or place ideas.
+- If live hotel/place data is unavailable, still return 8 clearly marked fallback/external options with booking/search context.
 - For each day, include 3 to 5 planned items.
 - Hotel recommendations can be confirmed on Katris, but final payment may happen through external booking links.
 - Flight prices are real only when provider data is present in the input state; otherwise mark estimates as 推定.
@@ -400,6 +401,9 @@ function buildFallbackPlan(payload: any) {
         { name: `${city} Garden Residence`, style: "Quiet stay", reason: "Good for recovery time and slower mornings." },
         { name: `${city} Harbour Hotel`, style: "Scenic", reason: "Useful when the trip prioritizes views and low-friction evenings." },
         { name: `${city} Design Suites`, style: "Design", reason: "A polished option for a premium travel mood." },
+        { name: `${city} Station Hotel`, style: "Transit-friendly", reason: "Practical for early departures, rail transfers, and lower-friction luggage days." },
+        { name: `${city} Apartment Hotel`, style: "Long stay", reason: "Useful for a two-week trip where laundry, kitchen access, and routine matter." },
+        { name: `${city} Spa Hotel`, style: "Recovery", reason: "A calmer option for rest days and fatigue management." },
       ],
       attractions: [
         { name: `${city} Old Quarter`, category: "Culture", reason: "A compact first walk with orientation value." },
@@ -407,6 +411,9 @@ function buildFallbackPlan(payload: any) {
         { name: `${city} Design Museum`, category: "Design", reason: "A strong indoor anchor for weather-proof planning." },
         { name: `${city} Market Hall`, category: "Food", reason: "Useful for local snacks and casual lunches." },
         { name: `${city} Lookout Route`, category: "Landscape", reason: "A scenic way to end the afternoon." },
+        { name: `${city} Art Gallery`, category: "Art", reason: "Adds a slower indoor cultural block for poor weather days." },
+        { name: `${city} Local Neighbourhood Walk`, category: "Local life", reason: "Helps the route feel less generic and more lived-in." },
+        { name: `${city} Evening Food Street`, category: "Food", reason: "Creates a light night plan without overloading the day." },
       ],
       days,
     };

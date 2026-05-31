@@ -225,6 +225,9 @@ function createFallbackHotels(city: string, date: string): HotelResult[] {
     `${city} Garden Residence`,
     `${city} Harbour Hotel`,
     `${city} Design Suites`,
+    `${city} Station Hotel`,
+    `${city} Apartment Hotel`,
+    `${city} Spa Hotel`,
   ];
 
   return names.map((name, index) => ({
