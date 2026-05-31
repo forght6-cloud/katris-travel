@@ -800,32 +800,91 @@ function generateAttractions(city, warning = "") {
   ];
 }
 
-function buildDailyPlan(stop, index, priorities) {
-  const city = stop.city;
+function getTripDayCount(tripLength) {
+  const text = String(tripLength || "").toLowerCase();
+  const weekMatch = text.match(/(\d+)\s*weeks?/);
+  const dayMatch = text.match(/(\d+)\s*days?/);
+  const nightMatch = text.match(/(\d+)\s*nights?/);
 
-  return [
+  if (weekMatch) {
+    return Number(weekMatch[1]) * 7;
+  }
+
+  if (dayMatch) {
+    return Number(dayMatch[1]);
+  }
+
+  if (nightMatch) {
+    return Number(nightMatch[1]) + 1;
+  }
+
+  return 7;
+}
+
+function getStopDayCount(totalDays, stopCount, stopIndex) {
+  const base = Math.floor(totalDays / stopCount);
+  const remainder = totalDays % stopCount;
+  return Math.max(1, base + (stopIndex < remainder ? 1 : 0));
+}
+
+function buildDailyPlan(stop, index, priorities, dayCount = 2, startDay = 1) {
+  const city = stop.city;
+  const dayTemplates = [
     {
-      day: `Day ${index * 2 + 1}`,
-      theme: `${city} arrival and orientation`,
+      theme: "arrival and orientation",
       items: [
         { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for airport, rail, or hotel transfer." },
         { time: "Midday", title: "Neighbourhood lunch", detail: "Start close to the hotel with a simple local meal." },
-        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and bookmark cafés, galleries, and shops." },
+        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and bookmark cafes, galleries, and shops." },
         { time: "Evening", title: `${city} Waterfront`, detail: "End with an easy scenic walk and dinner reservation." },
       ],
     },
     {
-      day: `Day ${index * 2 + 2}`,
-      theme: `${city} culture, food, and scenery`,
+      theme: "culture, food, and scenery",
       items: [
         { time: "Morning", title: `${city} Design Museum`, detail: "Use the morning for a high-quality cultural anchor." },
         { time: "Midday", title: `${city} Market Hall`, detail: "Plan lunch around local vendors and seasonal produce." },
         { time: "Afternoon", title: `${city} Lookout Route`, detail: `Shape the scenic block around ${priorities.join(", ").toLowerCase()}.` },
-        { time: "Late afternoon", title: "Hotel reset", detail: "Leave time for spa, reading, or recovery before dinner." },
         { time: "Evening", title: "Reservation-led dinner", detail: "Choose a restaurant near the next morning's departure path." },
       ],
     },
+    {
+      theme: "local texture and slower pacing",
+      items: [
+        { time: "Morning", title: "Cafe and neighbourhood walk", detail: "Start with a low-friction local area before longer transfers." },
+        { time: "Midday", title: `${city} local food stop`, detail: "Use lunch to sample regional dishes without overloading the route." },
+        { time: "Afternoon", title: "Gallery or architecture block", detail: "Pick one indoor anchor that still works in poor weather." },
+        { time: "Evening", title: "Hotel reset", detail: "Protect recovery time before dinner or a short night walk." },
+      ],
+    },
+    {
+      theme: "nature and open-air route",
+      items: [
+        { time: "Morning", title: `${city} park or lakeside route`, detail: "Use the clearest daylight for the most scenic outdoor block." },
+        { time: "Midday", title: "Simple lunch near the route", detail: "Avoid a cross-city meal detour and keep energy stable." },
+        { time: "Afternoon", title: "Viewpoint and photo window", detail: "Leave time for weather changes, light, and rest stops." },
+        { time: "Evening", title: "Casual local dinner", detail: "Stay close to the return route and avoid late transfers." },
+      ],
+    },
+    {
+      theme: "booking and logistics pass",
+      items: [
+        { time: "Morning", title: "Hotel shortlist review", detail: "Compare location, commute, and external live-rate links." },
+        { time: "Midday", title: "Transport confirmation", detail: "Check station, airport, taxi, or rail timing before committing." },
+        { time: "Afternoon", title: "Flexible experience block", detail: "Choose one activity based on weather and fatigue." },
+        { time: "Evening", title: "Next-day prep", detail: "Keep bags, tickets, and route notes ready." },
+      ],
+    },
   ];
+
+  return Array.from({ length: dayCount }, (_, dayIndex) => {
+    const template = dayTemplates[dayIndex % dayTemplates.length];
+    return {
+      day: `Day ${startDay + dayIndex}`,
+      theme: `${city} ${template.theme}`,
+      items: template.items,
+    };
+  });
 }
 
 function generateTransportLinks(city) {
@@ -857,13 +916,17 @@ async function analyzeTripPlan(inputText) {
   const attractions = [];
   const dailyPlans = [];
   const transport = [];
+  const totalDays = getTripDayCount(appState.planner.tripLength);
+  let dayCursor = 1;
 
   for (let index = 0; index < normalizedStops.length; index += 1) {
     const stop = normalizedStops[index];
     const hotelOptions = await searchHotels(stop.city, stop.date);
     const attractionOptions = await searchAttractions(stop.city);
-    const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars);
+    const stopDayCount = getStopDayCount(totalDays, normalizedStops.length, index);
+    const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars, stopDayCount, dayCursor);
     const transportLinks = generateTransportLinks(stop.city);
+    dayCursor += stopDayCount;
 
     hotels.push({
       city: stop.city,

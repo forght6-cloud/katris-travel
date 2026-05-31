@@ -77,4 +77,18 @@ assert.deepEqual(
   "Assistant itinerary text should treat the origin as flight origin, not as an itinerary stop.",
 );
 
+assert.equal(context.getTripDayCount("2 weeks"), 14, "Two-week assistant plans should expand to 14 days.");
+const twoWeekDays = context.buildDailyPlan(
+  { city: "Frankfurt", date: "2026-05-30" },
+  0,
+  ["Scenery", "Quiet stays"],
+  14,
+  1,
+);
+assert.equal(twoWeekDays.length, 14, "Fallback planner should create one daily plan per trip day.");
+assert.ok(
+  twoWeekDays.every((day) => day.items.length >= 3 && day.items.length <= 5),
+  "Every fallback day should include 3 to 5 executable items.",
+);
+
 console.log("assistant contract ok");

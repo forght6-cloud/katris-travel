@@ -294,12 +294,103 @@ JSON schema:
   };
 }
 
+function getTripDayCount(tripLength: unknown) {
+  const text = String(tripLength || "").toLowerCase();
+  const weekMatch = text.match(/(\d+)\s*weeks?/);
+  const dayMatch = text.match(/(\d+)\s*days?/);
+  const nightMatch = text.match(/(\d+)\s*nights?/);
+
+  if (weekMatch) {
+    return Number(weekMatch[1]) * 7;
+  }
+
+  if (dayMatch) {
+    return Number(dayMatch[1]);
+  }
+
+  if (nightMatch) {
+    return Number(nightMatch[1]) + 1;
+  }
+
+  return 7;
+}
+
+function getStopDayCount(totalDays: number, stopCount: number, stopIndex: number) {
+  const base = Math.floor(totalDays / stopCount);
+  const remainder = totalDays % stopCount;
+  return Math.max(1, base + (stopIndex < remainder ? 1 : 0));
+}
+
+function buildFallbackDays(city: string, dayCount: number, startDay: number) {
+  const templates = [
+    {
+      theme: `${city} arrival and orientation`,
+      items: [
+        { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for transport and check-in." },
+        { time: "Midday", title: "Neighbourhood lunch", detail: "Choose a nearby local restaurant before heavy sightseeing." },
+        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafes or galleries for later." },
+        { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
+      ],
+    },
+    {
+      theme: `${city} culture and scenery`,
+      items: [
+        { time: "Morning", title: `${city} Design Museum`, detail: "Start with an indoor cultural anchor." },
+        { time: "Midday", title: `${city} Market Hall`, detail: "Build lunch around local vendors and seasonal produce." },
+        { time: "Afternoon", title: `${city} Lookout Route`, detail: "Plan a scenic route with photo stops and rest time." },
+        { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
+      ],
+    },
+    {
+      theme: `${city} local rhythm`,
+      items: [
+        { time: "Morning", title: "Neighbourhood cafe route", detail: "Start slowly and keep the first move close to the hotel." },
+        { time: "Midday", title: "Regional lunch stop", detail: "Use lunch to sample local dishes without overloading the route." },
+        { time: "Afternoon", title: "Gallery or architecture block", detail: "Choose one weather-proof cultural stop." },
+        { time: "Evening", title: "Short evening walk", detail: "End with a low-friction route near dinner." },
+      ],
+    },
+    {
+      theme: `${city} nature and rest`,
+      items: [
+        { time: "Morning", title: "Park or water route", detail: "Use the clearest daylight for the outdoor section." },
+        { time: "Midday", title: "Simple lunch near the route", detail: "Avoid crossing the city just for a meal." },
+        { time: "Afternoon", title: "Viewpoint and photo window", detail: "Leave room for weather, light, and rest." },
+        { time: "Evening", title: "Quiet dinner", detail: "Protect recovery time before the next day." },
+      ],
+    },
+    {
+      theme: `${city} logistics and flexible experience`,
+      items: [
+        { time: "Morning", title: "Hotel and booking review", detail: "Compare location, commute, and external live-rate links." },
+        { time: "Midday", title: "Transport confirmation", detail: "Check airport, rail, or taxi timing before committing." },
+        { time: "Afternoon", title: "Flexible experience block", detail: "Choose one activity based on weather and fatigue." },
+        { time: "Evening", title: "Next-day prep", detail: "Keep route notes, bags, and tickets ready." },
+      ],
+    },
+  ];
+
+  return Array.from({ length: dayCount }, (_, index) => {
+    const template = templates[index % templates.length];
+    return {
+      day: `Day ${startDay + index}`,
+      theme: template.theme,
+      items: template.items,
+    };
+  });
+}
+
 function buildFallbackPlan(payload: any) {
   const planner = payload?.planner || payload || {};
   const analysis = planner.analysis || payload?.analysis || {};
   const stops = analysis.stops?.length ? analysis.stops : [{ city: planner.to || "Nordic journey", date: planner.date || "" }];
+  const totalDays = getTripDayCount(planner.tripLength);
+  let dayCursor = 1;
   const cities = stops.map((stop: any, stopIndex: number) => {
     const city = stop.city || "Destination";
+    const dayCount = getStopDayCount(totalDays, stops.length, stopIndex);
+    const days = buildFallbackDays(city, dayCount, dayCursor);
+    dayCursor += dayCount;
 
     return {
       city,
@@ -317,28 +408,7 @@ function buildFallbackPlan(payload: any) {
         { name: `${city} Market Hall`, category: "Food", reason: "Useful for local snacks and casual lunches." },
         { name: `${city} Lookout Route`, category: "Landscape", reason: "A scenic way to end the afternoon." },
       ],
-      days: [
-        {
-          day: `Day ${stopIndex * 2 + 1}`,
-          theme: `${city} arrival and orientation`,
-          items: [
-            { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for transport and check-in." },
-            { time: "Midday", title: "Neighbourhood lunch", detail: "Choose a nearby local restaurant before heavy sightseeing." },
-            { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafes or galleries for later." },
-            { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
-          ],
-        },
-        {
-          day: `Day ${stopIndex * 2 + 2}`,
-          theme: `${city} culture and scenery`,
-          items: [
-            { time: "Morning", title: `${city} Design Museum`, detail: "Start with an indoor cultural anchor." },
-            { time: "Midday", title: `${city} Market Hall`, detail: "Build lunch around local vendors and seasonal produce." },
-            { time: "Afternoon", title: `${city} Lookout Route`, detail: "Plan a scenic route with photo stops and rest time." },
-            { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
-          ],
-        },
-      ],
+      days,
     };
   });
 
