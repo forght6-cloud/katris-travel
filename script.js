@@ -121,21 +121,130 @@ const regionDescriptions = {
   aurora: "Volcanic textures, northern skies, and winter-light experiences with room for wonder.",
 };
 
+const regionTemplates = {
+  fjord: {
+    kicker: "Norway / 7 days",
+    title: "Fjord Quiet: Bergen, Flam, and Aurlandsfjord",
+    summary: "A prepared route for travelers who want scenery, slow ferry movement, compact towns, and quiet stays.",
+    best: "scenery, ferry crossings, design cabins",
+    base: "Bergen + Flam",
+    action: "copy Bergen to Flam into the planner",
+    days: [
+      ["Day 1", "Bergen arrival, Bryggen walk, quiet harbor dinner."],
+      ["Day 2", "Flam Railway, Aurlandsfjord viewpoint, slow evening by the water."],
+      ["Day 3", "Ferry movement, cabin check-in, flexible weather buffer."],
+    ],
+  },
+  forest: {
+    kicker: "Sweden / 5-7 days",
+    title: "Forest Retreat: Stockholm, Dalarna, and Lake Siljan",
+    summary: "A soft inland route built around lakes, sauna culture, small towns, and low-pressure design stays.",
+    best: "sauna, woodland stays, quiet food stops",
+    base: "Stockholm + Tallberg",
+    action: "copy Stockholm to Dalarna into the planner",
+    days: [
+      ["Day 1", "Stockholm arrival, waterfront walk, early dinner."],
+      ["Day 2", "Train toward Dalarna, lake check-in, sauna evening."],
+      ["Day 3", "Lake Siljan villages, craft stops, forest cafe route."],
+    ],
+  },
+  coast: {
+    kicker: "Denmark / 4-6 days",
+    title: "Coastal Simplicity: Copenhagen, Louisiana, and North Zealand",
+    summary: "A compact route for cycling, galleries, sea light, and relaxed coastal meals without heavy transfers.",
+    best: "design museums, cycling, coastal towns",
+    base: "Copenhagen + Humlebaek",
+    action: "copy Copenhagen coast into the planner",
+    days: [
+      ["Day 1", "Copenhagen arrival, canals, design-led dinner."],
+      ["Day 2", "Louisiana Museum, coastal train, sea-view walk."],
+      ["Day 3", "North Zealand towns, slow lunch, return by evening."],
+    ],
+  },
+  aurora: {
+    kicker: "Finland / 6-8 days",
+    title: "Lapland Cabin Route: Rovaniemi, Levi, and Ruka",
+    summary: "A winter route built around wooden cabins, snowy forest roads, sauna rituals, and northern-light evenings.",
+    best: "cabins, aurora nights, ski villages",
+    base: "Rovaniemi + Levi",
+    action: "copy Lapland cabin route into the planner",
+    days: [
+      ["Day 1", "Rovaniemi arrival, cabin check-in, sauna recovery."],
+      ["Day 2", "Levi ski village, reindeer route, aurora watch."],
+      ["Day 3", "Ruka forest day, snowy viewpoints, quiet dinner."],
+    ],
+  },
+};
+
+const VERIFIED_CITY_PLACES = {
+  "new york": [
+    {
+      name: "The Metropolitan Museum of Art",
+      category: "Museum",
+      summary: "Major museum anchor for a focused culture block.",
+      address: "1000 5th Ave, New York, NY 10028",
+    },
+    {
+      name: "New York Public Library, Stephen A. Schwarzman Building",
+      category: "Architecture",
+      summary: "A strong Midtown architecture and reading-room stop.",
+      address: "476 5th Ave, New York, NY 10018",
+    },
+    {
+      name: "Chelsea Market",
+      category: "Food",
+      summary: "Practical lunch base with many vendors and easy indoor pacing.",
+      address: "75 9th Ave, New York, NY 10011",
+    },
+    {
+      name: "The High Line",
+      category: "Urban walk",
+      summary: "Elevated linear park that works well after Chelsea Market.",
+      address: "Gansevoort St. to W 34th St, New York, NY 10011",
+    },
+    {
+      name: "Museum of Modern Art",
+      category: "Museum",
+      summary: "Weather-proof art block near central Midtown routes.",
+      address: "11 W 53rd St, New York, NY 10019",
+    },
+    {
+      name: "Central Park",
+      category: "Park",
+      summary: "Use for daylight walking, recovery time, and flexible pacing.",
+      address: "59th St to 110th St, New York, NY 10022",
+    },
+    {
+      name: "Brooklyn Bridge Park",
+      category: "Scenery",
+      summary: "Waterfront views and a calmer evening route after Lower Manhattan.",
+      address: "334 Furman St, Brooklyn, NY 11201",
+    },
+    {
+      name: "Katz's Delicatessen",
+      category: "Restaurant",
+      summary: "Classic Lower East Side lunch stop; reserve buffer time for queues.",
+      address: "205 E Houston St, New York, NY 10002",
+    },
+  ],
+};
+
 const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant"];
 
 function initializeHomepage() {
   appState.currentSectionIndex = getInitialSectionIndex();
   bindScrollButtons();
   bindAnchorNavigation();
-  bindPaginationNavigation();
+  bindSectionTracking();
   bindDestinationCards();
   bindPlannerForm();
   bindAssistant();
   applySectionVisibility();
   renderPlannerPreview();
+  renderDestinationTemplate();
   renderAssistantThread();
   renderAnalysisResults(null);
-  updatePaginationState();
+  updateSectionState();
 }
 
 function bindScrollButtons() {
@@ -161,32 +270,9 @@ function bindAnchorNavigation() {
   });
 }
 
-function bindPaginationNavigation() {
-  const sectionButtons = document.querySelectorAll(".pagination-link");
-  const previousButton = document.getElementById("pagination-prev");
-  const nextButton = document.getElementById("pagination-next");
-
-  sectionButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      navigateToSection(button.dataset.sectionTarget);
-    });
-  });
-
-  previousButton.addEventListener("click", () => {
-    const currentIndex = getCurrentSectionIndex();
-    navigateToSection(SECTION_SELECTORS[Math.max(0, currentIndex - 1)]);
-  });
-
-  nextButton.addEventListener("click", () => {
-    const currentIndex = getCurrentSectionIndex();
-    navigateToSection(SECTION_SELECTORS[Math.min(SECTION_SELECTORS.length - 1, currentIndex + 1)]);
-  });
-
-  window.addEventListener("scroll", updatePaginationState, { passive: true });
-  window.addEventListener("resize", () => {
-    applySectionVisibility();
-    updatePaginationState();
-  });
+function bindSectionTracking() {
+  window.addEventListener("scroll", updateSectionState, { passive: true });
+  window.addEventListener("resize", updateSectionState);
   window.addEventListener("hashchange", () => {
     const selector = normalizeSectionSelector(window.location.hash);
     if (selector) {
@@ -208,7 +294,7 @@ function navigateToSection(rawSelector, options = {}) {
   if (isWindowNavigationMode()) {
     appState.currentSectionIndex = targetIndex;
     applySectionVisibility();
-    updatePaginationState();
+    updateSectionState();
 
     if (updateHash) {
       window.history.replaceState(null, "", selector);
@@ -220,7 +306,7 @@ function navigateToSection(rawSelector, options = {}) {
   appState.currentSectionIndex = targetIndex;
   const target = document.querySelector(selector);
   target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  updatePaginationState();
+  updateSectionState();
 }
 
 function normalizeSectionSelector(rawSelector) {
@@ -237,13 +323,10 @@ function getInitialSectionIndex() {
 }
 
 function isWindowNavigationMode() {
-  return window.matchMedia("(min-width: 761px)").matches;
+  return false;
 }
 
 function applySectionVisibility() {
-  const isWindowMode = isWindowNavigationMode();
-  document.body.classList.toggle("is-window-mode", isWindowMode);
-
   SECTION_SELECTORS.forEach((selector, index) => {
     const section = document.querySelector(selector);
     if (!section) {
@@ -252,7 +335,7 @@ function applySectionVisibility() {
 
     const isCurrent = index === appState.currentSectionIndex;
     section.classList.toggle("is-current", isCurrent);
-    section.toggleAttribute("hidden", isWindowMode && !isCurrent);
+    section.removeAttribute("hidden");
   });
 }
 
@@ -274,24 +357,8 @@ function getCurrentSectionIndex() {
   return currentIndex;
 }
 
-function updatePaginationState() {
-  const currentIndex = getCurrentSectionIndex();
-  const sectionButtons = document.querySelectorAll(".pagination-link");
-  const previousButton = document.getElementById("pagination-prev");
-  const nextButton = document.getElementById("pagination-next");
-
-  sectionButtons.forEach((button, index) => {
-    const isActive = index === currentIndex;
-    button.classList.toggle("is-active", isActive);
-    if (isActive) {
-      button.setAttribute("aria-current", "page");
-    } else {
-      button.removeAttribute("aria-current");
-    }
-  });
-
-  previousButton.disabled = currentIndex === 0;
-  nextButton.disabled = currentIndex === SECTION_SELECTORS.length - 1;
+function updateSectionState() {
+  appState.currentSectionIndex = getCurrentSectionIndex();
 }
 
 function bindDestinationCards() {
@@ -307,9 +374,41 @@ function bindDestinationCards() {
       card.classList.add("is-active");
       card.setAttribute("aria-pressed", "true");
       appState.selectedRegion = card.dataset.region;
+      renderDestinationTemplate();
       renderPlannerPreview();
     });
   });
+}
+
+function renderDestinationTemplate() {
+  const template = regionTemplates[appState.selectedRegion];
+  if (!template) {
+    return;
+  }
+
+  const root = document.getElementById("destination-template");
+  const kicker = document.getElementById("template-kicker");
+  const title = document.getElementById("template-title");
+  const summary = document.getElementById("template-summary");
+  const best = document.getElementById("template-best");
+  const base = document.getElementById("template-base");
+  const action = document.getElementById("template-action");
+  const days = document.getElementById("template-days");
+
+  if (!root || !kicker || !title || !summary || !best || !base || !action || !days) {
+    return;
+  }
+
+  root.dataset.region = appState.selectedRegion;
+  kicker.textContent = template.kicker;
+  title.textContent = template.title;
+  summary.textContent = template.summary;
+  best.textContent = template.best;
+  base.textContent = template.base;
+  action.textContent = template.action;
+  days.innerHTML = template.days
+    .map(([day, copy]) => `<article><span>${escapeHtml(day)}</span><p>${escapeHtml(copy)}</p></article>`)
+    .join("");
 }
 
 function bindPlannerForm() {
@@ -547,7 +646,8 @@ async function searchFlights(origin, destination, date) {
     return {
       status: "error",
       options: [],
-      message: "Flight search temporarily unavailable",
+      provider: "external",
+      message: "Add a supported departure and destination city to search live flight data.",
     };
   }
 
@@ -569,7 +669,8 @@ async function searchFlights(origin, destination, date) {
       return {
         status: "error",
         options: [],
-        message: "Flight search temporarily unavailable",
+        provider: "external",
+        message: "Live flight pricing is not connected for this request. Use the external fare search link or try a supported route/date.",
       };
     }
 
@@ -580,7 +681,8 @@ async function searchFlights(origin, destination, date) {
       return {
         status: "empty",
         options: [],
-        message: "No flights found for this route",
+        provider: data.provider || "external",
+        message: "No live flight offers returned for this route/date. Try flexible dates or external fare search.",
       };
     }
 
@@ -615,7 +717,8 @@ async function searchFlights(origin, destination, date) {
     return {
       status: "error",
       options: [],
-      message: "Flight search temporarily unavailable",
+      provider: "external",
+      message: "Live flight pricing is not connected right now. Keep the itinerary available and use external fare search for exact tickets.",
     };
   }
 }
@@ -723,6 +826,19 @@ function buildGoogleMapsSearchUrl(name, city) {
   return `https://www.google.com/maps/search/${encodeURIComponent(`${name} ${city}`)}`;
 }
 
+function getVerifiedPlaces(city) {
+  return VERIFIED_CITY_PLACES[String(city || "").trim().toLowerCase()] || [];
+}
+
+function normalizeVerifiedPlace(place, city, warning = "") {
+  return {
+    ...place,
+    mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(`${place.name} ${place.address}`)}`,
+    provider: "verified fallback",
+    warning: warning || `Verified address fallback for ${city}; live place ranking still requires the Places API.`,
+  };
+}
+
 function getCheckoutDate(checkinDate) {
   const parsed = new Date(`${checkinDate}T00:00:00Z`);
 
@@ -773,54 +889,21 @@ async function searchAttractions(city) {
 }
 
 function generateAttractions(city, warning = "") {
+  const verifiedPlaces = getVerifiedPlaces(city);
+
+  if (verifiedPlaces.length) {
+    return verifiedPlaces.map((place) => normalizeVerifiedPlace(place, city, warning));
+  }
+
   return [
     {
-      name: `${city} Old Quarter`,
-      category: "Culture",
-      summary: "A walkable starting point for architecture, cafés, and first-day orientation.",
-      warning,
-    },
-    {
-      name: `${city} Waterfront`,
-      category: "Scenery",
-      summary: "A calm route for sunset, photographs, and low-pressure exploration.",
-      warning,
-    },
-    {
-      name: `${city} Design Museum`,
-      category: "Design",
-      summary: "A weather-proof cultural anchor with strong local context.",
-      warning,
-    },
-    {
-      name: `${city} Market Hall`,
-      category: "Food",
-      summary: "Good for casual lunch, local produce, and flexible pacing.",
-      warning,
-    },
-    {
-      name: `${city} Lookout Route`,
-      category: "Landscape",
-      summary: "A scenic afternoon route with room for rest stops.",
-      warning,
-    },
-    {
-      name: `${city} Art Gallery`,
-      category: "Art",
-      summary: "A slower indoor cultural block that keeps the plan useful in bad weather.",
-      warning,
-    },
-    {
-      name: `${city} Local Neighbourhood Walk`,
-      category: "Local life",
-      summary: "A less generic route for cafes, shops, side streets, and everyday texture.",
-      warning,
-    },
-    {
-      name: `${city} Evening Food Street`,
-      category: "Food",
-      summary: "A light evening option for dinner, snacks, and a low-pressure night walk.",
-      warning,
+      name: `${city} verified place lookup required`,
+      category: "Live data needed",
+      summary: "Katris will not invent attraction names or addresses for this city. Connect Geoapify/Google Places or open the map search below for verified locations.",
+      address: "",
+      mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(`${city} attractions`)}`,
+      provider: "external search",
+      warning: warning || "Live places API is required for accurate names and addresses.",
     },
   ];
 }
@@ -854,41 +937,60 @@ function getStopDayCount(totalDays, stopCount, stopIndex) {
 
 function buildDailyPlan(stop, index, priorities, dayCount = 2, startDay = 1) {
   const city = stop.city;
+  const verifiedPlaces = getVerifiedPlaces(city);
+  const place = (index) => verifiedPlaces[index % Math.max(verifiedPlaces.length, 1)];
+  const placeItem = (time, verifiedPlace, fallbackTitle, fallbackDetail) => {
+    if (!verifiedPlace) {
+      return {
+        time,
+        title: fallbackTitle,
+        detail: `${fallbackDetail} Confirm the exact name and address through the live Places API or Google Maps before showing this as a booked itinerary.`,
+      };
+    }
+
+    return {
+      time,
+      title: verifiedPlace.name,
+      detail: `${verifiedPlace.address}. ${verifiedPlace.summary}`,
+      address: verifiedPlace.address,
+      mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(`${verifiedPlace.name} ${verifiedPlace.address}`)}`,
+    };
+  };
   const dayTemplates = [
     {
       theme: "arrival and orientation",
       items: [
-        { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for airport, rail, or hotel transfer." },
-        { time: "Midday", title: "Neighbourhood lunch", detail: "Start close to the hotel with a simple local meal." },
-        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and bookmark cafes, galleries, and shops." },
-        { time: "Evening", title: `${city} Waterfront`, detail: "End with an easy scenic walk and dinner reservation." },
+        { time: "Morning", title: "Arrival and transfer buffer", detail: "Keep this block flexible for airport, rail, or hotel transfer. No attraction address is assigned until arrival timing is known." },
+        placeItem("Midday", place(7), "Verified lunch stop needed", "Use a restaurant with a confirmed address near the hotel or first attraction."),
+        placeItem("Afternoon", place(1), "Verified orientation stop needed", "Use one confirmed landmark or museum address for the first sightseeing block."),
+        placeItem("Evening", place(6), "Verified evening route needed", "Use a confirmed waterfront, park, or low-transfer evening area."),
       ],
     },
     {
       theme: "culture, food, and scenery",
       items: [
-        { time: "Morning", title: `${city} Design Museum`, detail: "Use the morning for a high-quality cultural anchor." },
-        { time: "Midday", title: `${city} Market Hall`, detail: "Plan lunch around local vendors and seasonal produce." },
-        { time: "Afternoon", title: `${city} Lookout Route`, detail: `Shape the scenic block around ${priorities.join(", ").toLowerCase()}.` },
-        { time: "Evening", title: "Reservation-led dinner", detail: "Choose a restaurant near the next morning's departure path." },
+        placeItem("Morning", place(0), "Verified museum needed", "Use the morning for a high-quality cultural anchor with a confirmed address."),
+        placeItem("Midday", place(2), "Verified food hall or restaurant needed", "Plan lunch around a confirmed address, not a generic nearby restaurant."),
+        placeItem("Afternoon", place(3), "Verified walking route needed", `Shape the scenic block around ${priorities.join(", ").toLowerCase()} with a confirmed route start.`),
+        { time: "Evening", title: "Reservation-led dinner near confirmed route", detail: "Choose a restaurant only after the final hotel area is known; do not display a fake address." },
       ],
     },
     {
       theme: "local texture and slower pacing",
       items: [
-        { time: "Morning", title: "Cafe and neighbourhood walk", detail: "Start with a low-friction local area before longer transfers." },
-        { time: "Midday", title: `${city} local food stop`, detail: "Use lunch to sample regional dishes without overloading the route." },
-        { time: "Afternoon", title: "Gallery or architecture block", detail: "Pick one indoor anchor that still works in poor weather." },
-        { time: "Evening", title: "Hotel reset", detail: "Protect recovery time before dinner or a short night walk." },
+        placeItem("Morning", place(5), "Verified park or neighborhood anchor needed", "Start with a low-friction confirmed area before longer transfers."),
+        placeItem("Midday", place(7), "Verified lunch stop needed", "Use lunch to sample local dishes at a confirmed address."),
+        placeItem("Afternoon", place(4), "Verified gallery or architecture stop needed", "Pick one indoor anchor that still works in poor weather."),
+        { time: "Evening", title: "Hotel reset", detail: "Protect recovery time before dinner or a short night walk near the confirmed hotel area." },
       ],
     },
     {
       theme: "nature and open-air route",
       items: [
-        { time: "Morning", title: `${city} park or lakeside route`, detail: "Use the clearest daylight for the most scenic outdoor block." },
-        { time: "Midday", title: "Simple lunch near the route", detail: "Avoid a cross-city meal detour and keep energy stable." },
-        { time: "Afternoon", title: "Viewpoint and photo window", detail: "Leave time for weather changes, light, and rest stops." },
-        { time: "Evening", title: "Casual local dinner", detail: "Stay close to the return route and avoid late transfers." },
+        placeItem("Morning", place(5), "Verified park or open-air route needed", "Use the clearest daylight for a confirmed outdoor block."),
+        { time: "Midday", title: "Lunch near confirmed route", detail: "Avoid a cross-city meal detour; choose the restaurant only after the route start is fixed." },
+        placeItem("Afternoon", place(6), "Verified viewpoint or waterfront needed", "Leave time for weather changes, light, and rest stops."),
+        { time: "Evening", title: "Dinner near return route", detail: "Stay close to the return route and avoid late transfers; exact address requires live restaurant data." },
       ],
     },
     {
@@ -920,6 +1022,10 @@ function generateTransportLinks(city) {
     uber: `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${encodedCity}`,
     train: `https://www.google.com/maps/search/${encodedCity}+train+station/`,
   };
+}
+
+function buildExternalFlightSearchUrl(origin, destination) {
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(`${origin} to ${destination} flights`)}`;
 }
 
 async function analyzeTripPlan(inputText) {
@@ -1051,7 +1157,8 @@ function renderAnalysisResults(result) {
               <div class="analysis-block">
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
                 ${renderProviderNotice(segment)}
-                <p class="analysis-empty">Flight search temporarily unavailable</p>
+                <p class="analysis-empty">${escapeHtml(segment.message || "Live flight pricing is not connected for this route yet.")}</p>
+                <a class="analysis-link" href="${escapeHtml(buildExternalFlightSearchUrl(segment.origin, segment.destination))}" target="_blank" rel="noreferrer">Search externally</a>
               </div>
             `;
           }
@@ -1061,7 +1168,8 @@ function renderAnalysisResults(result) {
               <div class="analysis-block">
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
                 ${renderProviderNotice(segment)}
-                <p class="analysis-empty">No flights found for this route</p>
+                <p class="analysis-empty">${escapeHtml(segment.message || "No live flight offers returned for this route/date.")}</p>
+                <a class="analysis-link" href="${escapeHtml(buildExternalFlightSearchUrl(segment.origin, segment.destination))}" target="_blank" rel="noreferrer">Search externally</a>
               </div>
             `;
           }
@@ -1129,7 +1237,7 @@ function renderAnalysisResults(result) {
                 <article class="analysis-item">
                   <div>
                     <strong>${escapeHtml(attraction.name)}</strong>
-                    <p>${escapeHtml(attraction.category)} · ${escapeHtml(attraction.summary)}${attraction.warning ? ` · ${escapeHtml(attraction.warning)}` : ""}</p>
+                    <p>${escapeHtml(attraction.category)}${attraction.address ? ` · ${escapeHtml(attraction.address)}` : ""} · ${escapeHtml(attraction.summary)}${attraction.warning ? ` · ${escapeHtml(attraction.warning)}` : ""}</p>
                   </div>
                   ${attraction.mapsUrl ? `<a class="analysis-link" href="${escapeHtml(attraction.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
                 </article>
@@ -1797,7 +1905,7 @@ function renderAssistantAttractions(attractions) {
             <article class="assistant-mini-item">
               <div>
                 <strong>${escapeHtml(place.name)}</strong>
-                <p>${escapeHtml(place.category)} · ${escapeHtml(place.warning || place.summary || "Place lookup ready")}</p>
+                <p>${escapeHtml(place.category)}${place.address ? ` · ${escapeHtml(place.address)}` : ""} · ${escapeHtml(place.warning || place.summary || "Place lookup ready")}</p>
               </div>
               ${place.mapsUrl ? `<a href="${escapeHtml(place.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
             </article>

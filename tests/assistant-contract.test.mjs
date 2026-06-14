@@ -121,6 +121,29 @@ assert.ok(
   "Every fallback day should include 3 to 5 executable items.",
 );
 
+const newYorkPlaces = context.generateAttractions("New York", "test fallback");
+assert.ok(
+  newYorkPlaces.some((place) => place.name === "The Metropolitan Museum of Art" && place.address === "1000 5th Ave, New York, NY 10028"),
+  "New York fallback places should use verified real addresses instead of invented generic place names.",
+);
+assert.ok(
+  !newYorkPlaces.some((place) => /Old Quarter|nearby restaurant|neighbourhood lunch/i.test(`${place.name} ${place.summary}`)),
+  "Fallback places should not invent generic old-quarter or nearby-restaurant stops.",
+);
+
+const newYorkDays = context.buildDailyPlan(
+  { city: "New York", date: "2026-06-14" },
+  0,
+  ["Culture"],
+  1,
+  1,
+);
+assert.match(
+  newYorkDays[0].items.map((item) => `${item.title} ${item.detail}`).join("\n"),
+  /205 E Houston St, New York, NY 10002|476 5th Ave, New York, NY 10018/,
+  "New York daily plans should include concrete verified addresses.",
+);
+
 const chicagoManchester = context.inferPlannerFieldsFromMessage(
   "chicago to Manchester 800 Eur 2weeks 1person",
 );

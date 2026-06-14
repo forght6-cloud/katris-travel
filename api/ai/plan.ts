@@ -322,41 +322,75 @@ function getStopDayCount(totalDays: number, stopCount: number, stopIndex: number
   return Math.max(1, base + (stopIndex < remainder ? 1 : 0));
 }
 
+const VERIFIED_CITY_PLACES: Record<string, Array<{ name: string; category: string; address: string; reason: string }>> = {
+  "new york": [
+    { name: "The Metropolitan Museum of Art", category: "Museum", address: "1000 5th Ave, New York, NY 10028", reason: "Major museum anchor for a focused culture block." },
+    { name: "New York Public Library, Stephen A. Schwarzman Building", category: "Architecture", address: "476 5th Ave, New York, NY 10018", reason: "A strong Midtown architecture and reading-room stop." },
+    { name: "Chelsea Market", category: "Food", address: "75 9th Ave, New York, NY 10011", reason: "Practical lunch base with many vendors and easy indoor pacing." },
+    { name: "The High Line", category: "Urban walk", address: "Gansevoort St. to W 34th St, New York, NY 10011", reason: "Elevated linear park that works well after Chelsea Market." },
+    { name: "Museum of Modern Art", category: "Museum", address: "11 W 53rd St, New York, NY 10019", reason: "Weather-proof art block near central Midtown routes." },
+    { name: "Central Park", category: "Park", address: "59th St to 110th St, New York, NY 10022", reason: "Use for daylight walking, recovery time, and flexible pacing." },
+    { name: "Brooklyn Bridge Park", category: "Scenery", address: "334 Furman St, Brooklyn, NY 11201", reason: "Waterfront views and a calmer evening route after Lower Manhattan." },
+    { name: "Katz's Delicatessen", category: "Restaurant", address: "205 E Houston St, New York, NY 10002", reason: "Classic Lower East Side lunch stop; reserve buffer time for queues." },
+  ],
+};
+
+function getVerifiedPlaces(city: string) {
+  return VERIFIED_CITY_PLACES[String(city || "").trim().toLowerCase()] || [];
+}
+
+function buildFallbackPlace(city: string, index: number, fallbackTitle: string) {
+  const places = getVerifiedPlaces(city);
+  const place = places[index % Math.max(places.length, 1)];
+
+  if (!place) {
+    return {
+      title: fallbackTitle,
+      detail: "Do not invent a venue or address here. Connect live Places data or confirm the exact Google Maps result before showing it to users.",
+    };
+  }
+
+  return {
+    title: place.name,
+    detail: `${place.address}. ${place.reason}`,
+  };
+}
+
 function buildFallbackDays(city: string, dayCount: number, startDay: number) {
   const templates = [
     {
       theme: `${city} arrival and orientation`,
       items: [
-        { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for transport and check-in." },
-        { time: "Midday", title: "Neighbourhood lunch", detail: "Choose a nearby local restaurant before heavy sightseeing." },
-        { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafes or galleries for later." },
+        { time: "Morning", title: "Arrival and transfer buffer", detail: "Keep the first block flexible for transport and check-in. No venue address is assigned until arrival timing is known." },
+        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 1, "Verified orientation stop needed") },
         { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
       ],
     },
     {
       theme: `${city} culture and scenery`,
       items: [
-        { time: "Morning", title: `${city} Design Museum`, detail: "Start with an indoor cultural anchor." },
-        { time: "Midday", title: `${city} Market Hall`, detail: "Build lunch around local vendors and seasonal produce." },
-        { time: "Afternoon", title: `${city} Lookout Route`, detail: "Plan a scenic route with photo stops and rest time." },
+        { time: "Morning", ...buildFallbackPlace(city, 0, "Verified museum needed") },
+        { time: "Midday", ...buildFallbackPlace(city, 2, "Verified food stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 3, "Verified walking route needed") },
         { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
       ],
     },
     {
       theme: `${city} local rhythm`,
       items: [
-        { time: "Morning", title: "Neighbourhood cafe route", detail: "Start slowly and keep the first move close to the hotel." },
-        { time: "Midday", title: "Regional lunch stop", detail: "Use lunch to sample local dishes without overloading the route." },
-        { time: "Afternoon", title: "Gallery or architecture block", detail: "Choose one weather-proof cultural stop." },
+        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or neighborhood anchor needed") },
+        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 4, "Verified gallery or architecture stop needed") },
         { time: "Evening", title: "Short evening walk", detail: "End with a low-friction route near dinner." },
       ],
     },
     {
       theme: `${city} nature and rest`,
       items: [
-        { time: "Morning", title: "Park or water route", detail: "Use the clearest daylight for the outdoor section." },
-        { time: "Midday", title: "Simple lunch near the route", detail: "Avoid crossing the city just for a meal." },
-        { time: "Afternoon", title: "Viewpoint and photo window", detail: "Leave room for weather, light, and rest." },
+        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or open-air route needed") },
+        { time: "Midday", title: "Lunch near confirmed route", detail: "Choose the restaurant only after the route start is fixed; do not display a fake address." },
+        { time: "Afternoon", ...buildFallbackPlace(city, 6, "Verified viewpoint or waterfront needed") },
         { time: "Evening", title: "Quiet dinner", detail: "Protect recovery time before the next day." },
       ],
     },
@@ -393,6 +427,23 @@ function buildFallbackPlan(payload: any) {
     const days = buildFallbackDays(city, dayCount, dayCursor);
     dayCursor += dayCount;
 
+    const verifiedPlaces = getVerifiedPlaces(city);
+    const attractions = verifiedPlaces.length
+      ? verifiedPlaces.map((place) => ({
+          name: place.name,
+          category: place.category,
+          address: place.address,
+          reason: place.reason,
+        }))
+      : [
+          {
+            name: `${city} verified place lookup required`,
+            category: "Live data needed",
+            address: "",
+            reason: "Katris should not invent place names or addresses here. Connect Geoapify/Google Places or open external map search before presenting concrete stops.",
+          },
+        ];
+
     return {
       city,
       hotels: [
@@ -405,16 +456,7 @@ function buildFallbackPlan(payload: any) {
         { name: `${city} Apartment Hotel`, style: "Long stay", reason: "Useful for a two-week trip where laundry, kitchen access, and routine matter." },
         { name: `${city} Spa Hotel`, style: "Recovery", reason: "A calmer option for rest days and fatigue management." },
       ],
-      attractions: [
-        { name: `${city} Old Quarter`, category: "Culture", reason: "A compact first walk with orientation value." },
-        { name: `${city} Waterfront`, category: "Scenery", reason: "Best for soft light, cafes, and low-friction exploration." },
-        { name: `${city} Design Museum`, category: "Design", reason: "A strong indoor anchor for weather-proof planning." },
-        { name: `${city} Market Hall`, category: "Food", reason: "Useful for local snacks and casual lunches." },
-        { name: `${city} Lookout Route`, category: "Landscape", reason: "A scenic way to end the afternoon." },
-        { name: `${city} Art Gallery`, category: "Art", reason: "Adds a slower indoor cultural block for poor weather days." },
-        { name: `${city} Local Neighbourhood Walk`, category: "Local life", reason: "Helps the route feel less generic and more lived-in." },
-        { name: `${city} Evening Food Street`, category: "Food", reason: "Creates a light night plan without overloading the day." },
-      ],
+      attractions,
       days,
     };
   });
@@ -430,7 +472,7 @@ function buildFallbackPlan(payload: any) {
             "【每日计划】",
             ...entry.days.map(
               (day: any) =>
-                `${day.day} · ${day.theme}\n- 上午：${day.items[0]?.title || "推定行程"}\n- 下午：${day.items[2]?.title || day.items[1]?.title || "推定行程"}\n- 晚上：${day.items[3]?.title || "酒店与晚餐衔接"}\n- 疲劳度：中低`,
+                `${day.day} · ${day.theme}\n- 上午：${day.items[0]?.title || "推定行程"}｜${day.items[0]?.detail || "需要实时地点数据确认。"}\n- 中午：${day.items[1]?.title || "推定行程"}｜${day.items[1]?.detail || "需要实时地点数据确认。"}\n- 下午：${day.items[2]?.title || "推定行程"}｜${day.items[2]?.detail || "需要实时地点数据确认。"}\n- 晚上：${day.items[3]?.title || "酒店与晚餐衔接"}｜${day.items[3]?.detail || "根据酒店位置确认。"}\n- 疲劳度：中低`,
             ),
           ].join("\n"),
         )

@@ -49,6 +49,59 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   zurich: { lat: 47.3769, lon: 8.5417 },
 };
 
+const VERIFIED_CITY_PLACES: Record<string, Array<Omit<NormalizedPlace, "id" | "mapsUrl">>> = {
+  "new york": [
+    {
+      name: "The Metropolitan Museum of Art",
+      category: "Museum",
+      summary: "Major museum anchor for a focused culture block.",
+      address: "1000 5th Ave, New York, NY 10028",
+    },
+    {
+      name: "New York Public Library, Stephen A. Schwarzman Building",
+      category: "Architecture",
+      summary: "A strong Midtown architecture and reading-room stop.",
+      address: "476 5th Ave, New York, NY 10018",
+    },
+    {
+      name: "Chelsea Market",
+      category: "Food",
+      summary: "Practical lunch base with many vendors and easy indoor pacing.",
+      address: "75 9th Ave, New York, NY 10011",
+    },
+    {
+      name: "The High Line",
+      category: "Urban walk",
+      summary: "Elevated linear park that works well after Chelsea Market.",
+      address: "Gansevoort St. to W 34th St, New York, NY 10011",
+    },
+    {
+      name: "Museum of Modern Art",
+      category: "Museum",
+      summary: "Weather-proof art block near central Midtown routes.",
+      address: "11 W 53rd St, New York, NY 10019",
+    },
+    {
+      name: "Central Park",
+      category: "Park",
+      summary: "Use for daylight walking, recovery time, and flexible pacing.",
+      address: "59th St to 110th St, New York, NY 10022",
+    },
+    {
+      name: "Brooklyn Bridge Park",
+      category: "Scenery",
+      summary: "Waterfront views and a calmer evening route after Lower Manhattan.",
+      address: "334 Furman St, Brooklyn, NY 11201",
+    },
+    {
+      name: "Katz's Delicatessen",
+      category: "Restaurant",
+      summary: "Classic Lower East Side lunch stop; reserve buffer time for queues.",
+      address: "205 E Houston St, New York, NY 10002",
+    },
+  ],
+};
+
 type NormalizedPlace = {
   id: string;
   name: string;
@@ -59,6 +112,16 @@ type NormalizedPlace = {
   lat?: number;
   lon?: number;
 };
+
+function getVerifiedFallbackPlaces(city: string, limit: number): NormalizedPlace[] {
+  const places = VERIFIED_CITY_PLACES[city.trim().toLowerCase()] || [];
+
+  return places.slice(0, limit).map((place, index) => ({
+    id: `verified-${city}-${index + 1}`,
+    ...place,
+    mapsUrl: buildMapsUrl(`${place.name} ${place.address}`, 0, 0),
+  }));
+}
 
 async function geocodeCity(city: string) {
   const knownCenter = CITY_CENTER_MAP[city.trim().toLowerCase()];
@@ -210,11 +273,14 @@ export default async function handler(req: any, res: any) {
       warning: places.length ? "" : "Geoapify returned no places for this city.",
     });
   } catch (error: any) {
+    const fallbackPlaces = getVerifiedFallbackPlaces(city, limit);
     res.status(200).json({
-      provider: "fallback",
+      provider: fallbackPlaces.length ? "verified fallback" : "fallback",
       city,
-      places: [],
-      warning: error?.message || "Geoapify places search failed.",
+      places: fallbackPlaces,
+      warning: fallbackPlaces.length
+        ? `Geoapify unavailable; returned verified static addresses for ${city}.`
+        : error?.message || "Geoapify places search failed.",
     });
   }
 }
