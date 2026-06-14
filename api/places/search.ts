@@ -123,6 +123,24 @@ function getVerifiedFallbackPlaces(city: string, limit: number): NormalizedPlace
   }));
 }
 
+function mergeVerifiedAndLivePlaces(city: string, livePlaces: NormalizedPlace[], limit: number) {
+  const verifiedPlaces = getVerifiedFallbackPlaces(city, limit);
+  const seen = new Set<string>();
+  const merged: NormalizedPlace[] = [];
+
+  [...verifiedPlaces, ...livePlaces].forEach((place) => {
+    const key = `${place.name}|${place.address}`.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    merged.push(place);
+  });
+
+  return merged.slice(0, limit);
+}
+
 async function geocodeCity(city: string) {
   const knownCenter = CITY_CENTER_MAP[city.trim().toLowerCase()];
 
@@ -265,11 +283,12 @@ export default async function handler(req: any, res: any) {
 
   try {
     const places = await searchGeoapifyPlaces(city, limit);
+    const mergedPlaces = mergeVerifiedAndLivePlaces(city, places, limit);
 
     res.status(200).json({
-      provider: "geoapify",
+      provider: mergedPlaces.length > places.length ? "verified + geoapify" : "geoapify",
       city,
-      places,
+      places: mergedPlaces,
       warning: places.length ? "" : "Geoapify returned no places for this city.",
     });
   } catch (error: any) {
