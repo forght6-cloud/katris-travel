@@ -284,9 +284,10 @@ export default async function handler(req: any, res: any) {
   try {
     const places = await searchGeoapifyPlaces(city, limit);
     const mergedPlaces = mergeVerifiedAndLivePlaces(city, places, limit);
+    const hasVerifiedPlaces = getVerifiedFallbackPlaces(city, 1).length > 0;
 
     res.status(200).json({
-      provider: mergedPlaces.length > places.length ? "verified + geoapify" : "geoapify",
+      provider: hasVerifiedPlaces && mergedPlaces.length ? "verified + geoapify" : "geoapify",
       city,
       places: mergedPlaces,
       warning: places.length ? "" : "Geoapify returned no places for this city.",
