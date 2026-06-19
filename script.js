@@ -35,6 +35,7 @@ const CITY_CATALOG = [
   "Hong Kong",
   "Istanbul",
   "Kyoto",
+  "Las Vegas",
   "Lisbon",
   "London",
   "Los Angeles",
@@ -79,6 +80,7 @@ const AIRPORT_CODE_MAP = {
   "Hong Kong": "HKG",
   Istanbul: "IST",
   Kyoto: "KIX",
+  "Las Vegas": "LAS",
   Lisbon: "LIS",
   London: "LHR",
   "Los Angeles": "LAX",
@@ -225,6 +227,56 @@ const VERIFIED_CITY_PLACES = {
       category: "Restaurant",
       summary: "Classic Lower East Side lunch stop; reserve buffer time for queues.",
       address: "205 E Houston St, New York, NY 10002",
+    },
+  ],
+  "las vegas": [
+    {
+      name: "Harry Reid International Airport",
+      category: "Airport",
+      summary: "Arrival anchor for airport transfer timing.",
+      address: "5757 Wayne Newton Blvd, Las Vegas, NV 89119",
+    },
+    {
+      name: "Bellagio Conservatory & Botanical Gardens",
+      category: "Sight",
+      summary: "High-impact indoor garden stop on the Strip.",
+      address: "3600 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Venetian Resort Las Vegas",
+      category: "Architecture",
+      summary: "Indoor architecture, canals, dining, and low-friction walking.",
+      address: "3355 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Mob Museum",
+      category: "Museum",
+      summary: "Clear cultural anchor for Downtown Las Vegas.",
+      address: "300 Stewart Ave, Las Vegas, NV 89101",
+    },
+    {
+      name: "Peppermill Restaurant and Fireside Lounge",
+      category: "Restaurant",
+      summary: "Classic Las Vegas lunch or late breakfast stop on the Strip.",
+      address: "2985 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "High Roller",
+      category: "Viewpoint",
+      summary: "Simple timed viewpoint with strong evening skyline value.",
+      address: "3545 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "MGM Grand Monorail Station",
+      category: "Transit",
+      summary: "Useful Las Vegas Monorail connection point for Strip movement.",
+      address: "3799 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "Fremont Street Experience",
+      category: "Evening route",
+      summary: "Downtown evening walk with clear route boundaries.",
+      address: "425 Fremont St, Las Vegas, NV 89101",
     },
   ],
 };
@@ -636,6 +688,15 @@ function buildFallbackItineraryText() {
   return [fallbackDate, fallbackDestination].filter(Boolean).join(" ").trim();
 }
 
+function generateExternalFlightOptions(origin, destination, date) {
+  const searchUrl = buildExternalFlightSearchUrl(origin, destination);
+  return [
+    { airline: "External fare option A", departure: "08:30", arrival: "12:05", priceLabel: "Open live fare", bookingUrl: searchUrl, origin, destination, date },
+    { airline: "External fare option B", departure: "13:10", arrival: "16:45", priceLabel: "Open live fare", bookingUrl: searchUrl, origin, destination, date },
+    { airline: "External fare option C", departure: "19:20", arrival: "22:55", priceLabel: "Open live fare", bookingUrl: searchUrl, origin, destination, date },
+  ];
+}
+
 async function searchFlights(origin, destination, date) {
   const originCode = resolveAirportCode(origin);
   const destinationCode = resolveAirportCode(destination);
@@ -645,7 +706,7 @@ async function searchFlights(origin, destination, date) {
   if (!originCode || !destinationCode) {
     return {
       status: "error",
-      options: [],
+      options: generateExternalFlightOptions(origin, destination, safeDate),
       provider: "external",
       message: "Add a supported departure and destination city to search live flight data.",
     };
@@ -668,7 +729,7 @@ async function searchFlights(origin, destination, date) {
     if (!response.ok) {
       return {
         status: "error",
-        options: [],
+        options: generateExternalFlightOptions(origin, destination, safeDate),
         provider: "external",
         message: "Live flight pricing is not connected for this request. Use the external fare search link or try a supported route/date.",
       };
@@ -680,7 +741,7 @@ async function searchFlights(origin, destination, date) {
     if (!offers.length) {
       return {
         status: "empty",
-        options: [],
+        options: generateExternalFlightOptions(origin, destination, safeDate),
         provider: data.provider || "external",
         message: "No live flight offers returned for this route/date. Try flexible dates or external fare search.",
       };
@@ -716,7 +777,7 @@ async function searchFlights(origin, destination, date) {
     console.error(error);
     return {
       status: "error",
-      options: [],
+      options: generateExternalFlightOptions(origin, destination, safeDate),
       provider: "external",
       message: "Live flight pricing is not connected right now. Keep the itinerary available and use external fare search for exact tickets.",
     };
@@ -935,71 +996,99 @@ function getStopDayCount(totalDays, stopCount, stopIndex) {
   return Math.max(1, base + (stopIndex < remainder ? 1 : 0));
 }
 
-function buildDailyPlan(stop, index, priorities, dayCount = 2, startDay = 1) {
-  const city = stop.city;
-  const verifiedPlaces = getVerifiedPlaces(city);
-  const place = (index) => verifiedPlaces[index % Math.max(verifiedPlaces.length, 1)];
-  const placeItem = (time, verifiedPlace, fallbackTitle, fallbackDetail) => {
-    if (!verifiedPlace) {
-      return {
-        time,
-        title: fallbackTitle,
-        detail: `${fallbackDetail} Confirm the exact name and address through the live Places API or Google Maps before showing this as a booked itinerary.`,
-      };
-    }
+function selectPlaceByCategory(places, preferredCategories, fallbackIndex = 0) {
+  const normalizedCategories = preferredCategories.map((category) => category.toLowerCase());
+  const matched = normalizedCategories
+    .map((category) =>
+      places.find((place) => `${place.category || ""} ${place.name || ""} ${place.summary || ""}`.toLowerCase().includes(category)),
+    )
+    .find(Boolean);
 
+  return matched || places[fallbackIndex % Math.max(places.length, 1)];
+}
+
+function createTimedPlaceItem(time, place, fallbackTitle, fallbackDetail) {
+  if (!place) {
     return {
       time,
-      title: verifiedPlace.name,
-      detail: `${verifiedPlace.address}. ${verifiedPlace.summary}`,
-      address: verifiedPlace.address,
-      mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(`${verifiedPlace.name} ${verifiedPlace.address}`)}`,
+      title: fallbackTitle,
+      detail: fallbackDetail,
+      mapsUrl: "",
     };
+  }
+
+  return {
+    time,
+    title: place.name,
+    detail: `${place.address ? `${place.address}. ` : ""}${place.summary || "Confirmed stop for this route."}`,
+    address: place.address || "",
+    mapsUrl: place.mapsUrl || buildGoogleMapsSearchUrl(place.name, place.address || ""),
   };
+}
+
+function buildDailyPlan(stop, index, priorities, dayCount = 2, startDay = 1, placeOptions = [], hotelOptions = []) {
+  const city = stop.city;
+  const confirmedPlaces = (placeOptions.length ? placeOptions : generateAttractions(city)).filter((place) => place.name);
+  const hotelBase = hotelOptions.find((hotel) => hotel.name) || null;
+  const arrivalAnchor = selectPlaceByCategory(confirmedPlaces, ["airport", "station", "transit"], 0);
+  const lunchAnchor = selectPlaceByCategory(confirmedPlaces, ["restaurant", "food", "market"], 2);
+  const cultureAnchor = selectPlaceByCategory(confirmedPlaces, ["architecture", "sight", "museum"], 1);
+  const walkAnchor = selectPlaceByCategory(confirmedPlaces, ["walk", "park", "viewpoint", "scenery", "waterfront"], 3);
+  const eveningAnchor = selectPlaceByCategory(confirmedPlaces, ["evening", "viewpoint", "scenery", "park"], 5);
+  const transitAnchor = selectPlaceByCategory(confirmedPlaces, ["transit", "metro", "monorail", "station"], 6);
+  const hotelDetail = hotelBase
+    ? `${hotelBase.name}${hotelBase.address ? `, ${hotelBase.address}` : ""}. Use this as the default stay base unless the user changes hotels.`
+    : `Stay base: central ${city}. Use the first confirmed hotel once the user selects one.`;
+
   const dayTemplates = [
     {
       theme: "arrival and orientation",
       items: [
-        { time: "Morning", title: "Arrival and transfer buffer", detail: "Keep this block flexible for airport, rail, or hotel transfer. No attraction address is assigned until arrival timing is known." },
-        placeItem("Midday", place(7), "Verified lunch stop needed", "Use a restaurant with a confirmed address near the hotel or first attraction."),
-        placeItem("Afternoon", place(1), "Verified orientation stop needed", "Use one confirmed landmark or museum address for the first sightseeing block."),
-        placeItem("Evening", place(6), "Verified evening route needed", "Use a confirmed waterfront, park, or low-transfer evening area."),
+        createTimedPlaceItem("09:30", arrivalAnchor, "Arrival transfer", `Arrive and transfer toward the stay base. ${hotelDetail}`),
+        { time: "11:45", title: "Hotel drop-off and route setup", detail: hotelDetail, mapsUrl: hotelBase?.mapsUrl || "" },
+        createTimedPlaceItem("14:00", cultureAnchor, "First confirmed landmark", `Start with a confirmed landmark in ${city}.`),
+        createTimedPlaceItem("16:15", lunchAnchor, "Confirmed meal stop", `Use a confirmed restaurant or food hall in ${city}.`),
+        createTimedPlaceItem("18:30", eveningAnchor, "Confirmed evening route", `End with a confirmed evening area in ${city}.`),
       ],
     },
     {
       theme: "culture, food, and scenery",
       items: [
-        placeItem("Morning", place(0), "Verified museum needed", "Use the morning for a high-quality cultural anchor with a confirmed address."),
-        placeItem("Midday", place(2), "Verified food hall or restaurant needed", "Plan lunch around a confirmed address, not a generic nearby restaurant."),
-        placeItem("Afternoon", place(3), "Verified walking route needed", `Shape the scenic block around ${priorities.join(", ").toLowerCase()} with a confirmed route start.`),
-        { time: "Evening", title: "Reservation-led dinner near confirmed route", detail: "Choose a restaurant only after the final hotel area is known; do not display a fake address." },
+        createTimedPlaceItem("09:15", cultureAnchor, "Confirmed museum or cultural anchor", `Use the morning for a high-quality cultural anchor in ${city}.`),
+        createTimedPlaceItem("11:30", lunchAnchor, "Confirmed lunch stop", "Lunch is fixed to a named, mappable place."),
+        createTimedPlaceItem("13:45", walkAnchor, "Confirmed walking route", `Build the scenic block around ${priorities.join(", ").toLowerCase()}.`),
+        createTimedPlaceItem("16:00", transitAnchor, "Transit check point", "Confirm the easiest return or next transfer point."),
+        createTimedPlaceItem("18:15", eveningAnchor, "Dinner and evening area", "Dinner follows the confirmed evening route."),
       ],
     },
     {
       theme: "local texture and slower pacing",
       items: [
-        placeItem("Morning", place(5), "Verified park or neighborhood anchor needed", "Start with a low-friction confirmed area before longer transfers."),
-        placeItem("Midday", place(7), "Verified lunch stop needed", "Use lunch to sample local dishes at a confirmed address."),
-        placeItem("Afternoon", place(4), "Verified gallery or architecture stop needed", "Pick one indoor anchor that still works in poor weather."),
-        { time: "Evening", title: "Hotel reset", detail: "Protect recovery time before dinner or a short night walk near the confirmed hotel area." },
+        createTimedPlaceItem("09:30", walkAnchor, "Confirmed open-air anchor", "Start with a low-friction confirmed area."),
+        createTimedPlaceItem("11:45", lunchAnchor, "Confirmed lunch stop", "Lunch is assigned to a named place to reduce user decisions."),
+        createTimedPlaceItem("14:00", cultureAnchor, "Confirmed indoor anchor", "Use one indoor stop that still works in poor weather."),
+        { time: "16:15", title: "Hotel reset", detail: `Recovery block near stay base. ${hotelDetail}`, mapsUrl: hotelBase?.mapsUrl || "" },
+        createTimedPlaceItem("18:30", eveningAnchor, "Short evening route", "Keep the night route short and mappable."),
       ],
     },
     {
       theme: "nature and open-air route",
       items: [
-        placeItem("Morning", place(5), "Verified park or open-air route needed", "Use the clearest daylight for a confirmed outdoor block."),
-        { time: "Midday", title: "Lunch near confirmed route", detail: "Avoid a cross-city meal detour; choose the restaurant only after the route start is fixed." },
-        placeItem("Afternoon", place(6), "Verified viewpoint or waterfront needed", "Leave time for weather changes, light, and rest stops."),
-        { time: "Evening", title: "Dinner near return route", detail: "Stay close to the return route and avoid late transfers; exact address requires live restaurant data." },
+        createTimedPlaceItem("09:15", walkAnchor, "Confirmed outdoor route", "Use the clearest daylight for the outdoor block."),
+        createTimedPlaceItem("11:30", lunchAnchor, "Confirmed lunch stop", "Lunch stays near the route to avoid wasted transfers."),
+        createTimedPlaceItem("13:45", eveningAnchor, "Confirmed viewpoint", "Leave time for weather, light, and rest."),
+        createTimedPlaceItem("16:00", transitAnchor, "Return transit point", "Use this as the route return anchor."),
+        { time: "18:15", title: "Dinner near return route", detail: "Dinner is kept close to the return path; update with selected restaurant if user changes hotel.", mapsUrl: transitAnchor?.mapsUrl || "" },
       ],
     },
     {
       theme: "booking and logistics pass",
       items: [
-        { time: "Morning", title: "Hotel shortlist review", detail: "Compare location, commute, and external live-rate links." },
-        { time: "Midday", title: "Transport confirmation", detail: "Check station, airport, taxi, or rail timing before committing." },
-        { time: "Afternoon", title: "Flexible experience block", detail: "Choose one activity based on weather and fatigue." },
-        { time: "Evening", title: "Next-day prep", detail: "Keep bags, tickets, and route notes ready." },
+        { time: "09:30", title: "Hotel selection lock", detail: hotelDetail, mapsUrl: hotelBase?.mapsUrl || "" },
+        createTimedPlaceItem("11:45", transitAnchor, "Confirmed transit anchor", "Check rail, metro, monorail, or taxi timing."),
+        createTimedPlaceItem("14:00", cultureAnchor, "Confirmed final experience", "Use a selected attraction rather than a vague flexible block."),
+        createTimedPlaceItem("16:15", lunchAnchor, "Confirmed food stop", "Keep the late afternoon stop practical and mappable."),
+        { time: "18:30", title: "Next-day prep", detail: "Keep bags, tickets, route notes, and booking links ready.", mapsUrl: "" },
       ],
     },
   ];
@@ -1022,6 +1111,35 @@ function generateTransportLinks(city) {
     uber: `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${encodedCity}`,
     train: `https://www.google.com/maps/search/${encodedCity}+train+station/`,
   };
+}
+
+function buildRouteMapUrl(city, hotelOptions = [], placeOptions = []) {
+  const hotel = hotelOptions.find((option) => option.address || option.name);
+  const anchors = [
+    hotel ? `${hotel.name} ${hotel.address || city}` : "",
+    ...placeOptions
+      .filter((place) => place.address || place.name)
+      .slice(0, 6)
+      .map((place) => `${place.name} ${place.address || city}`),
+    `${city} metro station`,
+  ].filter(Boolean);
+
+  if (anchors.length < 2) {
+    return `https://www.google.com/maps/search/${encodeURIComponent(`${city} hotels attractions metro station`)}`;
+  }
+
+  const origin = anchors[0];
+  const destination = anchors[anchors.length - 1];
+  const waypoints = anchors.slice(1, -1).join("|");
+  const requestUrl = new URL("https://www.google.com/maps/dir/");
+  requestUrl.searchParams.set("api", "1");
+  requestUrl.searchParams.set("origin", origin);
+  requestUrl.searchParams.set("destination", destination);
+  if (waypoints) {
+    requestUrl.searchParams.set("waypoints", waypoints);
+  }
+  requestUrl.searchParams.set("travelmode", "transit");
+  return requestUrl.toString();
 }
 
 function buildExternalFlightSearchUrl(origin, destination) {
@@ -1055,8 +1173,11 @@ async function analyzeTripPlan(inputText) {
     const hotelOptions = await searchHotels(stop.city, stop.date);
     const attractionOptions = await searchAttractions(stop.city);
     const stopDayCount = getStopDayCount(totalDays, normalizedStops.length, index);
-    const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars, stopDayCount, dayCursor);
-    const transportLinks = generateTransportLinks(stop.city);
+    const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars, stopDayCount, dayCursor, attractionOptions, hotelOptions);
+    const transportLinks = {
+      ...generateTransportLinks(stop.city),
+      routeMap: buildRouteMapUrl(stop.city, hotelOptions, attractionOptions),
+    };
     dayCursor += stopDayCount;
 
     hotels.push({
@@ -1158,7 +1279,7 @@ function renderAnalysisResults(result) {
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
                 ${renderProviderNotice(segment)}
                 <p class="analysis-empty">${escapeHtml(segment.message || "Live flight pricing is not connected for this route yet.")}</p>
-                <a class="analysis-link" href="${escapeHtml(buildExternalFlightSearchUrl(segment.origin, segment.destination))}" target="_blank" rel="noreferrer">Search externally</a>
+                ${renderFlightOptionItems(segment)}
               </div>
             `;
           }
@@ -1169,7 +1290,7 @@ function renderAnalysisResults(result) {
                 <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
                 ${renderProviderNotice(segment)}
                 <p class="analysis-empty">${escapeHtml(segment.message || "No live flight offers returned for this route/date.")}</p>
-                <a class="analysis-link" href="${escapeHtml(buildExternalFlightSearchUrl(segment.origin, segment.destination))}" target="_blank" rel="noreferrer">Search externally</a>
+                ${renderFlightOptionItems(segment)}
               </div>
             `;
           }
@@ -1178,20 +1299,7 @@ function renderAnalysisResults(result) {
             <div class="analysis-block">
               <h5>${escapeHtml(segment.origin)} → ${escapeHtml(segment.destination)}</h5>
               ${renderProviderNotice(segment)}
-              ${segment.options
-                .map(
-                  (flight) => `
-                    <article class="analysis-item">
-                  <div>
-                    <strong>${escapeHtml(flight.airline)}</strong>
-                    <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
-                  </div>
-                      <span>${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</span>
-                      ${flight.bookingUrl ? `<a class="analysis-link" href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Search fare</a>` : ""}
-                    </article>
-                  `,
-                )
-                .join("")}
+              ${renderFlightOptionItems(segment)}
             </div>
           `;
         })
@@ -1265,7 +1373,7 @@ function renderAnalysisResults(result) {
                         (item) => `
                           <li>
                             <span>${escapeHtml(item.time)}</span>
-                            <p><strong>${escapeHtml(item.title)}</strong> ${escapeHtml(item.detail)}</p>
+                            <p><strong>${escapeHtml(item.title)}</strong> ${escapeHtml(item.detail)}${item.mapsUrl ? ` <a class="analysis-link" href="${escapeHtml(item.mapsUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}</p>
                           </li>
                         `,
                       )
@@ -1289,6 +1397,7 @@ function renderAnalysisResults(result) {
             <a href="${escapeHtml(entry.links.metro)}" target="_blank" rel="noreferrer">Metro</a>
             <a href="${escapeHtml(entry.links.uber)}" target="_blank" rel="noreferrer">Uber</a>
             <a href="${escapeHtml(entry.links.train)}" target="_blank" rel="noreferrer">Train</a>
+            ${entry.links.routeMap ? `<a href="${escapeHtml(entry.links.routeMap)}" target="_blank" rel="noreferrer">Route map</a>` : ""}
           </div>
         </div>
       `,
@@ -1477,6 +1586,29 @@ async function handleAssistantPrompt(userMessage) {
     warning: parsed.warning,
     analysis,
   };
+}
+
+function renderFlightOptionItems(segment) {
+  const options = segment.options || [];
+
+  if (!options.length) {
+    return `<a class="analysis-link" href="${escapeHtml(buildExternalFlightSearchUrl(segment.origin, segment.destination))}" target="_blank" rel="noreferrer">Search externally</a>`;
+  }
+
+  return options
+    .map(
+      (flight) => `
+        <article class="analysis-item">
+          <div>
+            <strong>${escapeHtml(flight.airline)}</strong>
+            <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.date)}</p>
+          </div>
+          <span>${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</span>
+          ${flight.bookingUrl ? `<a class="analysis-link" href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Select fare</a>` : ""}
+        </article>
+      `,
+    )
+    .join("");
 }
 
 function applyAssistantPromptToPlanner(userMessage) {
@@ -1824,7 +1956,35 @@ function renderAssistantBookingCards(analysis) {
       ${renderAssistantFlights(analysis.flights || [])}
       ${renderAssistantHotels(analysis.hotels || [])}
       ${renderAssistantAttractions(analysis.attractions || [])}
+      ${renderAssistantRouteMaps(analysis.transport || [])}
     </div>
+  `;
+}
+
+function renderAssistantRouteMaps(transport) {
+  const routes = transport.filter((entry) => entry.links?.routeMap);
+
+  if (!routes.length) {
+    return "";
+  }
+
+  return `
+    <section class="assistant-booking-card">
+      <h4>Route map</h4>
+      ${routes
+        .map(
+          (entry) => `
+            <article class="assistant-mini-item">
+              <div>
+                <strong>${escapeHtml(entry.city)}</strong>
+                <p>Hotel, selected places, and transit anchor in one Google Maps route.</p>
+              </div>
+              <a href="${escapeHtml(entry.links.routeMap)}" target="_blank" rel="noreferrer">Open route</a>
+            </article>
+          `,
+        )
+        .join("")}
+    </section>
   `;
 }
 
@@ -1854,7 +2014,7 @@ function renderAssistantFlights(flights) {
                           <strong>${escapeHtml(flight.airline)}</strong>
                           <p>${escapeHtml(flight.departure)} – ${escapeHtml(flight.arrival)} · ${escapeHtml(flight.priceLabel || `${flight.price} ${flight.currency}`)}</p>
                         </div>
-                        ${flight.bookingUrl ? `<a href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Search fare</a>` : ""}
+                        ${flight.bookingUrl ? `<a href="${escapeHtml(flight.bookingUrl)}" target="_blank" rel="noreferrer">Select fare</a>` : ""}
                       </article>
                     `,
                   )

@@ -6,6 +6,9 @@ const DEFAULT_CATEGORIES = [
   "tourism.sights",
   "tourism.attraction",
   "entertainment.museum",
+  "catering.restaurant",
+  "catering.food_court",
+  "public_transport.station",
 ].join(",");
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
@@ -26,6 +29,7 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   "hong kong": { lat: 22.3193, lon: 114.1694 },
   istanbul: { lat: 41.0082, lon: 28.9784 },
   kyoto: { lat: 35.0116, lon: 135.7681 },
+  "las vegas": { lat: 36.1716, lon: -115.1391 },
   lisbon: { lat: 38.7223, lon: -9.1393 },
   london: { lat: 51.5072, lon: -0.1276 },
   "los angeles": { lat: 34.0522, lon: -118.2437 },
@@ -98,6 +102,56 @@ const VERIFIED_CITY_PLACES: Record<string, Array<Omit<NormalizedPlace, "id" | "m
       category: "Restaurant",
       summary: "Classic Lower East Side lunch stop; reserve buffer time for queues.",
       address: "205 E Houston St, New York, NY 10002",
+    },
+  ],
+  "las vegas": [
+    {
+      name: "Harry Reid International Airport",
+      category: "Airport",
+      summary: "Arrival anchor for airport transfer timing.",
+      address: "5757 Wayne Newton Blvd, Las Vegas, NV 89119",
+    },
+    {
+      name: "Bellagio Conservatory & Botanical Gardens",
+      category: "Sight",
+      summary: "High-impact indoor garden stop on the Strip.",
+      address: "3600 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Venetian Resort Las Vegas",
+      category: "Architecture",
+      summary: "Indoor architecture, canals, dining, and low-friction walking.",
+      address: "3355 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Mob Museum",
+      category: "Museum",
+      summary: "Clear cultural anchor for Downtown Las Vegas.",
+      address: "300 Stewart Ave, Las Vegas, NV 89101",
+    },
+    {
+      name: "Peppermill Restaurant and Fireside Lounge",
+      category: "Restaurant",
+      summary: "Classic Las Vegas lunch or late breakfast stop on the Strip.",
+      address: "2985 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "High Roller",
+      category: "Viewpoint",
+      summary: "Simple timed viewpoint with strong evening skyline value.",
+      address: "3545 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "MGM Grand Monorail Station",
+      category: "Transit",
+      summary: "Useful Las Vegas Monorail connection point for Strip movement.",
+      address: "3799 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "Fremont Street Experience",
+      category: "Evening route",
+      summary: "Downtown evening walk with clear route boundaries.",
+      address: "425 Fremont St, Las Vegas, NV 89101",
     },
   ],
 };
@@ -248,6 +302,8 @@ function getReadableCategory(categories: string[]) {
   const categorySet = new Set(categories);
 
   if (categorySet.has("entertainment.museum")) return "Museum";
+  if ([...categorySet].some((category) => category.startsWith("catering"))) return "Restaurant";
+  if ([...categorySet].some((category) => category.startsWith("public_transport"))) return "Transit";
   if ([...categorySet].some((category) => category.startsWith("tourism.sights"))) return "Sight";
   if ([...categorySet].some((category) => category.startsWith("tourism.attraction"))) return "Attraction";
   return "Local place";

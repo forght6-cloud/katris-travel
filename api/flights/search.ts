@@ -57,6 +57,7 @@ const AIRPORT_CODE_MAP: Record<string, string> = {
   "Hong Kong": "HKG",
   Istanbul: "IST",
   Kyoto: "KIX",
+  "Las Vegas": "LAS",
   Lisbon: "LIS",
   London: "LHR",
   "Los Angeles": "LAX",
