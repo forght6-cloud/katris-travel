@@ -4,6 +4,7 @@ import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
 const aiPlan = readFileSync(new URL("../api/ai/plan.ts", import.meta.url), "utf8");
+const hotelApi = readFileSync(new URL("../api/hotels/search.ts", import.meta.url), "utf8");
 
 assert.match(
   script,
@@ -45,6 +46,12 @@ assert.match(
   script,
   /\/api\/hotels\/search[\s\S]*?limit:\s*8/,
   "Assistant data flow should request 8 hotel options per city.",
+);
+
+assert.match(
+  hotelApi,
+  /manchester:\s*\{\s*lat:\s*53\.4808,\s*lon:\s*-2\.2426\s*\}/,
+  "Manchester hotel searches should resolve to Manchester, UK rather than Manchester, New Hampshire.",
 );
 
 assert.match(
@@ -165,5 +172,16 @@ assert.deepEqual(
   },
   "Assistant prompt parsing should not treat currency labels as destination cities.",
 );
+
+assert.equal(
+  context.getDateAfterDays("2026-06-20", 14),
+  "2026-07-04",
+  "Two-week hotel searches should use the complete stay for checkout.",
+);
+const oneTravelerHotelUrl = new URL(
+  context.buildBookingSearchUrl("Manchester Hotel", "Manchester", "2026-06-20", "2026-07-04", 1),
+);
+assert.equal(oneTravelerHotelUrl.searchParams.get("checkout"), "2026-07-04");
+assert.equal(oneTravelerHotelUrl.searchParams.get("group_adults"), "1");
 
 console.log("assistant contract ok");

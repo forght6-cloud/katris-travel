@@ -784,7 +784,7 @@ async function searchFlights(origin, destination, date) {
   }
 }
 
-async function searchHotels(city, date) {
+async function searchHotels(city, date, checkoutDate = getCheckoutDate(date), adults = Number(appState.planner.people) || 1) {
   const safeDate = date || getFallbackTravelDate();
 
   try {
@@ -796,19 +796,21 @@ async function searchHotels(city, date) {
       body: JSON.stringify({
         city,
         date: safeDate,
+        checkoutDate,
+        adults,
         limit: 8,
       }),
     });
 
     if (!response.ok) {
-      return generateExternalHotelLinks(city, safeDate, "Hotel search temporarily unavailable");
+      return generateExternalHotelLinks(city, safeDate, checkoutDate, adults, "Hotel search temporarily unavailable");
     }
 
     const data = await response.json();
     const hotels = Array.isArray(data.hotels) ? data.hotels : [];
 
     if (!hotels.length) {
-      return generateExternalHotelLinks(city, safeDate, data.warning || "Hotel search returned no results");
+      return generateExternalHotelLinks(city, safeDate, checkoutDate, adults, data.warning || "Hotel search returned no results");
     }
 
     return hotels.map((hotel) => ({
@@ -818,8 +820,9 @@ async function searchHotels(city, date) {
       address: hotel.address || city,
       city,
       date: hotel.date || safeDate,
-      bookingUrl: hotel.bookingUrl || buildBookingSearchUrl(hotel.name, city, safeDate),
-      googleHotelsUrl: hotel.googleHotelsUrl || buildGoogleHotelsUrl(hotel.name, city, safeDate),
+      checkoutDate: hotel.checkoutDate || checkoutDate,
+      bookingUrl: hotel.bookingUrl || buildBookingSearchUrl(hotel.name, city, safeDate, checkoutDate, adults),
+      googleHotelsUrl: hotel.googleHotelsUrl || buildGoogleHotelsUrl(hotel.name, city, safeDate, checkoutDate, adults),
       tripadvisorUrl: hotel.tripadvisorUrl || buildTripadvisorUrl(hotel.name, city),
       mapsUrl: hotel.mapsUrl || buildGoogleMapsSearchUrl(hotel.name, city),
       provider: data.provider || "hotel-search",
@@ -827,11 +830,11 @@ async function searchHotels(city, date) {
     }));
   } catch (error) {
     console.error(error);
-    return generateExternalHotelLinks(city, safeDate, "Hotel search temporarily unavailable");
+    return generateExternalHotelLinks(city, safeDate, checkoutDate, adults, "Hotel search temporarily unavailable");
   }
 }
 
-function generateExternalHotelLinks(city, date, warning = "") {
+function generateExternalHotelLinks(city, date, checkoutDate = getCheckoutDate(date), adults = Number(appState.planner.people) || 1, warning = "") {
   const names = [
     `${city} Central Hotel`,
     `${city} Boutique Stay`,
@@ -850,8 +853,9 @@ function generateExternalHotelLinks(city, date, warning = "") {
     address: city,
     city,
     date,
-    bookingUrl: buildBookingSearchUrl(name, city, date),
-    googleHotelsUrl: buildGoogleHotelsUrl(name, city, date),
+    checkoutDate,
+    bookingUrl: buildBookingSearchUrl(name, city, date, checkoutDate, adults),
+    googleHotelsUrl: buildGoogleHotelsUrl(name, city, date, checkoutDate, adults),
     tripadvisorUrl: buildTripadvisorUrl(name, city),
     mapsUrl: buildGoogleMapsSearchUrl(name, city),
     provider: "fallback",
@@ -859,23 +863,23 @@ function generateExternalHotelLinks(city, date, warning = "") {
   }));
 }
 
-function buildBookingSearchUrl(name, city, date) {
+function buildBookingSearchUrl(name, city, date, checkoutDate = getCheckoutDate(date), adults = Number(appState.planner.people) || 1) {
   const requestUrl = new URL("https://www.booking.com/searchresults.html");
   requestUrl.searchParams.set("ss", `${name}, ${city}`);
   requestUrl.searchParams.set("checkin", date);
-  requestUrl.searchParams.set("checkout", getCheckoutDate(date));
-  requestUrl.searchParams.set("group_adults", String(Number(appState.planner.people) || 2));
+  requestUrl.searchParams.set("checkout", checkoutDate);
+  requestUrl.searchParams.set("group_adults", String(adults));
   requestUrl.searchParams.set("no_rooms", "1");
   requestUrl.searchParams.set("group_children", "0");
   return requestUrl.toString();
 }
 
-function buildGoogleHotelsUrl(name, city, date) {
+function buildGoogleHotelsUrl(name, city, date, checkoutDate = getCheckoutDate(date), adults = Number(appState.planner.people) || 1) {
   const requestUrl = new URL("https://www.google.com/travel/hotels");
   requestUrl.searchParams.set("q", `${name} ${city}`);
   requestUrl.searchParams.set("checkin", date);
-  requestUrl.searchParams.set("checkout", getCheckoutDate(date));
-  requestUrl.searchParams.set("adults", String(Number(appState.planner.people) || 2));
+  requestUrl.searchParams.set("checkout", checkoutDate);
+  requestUrl.searchParams.set("adults", String(adults));
   return requestUrl.toString();
 }
 
@@ -901,13 +905,17 @@ function normalizeVerifiedPlace(place, city, warning = "") {
 }
 
 function getCheckoutDate(checkinDate) {
-  const parsed = new Date(`${checkinDate}T00:00:00Z`);
+  return getDateAfterDays(checkinDate, 1);
+}
+
+function getDateAfterDays(date, days) {
+  const parsed = new Date(`${date}T00:00:00Z`);
 
   if (Number.isNaN(parsed.getTime())) {
-    return checkinDate;
+    return date;
   }
 
-  parsed.setUTCDate(parsed.getUTCDate() + 1);
+  parsed.setUTCDate(parsed.getUTCDate() + Math.max(Number(days) || 1, 1));
   return parsed.toISOString().slice(0, 10);
 }
 
@@ -1170,9 +1178,10 @@ async function analyzeTripPlan(inputText) {
 
   for (let index = 0; index < normalizedStops.length; index += 1) {
     const stop = normalizedStops[index];
-    const hotelOptions = await searchHotels(stop.city, stop.date);
-    const attractionOptions = await searchAttractions(stop.city);
     const stopDayCount = getStopDayCount(totalDays, normalizedStops.length, index);
+    const checkoutDate = getDateAfterDays(stop.date, stopDayCount);
+    const hotelOptions = await searchHotels(stop.city, stop.date, checkoutDate, Number(appState.planner.people) || 1);
+    const attractionOptions = await searchAttractions(stop.city);
     const dayPlanOptions = buildDailyPlan(stop, index, appState.planner.pillars, stopDayCount, dayCursor, attractionOptions, hotelOptions);
     const transportLinks = {
       ...generateTransportLinks(stop.city),
@@ -1317,7 +1326,7 @@ function renderAnalysisResults(result) {
                 <article class="analysis-item hotel-item">
                   <div>
                     <strong>${escapeHtml(hotel.name)}</strong>
-                    <p>${escapeHtml(hotel.rating)} · ${escapeHtml(hotel.date)}${hotel.address ? ` · ${escapeHtml(hotel.address)}` : ""}${hotel.warning ? ` · ${escapeHtml(hotel.warning)}` : ""}</p>
+                    <p>${escapeHtml(hotel.rating)} · ${escapeHtml(hotel.date)}${hotel.checkoutDate ? ` → ${escapeHtml(hotel.checkoutDate)}` : ""}${hotel.address ? ` · ${escapeHtml(hotel.address)}` : ""}${hotel.warning ? ` · ${escapeHtml(hotel.warning)}` : ""}</p>
                   </div>
                   <span>${escapeHtml(hotel.rateLabel || "Search live rates")}</span>
                   <div class="analysis-actions">
@@ -2039,6 +2048,7 @@ function renderAssistantHotels(hotels) {
             <article class="assistant-mini-item">
               <div>
                 <strong>${escapeHtml(hotel.name)}</strong>
+                <p>${escapeHtml(hotel.date)}${hotel.checkoutDate ? ` → ${escapeHtml(hotel.checkoutDate)}` : ""}${hotel.address ? ` · ${escapeHtml(hotel.address)}` : ""}</p>
                 <p>${escapeHtml(formatDataStatus(hotel.provider, "success", hotel.warning))}</p>
               </div>
               <div class="assistant-link-row">

@@ -26,6 +26,7 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   london: { lat: 51.5072, lon: -0.1276 },
   "los angeles": { lat: 34.0522, lon: -118.2437 },
   madrid: { lat: 40.4168, lon: -3.7038 },
+  manchester: { lat: 53.4808, lon: -2.2426 },
   milan: { lat: 45.4642, lon: 9.19 },
   munich: { lat: 48.1351, lon: 11.582 },
   "new york": { lat: 40.7128, lon: -74.006 },
@@ -53,6 +54,7 @@ type HotelResult = {
   address: string;
   city: string;
   date: string;
+  checkoutDate: string;
   bookingUrl: string;
   googleHotelsUrl: string;
   tripadvisorUrl: string;
@@ -99,7 +101,7 @@ async function geocodeCity(city: string) {
   };
 }
 
-async function searchGeoapifyHotels(city: string, date: string, limit: number) {
+async function searchGeoapifyHotels(city: string, date: string, checkoutDate: string, adults: number, limit: number) {
   const apiKey = process.env.GEOAPIFY_PLACES_API_KEY;
 
   if (!apiKey) {
@@ -121,10 +123,10 @@ async function searchGeoapifyHotels(city: string, date: string, limit: number) {
     throw new Error(data?.message || "Geoapify hotel search failed.");
   }
 
-  return normalizeHotels(data?.features || [], city, date, limit);
+  return normalizeHotels(data?.features || [], city, date, checkoutDate, adults, limit);
 }
 
-function normalizeHotels(features: any[], city: string, date: string, limit: number): HotelResult[] {
+function normalizeHotels(features: any[], city: string, date: string, checkoutDate: string, adults: number, limit: number): HotelResult[] {
   const seen = new Set<string>();
   const hotels: HotelResult[] = [];
 
@@ -151,8 +153,9 @@ function normalizeHotels(features: any[], city: string, date: string, limit: num
       address,
       city,
       date,
-      bookingUrl: buildBookingSearchUrl(name, city, date),
-      googleHotelsUrl: buildGoogleHotelsUrl(name, city, date),
+      checkoutDate,
+      bookingUrl: buildBookingSearchUrl(name, city, date, checkoutDate, adults),
+      googleHotelsUrl: buildGoogleHotelsUrl(name, city, date, checkoutDate, adults),
       tripadvisorUrl: buildTripadvisorUrl(name, city),
       mapsUrl: buildMapsUrl(name, lat, lon),
       provider: "geoapify",
@@ -166,13 +169,12 @@ function normalizeHotels(features: any[], city: string, date: string, limit: num
   return hotels;
 }
 
-function buildBookingSearchUrl(name: string, city: string, date: string) {
-  const checkoutDate = getCheckoutDate(date);
+function buildBookingSearchUrl(name: string, city: string, date: string, checkoutDate: string, adults: number) {
   const requestUrl = new URL("https://www.booking.com/searchresults.html");
   requestUrl.searchParams.set("ss", `${name}, ${city}`);
   requestUrl.searchParams.set("checkin", date);
   requestUrl.searchParams.set("checkout", checkoutDate);
-  requestUrl.searchParams.set("group_adults", "2");
+  requestUrl.searchParams.set("group_adults", String(adults));
   requestUrl.searchParams.set("no_rooms", "1");
   requestUrl.searchParams.set("group_children", "0");
   return requestUrl.toString();
@@ -185,13 +187,12 @@ function cleanHotelName(value: string) {
     .filter(Boolean)[0] || "";
 }
 
-function buildGoogleHotelsUrl(name: string, city: string, date: string) {
-  const checkoutDate = getCheckoutDate(date);
+function buildGoogleHotelsUrl(name: string, city: string, date: string, checkoutDate: string, adults: number) {
   const requestUrl = new URL("https://www.google.com/travel/hotels");
   requestUrl.searchParams.set("q", `${name} ${city}`);
   requestUrl.searchParams.set("checkin", date);
   requestUrl.searchParams.set("checkout", checkoutDate);
-  requestUrl.searchParams.set("adults", "2");
+  requestUrl.searchParams.set("adults", String(adults));
   return requestUrl.toString();
 }
 
@@ -218,7 +219,7 @@ function getCheckoutDate(checkinDate: string) {
   return parsed.toISOString().slice(0, 10);
 }
 
-function createFallbackHotels(city: string, date: string): HotelResult[] {
+function createFallbackHotels(city: string, date: string, checkoutDate: string, adults: number): HotelResult[] {
   const names = [
     `${city} Central Hotel`,
     `${city} Boutique Stay`,
@@ -238,8 +239,9 @@ function createFallbackHotels(city: string, date: string): HotelResult[] {
     address: city,
     city,
     date,
-    bookingUrl: buildBookingSearchUrl(name, city, date),
-    googleHotelsUrl: buildGoogleHotelsUrl(name, city, date),
+    checkoutDate,
+    bookingUrl: buildBookingSearchUrl(name, city, date, checkoutDate, adults),
+    googleHotelsUrl: buildGoogleHotelsUrl(name, city, date, checkoutDate, adults),
     tripadvisorUrl: buildTripadvisorUrl(name, city),
     mapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(`${name} ${city}`)}`,
     provider: "fallback",
@@ -255,6 +257,8 @@ export default async function handler(req: any, res: any) {
   const body = req.body || {};
   const city = String(body.city || req.query?.city || "").trim();
   const date = String(body.date || req.query?.date || new Date().toISOString().slice(0, 10));
+  const checkoutDate = String(body.checkoutDate || req.query?.checkoutDate || getCheckoutDate(date));
+  const adults = Math.min(Math.max(Number(body.adults || req.query?.adults || 1) || 1, 1), 8);
   const limit = Math.min(Number(body.limit || req.query?.limit || 5) || 5, 10);
 
   if (!city) {
@@ -263,19 +267,19 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const hotels = await searchGeoapifyHotels(city, date, limit);
+    const hotels = await searchGeoapifyHotels(city, date, checkoutDate, adults, limit);
 
     res.status(200).json({
       provider: "geoapify",
       city,
-      hotels: hotels.length ? hotels : createFallbackHotels(city, date),
+      hotels: hotels.length ? hotels : createFallbackHotels(city, date, checkoutDate, adults),
       warning: hotels.length ? "" : "Geoapify returned no hotels; external search links were generated.",
     });
   } catch (error: any) {
     res.status(200).json({
       provider: "fallback",
       city,
-      hotels: createFallbackHotels(city, date),
+      hotels: createFallbackHotels(city, date, checkoutDate, adults),
       warning: error?.message || "Hotel search failed; external search links were generated.",
     });
   }

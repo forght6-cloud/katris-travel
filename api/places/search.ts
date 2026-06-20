@@ -34,6 +34,7 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   london: { lat: 51.5072, lon: -0.1276 },
   "los angeles": { lat: 34.0522, lon: -118.2437 },
   madrid: { lat: 40.4168, lon: -3.7038 },
+  manchester: { lat: 53.4808, lon: -2.2426 },
   milan: { lat: 45.4642, lon: 9.19 },
   munich: { lat: 48.1351, lon: 11.582 },
   "new york": { lat: 40.7128, lon: -74.006 },
