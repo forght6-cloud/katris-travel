@@ -2,6 +2,7 @@ declare const process: { env: Record<string, string | undefined> };
 
 const GEOAPIFY_GEOCODING_URL = "https://api.geoapify.com/v1/geocode/search";
 const GEOAPIFY_PLACES_URL = "https://api.geoapify.com/v2/places";
+const HASDATA_GOOGLE_HOTELS_URL = "https://api.hasdata.com/scrape/google/hotels";
 const HOTEL_CATEGORIES = "accommodation.hotel,accommodation.apartment,accommodation.guest_house";
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
@@ -61,6 +62,123 @@ type HotelResult = {
   mapsUrl: string;
   provider: string;
 };
+
+async function searchHasDataHotels(
+  apiKey: string,
+  city: string,
+  date: string,
+  checkoutDate: string,
+  adults: number,
+  limit: number,
+) {
+  const requestUrl = new URL(HASDATA_GOOGLE_HOTELS_URL);
+  requestUrl.searchParams.set("q", `Hotels in ${city}`);
+  requestUrl.searchParams.set("checkInDate", date);
+  requestUrl.searchParams.set("checkOutDate", checkoutDate);
+
+  const response = await fetch(requestUrl.toString(), {
+    headers: {
+      "x-api-key": apiKey,
+    },
+  });
+  const responseText = await response.text();
+
+  if (!responseText.trim()) {
+    throw new Error("HasData returned an empty hotel response.");
+  }
+
+  let data: any;
+
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error("HasData returned an unreadable hotel response.");
+  }
+
+  if (!response.ok || data.error || data.requestMetadata?.status === "error") {
+    throw new Error(`HasData hotel search error: ${JSON.stringify(data.error || data.requestMetadata || data)}`);
+  }
+
+  return normalizeHasDataHotels(data, city, date, checkoutDate, adults, limit);
+}
+
+function normalizeHasDataHotels(
+  data: any,
+  city: string,
+  date: string,
+  checkoutDate: string,
+  adults: number,
+  limit: number,
+): HotelResult[] {
+  const candidates = [
+    data?.properties,
+    data?.hotels,
+    data?.results,
+    data?.propertyResults,
+    data?.searchResults,
+    data?.accommodations,
+  ].find((value) => Array.isArray(value)) || [];
+  const seen = new Set<string>();
+  const hotels: HotelResult[] = [];
+
+  for (const candidate of candidates) {
+    const name = cleanHotelName(candidate?.name || candidate?.title || candidate?.propertyName || candidate?.hotelName);
+    const key = name.toLowerCase();
+
+    if (!name || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    const nightlyPrice = getPriceLabel(candidate?.ratePerNight || candidate?.rate_per_night || candidate?.nightlyPrice);
+    const totalPrice = getPriceLabel(candidate?.totalRate || candidate?.total_rate || candidate?.totalPrice);
+    const priceLabel = nightlyPrice
+      ? `${nightlyPrice} / night`
+      : totalPrice
+        ? `${totalPrice} total`
+        : getPriceLabel(candidate?.price) || "Check live price";
+    const ratingValue = candidate?.overallRating || candidate?.overall_rating || candidate?.rating;
+    const address = String(candidate?.address || candidate?.location?.address || candidate?.location || city);
+    const directLink = candidate?.link || candidate?.bookingUrl || candidate?.booking_url || candidate?.website || "";
+    const coordinates = candidate?.gpsCoordinates || candidate?.gps_coordinates || candidate?.coordinates || {};
+    const latitude = Number(coordinates.latitude || coordinates.lat || 0);
+    const longitude = Number(coordinates.longitude || coordinates.lng || coordinates.lon || 0);
+
+    hotels.push({
+      id: String(candidate?.propertyToken || candidate?.property_token || candidate?.id || `hasdata-${key}-${hotels.length + 1}`),
+      name,
+      rating: ratingValue ? `${ratingValue} / 5` : "Google Hotels rating",
+      rateLabel: priceLabel,
+      address,
+      city,
+      date,
+      checkoutDate,
+      bookingUrl: directLink || buildBookingSearchUrl(name, city, date, checkoutDate, adults),
+      googleHotelsUrl: buildGoogleHotelsUrl(name, city, date, checkoutDate, adults),
+      tripadvisorUrl: buildTripadvisorUrl(name, city),
+      mapsUrl: buildMapsUrl(name, latitude, longitude),
+      provider: "hasdata",
+    });
+
+    if (hotels.length >= limit) {
+      break;
+    }
+  }
+
+  return hotels;
+}
+
+function getPriceLabel(value: any) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+
+  return String(value.lowest || value.extractedLowest || value.extracted_lowest || value.beforeTaxesFees || value.before_taxes_fees || value.value || "");
+}
 
 async function geocodeCity(city: string) {
   const knownCenter = CITY_CENTER_MAP[city.trim().toLowerCase()];
@@ -267,13 +385,40 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const providerWarnings: string[] = [];
+    const hasDataApiKey = process.env.HASDATA_API_KEY;
+
+    if (hasDataApiKey) {
+      try {
+        const hasDataHotels = await searchHasDataHotels(hasDataApiKey, city, date, checkoutDate, adults, limit);
+
+        if (hasDataHotels.length) {
+          res.status(200).json({
+            provider: "hasdata",
+            city,
+            hotels: hasDataHotels,
+            warning: "Live hotel rates from Google Hotels via HasData; final inventory is confirmed by the booking provider.",
+          });
+          return;
+        }
+
+        providerWarnings.push("HasData returned no hotel properties.");
+      } catch (error: any) {
+        providerWarnings.push(error?.message || "HasData hotel search failed.");
+      }
+    } else {
+      providerWarnings.push("HasData hotel key is not configured.");
+    }
+
     const hotels = await searchGeoapifyHotels(city, date, checkoutDate, adults, limit);
 
     res.status(200).json({
       provider: "geoapify",
       city,
       hotels: hotels.length ? hotels : createFallbackHotels(city, date, checkoutDate, adults),
-      warning: hotels.length ? "" : "Geoapify returned no hotels; external search links were generated.",
+      warning: hotels.length
+        ? providerWarnings.join(" ")
+        : [...providerWarnings, "Geoapify returned no hotels; external search links were generated."].join(" "),
     });
   } catch (error: any) {
     res.status(200).json({

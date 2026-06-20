@@ -55,6 +55,18 @@ assert.match(
 );
 
 assert.match(
+  hotelApi,
+  /api\.hasdata\.com\/scrape\/google\/hotels/,
+  "Hotel searches should use the existing HasData account for live Google Hotels pricing.",
+);
+
+assert.match(
+  hotelApi,
+  /provider:\s*"hasdata"/,
+  "Live HasData hotel results should be labeled transparently.",
+);
+
+assert.match(
   script,
   /\/api\/places\/search[\s\S]*?limit:\s*8/,
   "Assistant data flow should request 8 place options per city.",
