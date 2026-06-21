@@ -2,6 +2,8 @@ declare const process: { env: Record<string, string | undefined> };
 
 const GEOAPIFY_GEOCODING_URL = "https://api.geoapify.com/v1/geocode/search";
 const GEOAPIFY_PLACES_URL = "https://api.geoapify.com/v2/places";
+const APIFY_BOOKING_ACTOR_ID = "oeiQgfg5fsmIJB7Cn";
+const APIFY_API_BASE_URL = "https://api.apify.com/v2";
 const HASDATA_GOOGLE_HOTELS_URL = "https://api.hasdata.com/scrape/google/hotels";
 const HOTEL_CATEGORIES = "accommodation.hotel,accommodation.apartment,accommodation.guest_house";
 
@@ -62,6 +64,134 @@ type HotelResult = {
   mapsUrl: string;
   provider: string;
 };
+
+async function searchApifyHotels(
+  apiToken: string,
+  city: string,
+  date: string,
+  checkoutDate: string,
+  adults: number,
+  limit: number,
+) {
+  const actorId = process.env.APIFY_BOOKING_ACTOR_ID || APIFY_BOOKING_ACTOR_ID;
+  const requestUrl = new URL(`${APIFY_API_BASE_URL}/acts/${actorId}/run-sync-get-dataset-items`);
+  requestUrl.searchParams.set("timeout", "90");
+  requestUrl.searchParams.set("memory", "4096");
+
+  const response = await fetch(requestUrl.toString(), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      search: city,
+      maxItems: limit,
+      extractAdditionalHotelData: false,
+      propertyType: "Hotels",
+      sortBy: "review_score_and_price",
+      currency: "EUR",
+      language: "en-gb",
+      checkIn: date,
+      checkOut: checkoutDate,
+      flexWindow: "0",
+      rooms: 1,
+      adults,
+      children: 0,
+      minMaxPrice: "0-999999",
+    }),
+  });
+  const responseText = await response.text();
+
+  if (!responseText.trim()) {
+    throw new Error("Apify returned an empty Booking response.");
+  }
+
+  let data: any;
+
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error("Apify returned an unreadable Booking response.");
+  }
+
+  if (!response.ok || data?.error) {
+    throw new Error(`Apify Booking search error: ${JSON.stringify(data?.error || data)}`);
+  }
+
+  return normalizeApifyHotels(Array.isArray(data) ? data : data?.items || [], city, date, checkoutDate, adults, limit);
+}
+
+function normalizeApifyHotels(
+  items: any[],
+  city: string,
+  date: string,
+  checkoutDate: string,
+  adults: number,
+  limit: number,
+): HotelResult[] {
+  const seen = new Set<string>();
+  const hotels: HotelResult[] = [];
+
+  for (const item of items) {
+    const name = cleanHotelName(item?.name || item?.title);
+    const key = name.toLowerCase();
+
+    if (!name || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    const currency = String(item?.currency || item?.rooms?.[0]?.currency || "EUR");
+    const price = Number(item?.price || item?.rooms?.find((room: any) => room?.available)?.price || 0);
+    const rating = Number(item?.rating || 0);
+    const address = String(item?.address?.full || item?.address || city);
+    const latitude = Number(item?.location?.lat || item?.latitude || 0);
+    const longitude = Number(item?.location?.lng || item?.longitude || 0);
+    const bookingUrl = String(item?.url || buildBookingSearchUrl(name, city, date, checkoutDate, adults));
+
+    hotels.push({
+      id: String(item?.id || item?.hotelId || item?.order || `apify-${key}-${hotels.length + 1}`),
+      name,
+      rating: rating ? `${rating} / 10${item?.ratingLabel ? ` · ${item.ratingLabel}` : ""}` : "Booking rating",
+      rateLabel: price ? `${formatHotelPrice(price, currency)} total` : "Check live price",
+      address,
+      city,
+      date,
+      checkoutDate,
+      bookingUrl,
+      googleHotelsUrl: buildGoogleHotelsUrl(name, city, date, checkoutDate, adults),
+      tripadvisorUrl: buildTripadvisorUrl(name, city),
+      mapsUrl: buildMapsUrl(name, latitude, longitude),
+      provider: "apify-booking",
+    });
+
+    if (hotels.length >= limit) {
+      break;
+    }
+  }
+
+  return hotels;
+}
+
+function formatHotelPrice(price: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: normalizeCurrencyCode(currency),
+      maximumFractionDigits: 0,
+    }).format(price);
+  } catch {
+    return `${currency} ${Math.round(price)}`;
+  }
+}
+
+function normalizeCurrencyCode(currency: string) {
+  const normalized = currency.toUpperCase().replace(/[^A-Z]/g, "");
+  if (normalized === "US" || normalized === "USDOLLAR") return "USD";
+  if (normalized === "EURO") return "EUR";
+  return normalized.length === 3 ? normalized : "EUR";
+}
 
 async function searchHasDataHotels(
   apiKey: string,
@@ -386,7 +516,30 @@ export default async function handler(req: any, res: any) {
 
   try {
     const providerWarnings: string[] = [];
+    const apifyToken = process.env.APIFY_TOKEN;
     const hasDataApiKey = process.env.HASDATA_API_KEY;
+
+    if (apifyToken) {
+      try {
+        const apifyHotels = await searchApifyHotels(apifyToken, city, date, checkoutDate, adults, limit);
+
+        if (apifyHotels.length) {
+          res.status(200).json({
+            provider: "apify-booking",
+            city,
+            hotels: apifyHotels,
+            warning: "Live Booking.com prices via Apify; final inventory and payment are confirmed by Booking.com.",
+          });
+          return;
+        }
+
+        providerWarnings.push("Apify returned no Booking.com properties.");
+      } catch (error: any) {
+        providerWarnings.push(error?.message || "Apify Booking search failed.");
+      }
+    } else {
+      providerWarnings.push("Apify token is not configured.");
+    }
 
     if (hasDataApiKey) {
       try {

@@ -62,6 +62,18 @@ assert.match(
 
 assert.match(
   hotelApi,
+  /api\.apify\.com\/v2/,
+  "Hotel searches should use Apify Booking as the primary live hotel provider.",
+);
+
+assert.match(
+  hotelApi,
+  /provider:\s*"apify-booking"/,
+  "Live Apify Booking results should be labeled transparently.",
+);
+
+assert.match(
+  hotelApi,
   /provider:\s*"hasdata"/,
   "Live HasData hotel results should be labeled transparently.",
 );
