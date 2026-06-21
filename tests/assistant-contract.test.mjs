@@ -109,6 +109,12 @@ assert.doesNotMatch(
   "Geoapify place searches must not use the unsupported public_transport.station category.",
 );
 
+assert.match(
+  placesApi,
+  /Manchester Art Gallery[\s\S]*?Mosley Street, Manchester, M2 3JL[\s\S]*?Manchester Piccadilly Station/,
+  "Manchester plans should prioritize a verified set of real attractions and transport anchors.",
+);
+
 const context = {
   document: { addEventListener() {} },
   console,

@@ -52,6 +52,56 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
 };
 
 const VERIFIED_CITY_PLACES: Record<string, Array<Omit<NormalizedPlace, "id" | "mapsUrl">>> = {
+  manchester: [
+    {
+      name: "Manchester Art Gallery",
+      category: "Museum",
+      summary: "Central collection spanning historic painting, decorative arts, and contemporary exhibitions.",
+      address: "Mosley Street, Manchester, M2 3JL, United Kingdom",
+    },
+    {
+      name: "Science and Industry Museum",
+      category: "Museum",
+      summary: "Manchester's industrial history presented on the former Liverpool Road station site.",
+      address: "Liverpool Road, Manchester, M3 4FP, United Kingdom",
+    },
+    {
+      name: "Manchester Cathedral",
+      category: "Architecture",
+      summary: "A medieval city landmark that anchors a walk through Manchester's historic core.",
+      address: "Victoria Street, Manchester, M3 1SX, United Kingdom",
+    },
+    {
+      name: "National Football Museum",
+      category: "Museum",
+      summary: "A focused cultural stop covering English football history and supporter culture.",
+      address: "Todd Street, Manchester, M4 3BG, United Kingdom",
+    },
+    {
+      name: "People's History Museum",
+      category: "Museum",
+      summary: "Social-history galleries centered on working lives, democracy, and civic movements.",
+      address: "Left Bank, Spinningfields, Manchester, M3 3ER, United Kingdom",
+    },
+    {
+      name: "Mackie Mayor",
+      category: "Restaurant",
+      summary: "A restored market hall with several independent food counters for a flexible lunch stop.",
+      address: "1 Eagle Street, Manchester, M4 5BU, United Kingdom",
+    },
+    {
+      name: "Manchester Victoria Station",
+      category: "Transit",
+      summary: "Main rail and tram interchange beside the cathedral and National Football Museum.",
+      address: "Victoria Station Approach, Manchester, M3 1NZ, United Kingdom",
+    },
+    {
+      name: "Manchester Piccadilly Station",
+      category: "Transit",
+      summary: "Manchester's principal intercity rail station and a practical city-center arrival anchor.",
+      address: "Piccadilly Station, Manchester, M60 7RA, United Kingdom",
+    },
+  ],
   "new york": [
     {
       name: "The Metropolitan Museum of Art",
