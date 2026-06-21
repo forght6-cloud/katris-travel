@@ -91,6 +91,18 @@ assert.match(
   "Geoapify place searches should request its supported public transport category.",
 );
 
+assert.match(
+  placesApi,
+  /Promise\.allSettled\(searches\)/,
+  "A failed Geoapify category group should not discard valid results from other groups.",
+);
+
+assert.match(
+  placesApi,
+  /attractionLimit[\s\S]*?diningLimit[\s\S]*?transitLimit/,
+  "Geoapify results should reserve space for attractions, dining, and transit.",
+);
+
 assert.doesNotMatch(
   placesApi,
   /public_transport\.station/,

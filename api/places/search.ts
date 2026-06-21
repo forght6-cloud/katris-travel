@@ -2,14 +2,11 @@ declare const process: { env: Record<string, string | undefined> };
 
 const GEOAPIFY_GEOCODING_URL = "https://api.geoapify.com/v1/geocode/search";
 const GEOAPIFY_PLACES_URL = "https://api.geoapify.com/v2/places";
-const DEFAULT_CATEGORIES = [
-  "tourism.sights",
-  "tourism.attraction",
-  "entertainment.museum",
-  "catering.restaurant",
-  "catering.food_court",
-  "public_transport",
-].join(",");
+const CATEGORY_GROUPS = {
+  attractions: "tourism.sights,tourism.attraction,entertainment.museum",
+  dining: "catering.restaurant,catering.food_court",
+  transit: "public_transport",
+};
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   amsterdam: { lat: 52.3676, lon: 4.9041 },
@@ -243,11 +240,42 @@ async function searchGeoapifyPlaces(city: string, limit: number) {
   }
 
   const center = await geocodeCity(city);
+  const attractionLimit = Math.max(1, Math.ceil(limit * 0.5));
+  const diningLimit = limit >= 3 ? Math.max(1, Math.floor(limit * 0.25)) : 0;
+  const transitLimit = Math.max(0, limit - attractionLimit - diningLimit);
+  const searches = [
+    searchGeoapifyCategoryGroup(CATEGORY_GROUPS.attractions, center, attractionLimit, apiKey),
+    diningLimit
+      ? searchGeoapifyCategoryGroup(CATEGORY_GROUPS.dining, center, diningLimit, apiKey)
+      : Promise.resolve([]),
+    transitLimit
+      ? searchGeoapifyCategoryGroup(CATEGORY_GROUPS.transit, center, transitLimit, apiKey)
+      : Promise.resolve([]),
+  ];
+  const results = await Promise.allSettled(searches);
+  const places = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+
+  if (!places.length) {
+    const firstFailure = results.find((result) => result.status === "rejected");
+    throw firstFailure?.status === "rejected"
+      ? firstFailure.reason
+      : new Error("Geoapify returned no places for this city.");
+  }
+
+  return places.slice(0, limit);
+}
+
+async function searchGeoapifyCategoryGroup(
+  categories: string,
+  center: { lat: number; lon: number },
+  limit: number,
+  apiKey: string,
+) {
   const requestUrl = new URL(GEOAPIFY_PLACES_URL);
-  requestUrl.searchParams.set("categories", DEFAULT_CATEGORIES);
+  requestUrl.searchParams.set("categories", categories);
   requestUrl.searchParams.set("filter", `circle:${center.lon},${center.lat},14000`);
   requestUrl.searchParams.set("bias", `proximity:${center.lon},${center.lat}`);
-  requestUrl.searchParams.set("limit", String(Math.max(limit * 2, 12)));
+  requestUrl.searchParams.set("limit", String(Math.max(limit * 3, 6)));
   requestUrl.searchParams.set("apiKey", apiKey);
 
   const response = await fetch(requestUrl.toString());
