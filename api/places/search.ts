@@ -8,7 +8,7 @@ const DEFAULT_CATEGORIES = [
   "entertainment.museum",
   "catering.restaurant",
   "catering.food_court",
-  "public_transport.station",
+  "public_transport",
 ].join(",");
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {

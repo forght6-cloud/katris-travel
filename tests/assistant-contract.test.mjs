@@ -5,6 +5,7 @@ import vm from "node:vm";
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
 const aiPlan = readFileSync(new URL("../api/ai/plan.ts", import.meta.url), "utf8");
 const hotelApi = readFileSync(new URL("../api/hotels/search.ts", import.meta.url), "utf8");
+const placesApi = readFileSync(new URL("../api/places/search.ts", import.meta.url), "utf8");
 
 assert.match(
   script,
@@ -82,6 +83,18 @@ assert.match(
   script,
   /\/api\/places\/search[\s\S]*?limit:\s*8/,
   "Assistant data flow should request 8 place options per city.",
+);
+
+assert.match(
+  placesApi,
+  /"public_transport"/,
+  "Geoapify place searches should request its supported public transport category.",
+);
+
+assert.doesNotMatch(
+  placesApi,
+  /public_transport\.station/,
+  "Geoapify place searches must not use the unsupported public_transport.station category.",
 );
 
 const context = {
