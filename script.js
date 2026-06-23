@@ -1,3 +1,9 @@
+const API_BASE_URL = "http://localhost:4000";
+
+function apiUrl(path) {
+  return `${API_BASE_URL}${path}`;
+}
+
 const INITIAL_ASSISTANT_MESSAGE = {
   role: "assistant",
   content:
@@ -119,6 +125,7 @@ const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant
 function initializeHomepage() {
   bindScrollButtons();
   bindPaginationNavigation();
+  bindOverviewDoubleClick();
   bindDestinationCards();
   bindPlannerForm();
   bindAssistant();
@@ -134,6 +141,18 @@ function bindScrollButtons() {
       const target = document.querySelector(button.dataset.scrollTarget);
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  });
+}
+
+function bindOverviewDoubleClick() {
+  const overview = document.getElementById("overview");
+
+  overview?.addEventListener("dblclick", (event) => {
+    if (event.target.closest("button, a, input, select, textarea, label")) {
+      return;
+    }
+
+    scrollToSection("#destinations");
   });
 }
 
@@ -458,7 +477,7 @@ async function searchFlights(origin, destination, date) {
   }
 
   try {
-    const response = await fetch("/api/flights/search", {
+    const response = await fetch(apiUrl("/api/amadeus"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -530,7 +549,7 @@ async function searchHotels(city, date) {
   const safeDate = date || getFallbackTravelDate();
 
   try {
-    const response = await fetch("/api/hotels/search", {
+    const response = await fetch(apiUrl("/api/booking"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -639,7 +658,7 @@ function getCheckoutDate(checkinDate) {
 
 async function searchAttractions(city) {
   try {
-    const response = await fetch("/api/places/search", {
+    const response = await fetch(apiUrl("/api/google-places"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1156,7 +1175,7 @@ function getPlannerPayload() {
 }
 
 async function requestAiPlan(state) {
-  const response = await fetch("/api/ai/plan", {
+  const response = await fetch(apiUrl("/api/generate-plan"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
