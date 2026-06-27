@@ -1,2 +1,4 @@
 .vercel
 .gstack/
+.env
+.env.local

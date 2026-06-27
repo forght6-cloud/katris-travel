@@ -286,6 +286,7 @@ const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant
 function initializeHomepage() {
   appState.currentSectionIndex = getInitialSectionIndex();
   bindScrollButtons();
+  bindOverviewDoubleClick();
   bindAnchorNavigation();
   bindSectionTracking();
   bindDestinationCards();
@@ -304,6 +305,14 @@ function bindScrollButtons() {
     button.addEventListener("click", () => {
       navigateToSection(button.dataset.scrollTarget);
     });
+  });
+}
+
+function bindOverviewDoubleClick() {
+  const overview = document.getElementById("overview");
+
+  overview?.addEventListener("dblclick", () => {
+    navigateToSection("#planner");
   });
 }
 
@@ -713,7 +722,7 @@ async function searchFlights(origin, destination, date) {
   }
 
   try {
-    const response = await fetch("/api/flights/search", {
+    const response = await fetch("/api/amadeus", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -788,7 +797,7 @@ async function searchHotels(city, date, checkoutDate = getCheckoutDate(date), ad
   const safeDate = date || getFallbackTravelDate();
 
   try {
-    const response = await fetch("/api/hotels/search", {
+    const response = await fetch("/api/booking", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -921,7 +930,7 @@ function getDateAfterDays(date, days) {
 
 async function searchAttractions(city) {
   try {
-    const response = await fetch("/api/places/search", {
+    const response = await fetch("/api/google-places", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1695,7 +1704,7 @@ function getPlannerPayload() {
 }
 
 async function requestAiPlan(state) {
-  const response = await fetch("/api/ai/plan", {
+  const response = await fetch("/api/generate-plan", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

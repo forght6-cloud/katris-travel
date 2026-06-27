@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
-const aiPlan = readFileSync(new URL("../api/ai/plan.ts", import.meta.url), "utf8");
-const hotelApi = readFileSync(new URL("../api/hotels/search.ts", import.meta.url), "utf8");
-const placesApi = readFileSync(new URL("../api/places/search.ts", import.meta.url), "utf8");
+const generatePlanApi = readFileSync(new URL("../api/generate-plan.js", import.meta.url), "utf8");
+const amadeusApi = readFileSync(new URL("../api/amadeus.js", import.meta.url), "utf8");
+const googlePlacesApi = readFileSync(new URL("../api/google-places.js", import.meta.url), "utf8");
+const bookingApi = readFileSync(new URL("../api/booking.js", import.meta.url), "utf8");
+const tripcomApi = readFileSync(new URL("../api/tripcom.js", import.meta.url), "utf8");
 
 assert.match(
   script,
@@ -32,88 +34,94 @@ assert.match(
 );
 
 assert.match(
-  aiPlan,
-  /messages:\s*\[\s*\{[\s\S]*?role:\s*"system"[\s\S]*?\},\s*\{[\s\S]*?role:\s*"user"/,
-  "AI provider calls should send separate system and user messages.",
+  generatePlanApi,
+  /role:\s*"system"[\s\S]*role:\s*"user"/,
+  "Generate-plan should send separate system and user messages to OpenAI.",
 );
 
 assert.match(
-  aiPlan,
+  generatePlanApi,
   /at least 8 hotels and 8 attractions/,
   "Strong assistant template should require richer hotel and place coverage.",
 );
 
 assert.match(
   script,
-  /\/api\/hotels\/search[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 hotel options per city.",
+  /fetch\("\/api\/booking"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 hotel options per city from the relative booking endpoint.",
 );
 
 assert.match(
-  hotelApi,
-  /manchester:\s*\{\s*lat:\s*53\.4808,\s*lon:\s*-2\.2426\s*\}/,
-  "Manchester hotel searches should resolve to Manchester, UK rather than Manchester, New Hampshire.",
+  bookingApi,
+  /placeholder/i,
+  "Booking route should currently be a placeholder route.",
 );
 
 assert.match(
-  hotelApi,
-  /api\.hasdata\.com\/scrape\/google\/hotels/,
-  "Hotel searches should use the existing HasData account for live Google Hotels pricing.",
-);
-
-assert.match(
-  hotelApi,
-  /api\.apify\.com\/v2/,
-  "Hotel searches should use Apify Booking as the primary live hotel provider.",
-);
-
-assert.match(
-  hotelApi,
-  /provider:\s*"apify-booking"/,
-  "Live Apify Booking results should be labeled transparently.",
-);
-
-assert.match(
-  hotelApi,
-  /provider:\s*"hasdata"/,
-  "Live HasData hotel results should be labeled transparently.",
+  tripcomApi,
+  /placeholder/i,
+  "Trip.com route should currently be a placeholder route.",
 );
 
 assert.match(
   script,
-  /\/api\/places\/search[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 place options per city.",
+  /fetch\("\/api\/google-places"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 place options per city from the local backend.",
 );
 
 assert.match(
-  placesApi,
-  /"public_transport"/,
-  "Geoapify place searches should request its supported public transport category.",
+  script,
+  /fetch\("\/api\/amadeus"/,
+  "Flight searches should go through the relative Amadeus endpoint.",
 );
 
 assert.match(
-  placesApi,
-  /Promise\.allSettled\(searches\)/,
-  "A failed Geoapify category group should not discard valid results from other groups.",
+  script,
+  /fetch\("\/api\/generate-plan"/,
+  "AI plan generation should go through the relative generate-plan endpoint.",
 );
 
 assert.match(
-  placesApi,
-  /attractionLimit[\s\S]*?diningLimit[\s\S]*?transitLimit/,
-  "Geoapify results should reserve space for attractions, dining, and transit.",
-);
-
-assert.doesNotMatch(
-  placesApi,
-  /public_transport\.station/,
-  "Geoapify place searches must not use the unsupported public_transport.station category.",
+  script,
+  /addEventListener\("dblclick"[\s\S]*?navigateToSection\("#planner"/,
+  "The landing page should support a double-click path into the planner section.",
 );
 
 assert.match(
-  placesApi,
-  /Manchester Art Gallery[\s\S]*?Mosley Street, Manchester, M2 3JL[\s\S]*?Manchester Piccadilly Station/,
-  "Manchester plans should prioritize a verified set of real attractions and transport anchors.",
+  googlePlacesApi,
+  /placeholder/i,
+  "Google places route should currently be a placeholder route.",
 );
+
+assert.match(
+  amadeusApi,
+  /oauth2\/token/,
+  "Amadeus route should request an OAuth token before searching flights.",
+);
+
+assert.match(
+  amadeusApi,
+  /flight-offers/,
+  "Amadeus route should call Flight Offers Search.",
+);
+
+assert.match(
+  generatePlanApi,
+  /api\.openai\.com/,
+  "Generate-plan route should call OpenAI from the server.",
+);
+
+assert.ok(
+  existsSync(new URL("../api/generate-plan.js", import.meta.url)),
+  "generate-plan.js should exist in the api root.",
+);
+assert.ok(existsSync(new URL("../api/amadeus.js", import.meta.url)), "amadeus.js should exist in the api root.");
+assert.ok(
+  existsSync(new URL("../api/google-places.js", import.meta.url)),
+  "google-places.js should exist in the api root.",
+);
+assert.ok(existsSync(new URL("../api/booking.js", import.meta.url)), "booking.js should exist in the api root.");
+assert.ok(existsSync(new URL("../api/tripcom.js", import.meta.url)), "tripcom.js should exist in the api root.");
 
 const context = {
   document: { addEventListener() {} },
