@@ -959,6 +959,36 @@ assert.match(
   "The assistant sidebar should summarize booking progress and re-selection warnings.",
 );
 
+const printableRecommendedExecutionPath = JSON.parse(
+  JSON.stringify(context.deriveRecommendedExecutionPath({
+    stops: [{ city: "New York", date: "2026-08-12" }],
+    dailyPlans: effortAnalysisBase.dailyPlans,
+    tripEffort: redEyeSelectedEffort,
+    bookingChecklist: confirmedChecklist,
+    flightDecisions: flightDecisionsWithBudget,
+  }, {
+    from: "Los Angeles",
+    to: "New York",
+    date: "2026-08-12",
+    people: 1,
+    budget: "1000 USD",
+    notes: "不要红眼航班",
+  }, selectedFlights)),
+);
+assert.equal(printableRecommendedExecutionPath.status, "ready");
+assert.equal(printableRecommendedExecutionPath.statusLabel, "等待确认");
+assert.match(
+  printableRecommendedExecutionPath.summary,
+  /尚未完成购买确认|等待用户确认/i,
+  "Recommended execution path should be explicitly framed as pending user confirmation.",
+);
+const executionPathMarkup = context.renderRecommendedExecutionPath(printableRecommendedExecutionPath);
+assert.match(
+  executionPathMarkup,
+  /推荐执行方案|等待确认|尚未完成购买确认/i,
+  "Recommended execution path UI should not imply the system has already confirmed or purchased items.",
+);
+
 const derivedTravelAssistant = JSON.parse(
   JSON.stringify(
     context.deriveTravelAssistantState(
@@ -1093,7 +1123,7 @@ const printDocumentHtml = context.renderFinalTravelPrintDocument({
 
 assert.match(
   printDocumentHtml,
-  /Katris Merrio AI Trip Studio|Final Travel Execution Plan|Draft|每日行程|已选择航班|预订清单|旅行消耗力分析|重要提醒/i,
+  /Katris Merrio AI Trip Studio|Final Travel Execution Plan|Draft|每日行程|推荐执行方案|已选择航班|预订清单|旅行消耗力分析|重要提醒/i,
   "The print document should include the required execution-plan sections and Draft marker.",
 );
 assert.match(

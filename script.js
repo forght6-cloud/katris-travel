@@ -2050,10 +2050,18 @@ function invalidateAnalysisIfPlannerChanged(previousSignature, plannerState = ap
   }
 
   appState.analysis.isStale = true;
+  appState.analysis.staleMessage = "当前推荐已过期，请重新分析后再继续确认。";
   appState.selectedFlights = {};
   appState.bookingChecklist = { items: [] };
+  appState.travelAssistant = createDefaultTravelAssistantState();
   appState.analysis.selectedFlights = {};
   appState.analysis.bookingChecklist = appState.bookingChecklist;
+  appState.analysis.travelAssistant = appState.travelAssistant;
+  appState.analysis.tripEffort = null;
+  appState.analysis.recommendedExecutionPath = {
+    ...(appState.analysis.recommendedExecutionPath || deriveRecommendedExecutionPath(appState.analysis, plannerState, appState.selectedFlights)),
+    status: "stale",
+  };
   appState.pdfExport = { lastGeneratedAt: "", wasDraft: false };
   syncTravelAssistantState();
   renderAnalysisResults(appState.analysis);
@@ -2137,6 +2145,10 @@ function deriveRecommendedExecutionPath(analysis = {}, plannerState = appState.p
   return {
     status: isAnalysisStaleForPlanner(analysis, plannerState) || analysis.isStale ? "stale" : "ready",
     title: "推荐执行方案",
+    statusLabel: isAnalysisStaleForPlanner(analysis, plannerState) || analysis.isStale ? "已过期，需要重新分析" : "等待确认",
+    summary: isAnalysisStaleForPlanner(analysis, plannerState) || analysis.isStale
+      ? "行程条件已变化，旧推荐路径已失效。"
+      : "系统推荐，尚未完成购买确认。",
     plannerSignature: analysis.plannerSignature || createPlannerSignature(plannerState),
     budgetFeasibility,
     flightSelections,
@@ -2155,6 +2167,8 @@ function resolveRecommendedExecutionPathForRender(analysis = {}, plannerState = 
     return {
       ...path,
       status: "stale",
+      statusLabel: "已过期，需要重新分析",
+      summary: "行程条件已变化，旧推荐路径已失效。",
     };
   }
 
@@ -2947,6 +2961,7 @@ function deriveTravelAssistantMessages({
   const messages = [];
   const tripEffort = analysis?.tripEffort || null;
   const dailyPlans = analysis?.dailyPlans || [];
+  const recommendedExecutionPath = analysis?.recommendedExecutionPath || (analysis ? deriveRecommendedExecutionPath(analysis, planner, selectedFlights) : null);
   const travelerProfile = parseEffortTravelerProfile(planner?.notes || "", planner?.confirmedPreferences?.pace || appState.preferences?.answers?.pace || "");
   const pushMessage = (message) => {
     if (!message?.messageId || messages.some((item) => item.messageId === message.messageId)) {
@@ -2954,6 +2969,24 @@ function deriveTravelAssistantMessages({
     }
     messages.push(message);
   };
+
+  if (recommendedExecutionPath?.status === "stale") {
+    pushMessage(createTravelAssistantMessage({
+      messageId: buildTravelAssistantMessageId("warning", "stale-route"),
+      type: "warning",
+      title: "旧推荐路径已失效",
+      body: "行程条件已变化，旧推荐路径已失效。请重新分析后再继续确认或购买。",
+      priority: "high",
+    }));
+  } else if (recommendedExecutionPath) {
+    pushMessage(createTravelAssistantMessage({
+      messageId: buildTravelAssistantMessageId("reminder", "recommended-path-pending"),
+      type: "reminder",
+      title: "推荐路径等待确认",
+      body: "系统已给出推荐执行方案，但这些项目仍需你确认或购买后才算完成。",
+      priority: "medium",
+    }));
+  }
 
   Object.values(selectedFlights || {}).forEach((entry) => {
     const offer = entry?.selectedFlightOffer;
@@ -3330,6 +3363,43 @@ function renderBookingChecklistForPrint(bookingChecklist) {
   `).join("");
 }
 
+function renderRecommendedExecutionPathForPrint(path) {
+  if (!path) {
+    return "<p>当前没有可用的推荐执行方案。</p>";
+  }
+
+  const flightLines = path.flightSelections?.length
+    ? path.flightSelections.map((selection) => `
+      <li>${escapeHtml(selection.from)} → ${escapeHtml(selection.to)} · ${escapeHtml(selection.selectedOffer?.airline || selection.selectedOffer?.carrierCode || "推荐航班")} · ${escapeHtml(selection.selectedOffer?.departure || "-")} → ${escapeHtml(selection.selectedOffer?.arrival || "-")} · ${escapeHtml(selection.selectedOffer?.priceLabel || `${selection.selectedOffer?.price || ""} ${selection.selectedOffer?.currency || ""}`)}</li>
+    `).join("")
+    : "<li>当前没有可自动生成的推荐航班。</li>";
+  const hotelLines = path.hotelSelections?.length
+    ? path.hotelSelections.map((selection) => `
+      <li>${escapeHtml(selection.city || selection.hotel?.city || "酒店")} · ${escapeHtml(selection.hotel?.name || "推荐酒店")}${selection.hotel?.address ? ` · ${escapeHtml(selection.hotel.address)}` : ""}</li>
+    `).join("")
+    : "<li>当前没有可自动生成的推荐酒店。</li>";
+  const anchorLines = path.dayAnchors?.length
+    ? path.dayAnchors.map((anchor) => `
+      <li>${escapeHtml([anchor.day, anchor.time, anchor.title].filter(Boolean).join(" · "))}</li>
+    `).join("")
+    : "<li>当前没有可自动生成的路线锚点。</li>";
+
+  return `
+    <article class="print-card">
+      <h3>推荐执行方案</h3>
+      <p>状态：${escapeHtml(path.statusLabel || (path.status === "stale" ? "已过期，需要重新分析" : "等待确认"))}</p>
+      <p>${escapeHtml(path.summary || "系统推荐，尚未完成购买确认。")}</p>
+      <p>${escapeHtml(path.supplierNote || "航班和酒店最终价格、库存与付款均需在原平台确认/支付。")}</p>
+      <p><strong>推荐航班</strong></p>
+      <ul>${flightLines}</ul>
+      <p><strong>推荐酒店</strong></p>
+      <ul>${hotelLines}</ul>
+      <p><strong>路线锚点</strong></p>
+      <ul>${anchorLines}</ul>
+    </article>
+  `;
+}
+
 function renderTripEffortForPrint(tripEffort) {
   if (!tripEffort?.overall) {
     return "<p>当前没有可用的旅行消耗力分析。</p>";
@@ -3400,6 +3470,7 @@ function renderFinalTravelPrintDocument({
   draftStatus = getExecutionPlanDraftStatus(analysis, selectedFlights, bookingChecklist),
 } = {}) {
   const generatedDate = new Intl.DateTimeFormat("en", { year: "numeric", month: "long", day: "numeric" }).format(new Date());
+  const recommendedExecutionPath = resolveRecommendedExecutionPathForRender(analysis, planner, selectedFlights);
 
   return `
     <!DOCTYPE html>
@@ -3471,6 +3542,11 @@ function renderFinalTravelPrintDocument({
           <section>
             <h2>每日行程</h2>
             ${renderDailyPlanForPrint(analysis?.dailyPlans || [])}
+          </section>
+
+          <section>
+            <h2>推荐执行方案</h2>
+            ${renderRecommendedExecutionPathForPrint(recommendedExecutionPath)}
           </section>
 
           <section>
@@ -3878,6 +3954,9 @@ function renderAnalysisResults(result) {
     .join("");
   const budgetFeasibility = result.budgetFeasibility || deriveBudgetFeasibility(result, appState.planner);
   const recommendedExecutionPath = resolveRecommendedExecutionPathForRender(result, appState.planner, appState.selectedFlights);
+  const staleBanner = result.isStale
+    ? `<p class="analysis-empty execution-stale">${escapeHtml(result.staleMessage || "当前推荐已过期，请重新分析后再继续确认。")}</p>`
+    : "";
 
   const flightDecisions = result.flightDecisions || deriveFlightDecisions(result.flights || [], appState.planner.budget, result.stops || []);
   const flightsMarkup = flightDecisions.length
@@ -3998,6 +4077,7 @@ function renderAnalysisResults(result) {
   container.innerHTML = `
     <section class="analysis-section">
       <h4>Summary</h4>
+      ${staleBanner}
       <p>${escapeHtml(result.summary)}</p>
       <ul class="summary-stops">${summaryList}</ul>
       ${renderBudgetFeasibilityCard(budgetFeasibility)}
@@ -4134,12 +4214,13 @@ function renderRecommendedExecutionPath(path) {
     <aside class="recommended-execution-card">
       <div class="recommended-execution-head">
         <div>
-          <p class="eyebrow">Execution path</p>
+          <p class="eyebrow">推荐执行方案</p>
           <h5>${escapeHtml(path.title || "推荐执行方案")}</h5>
         </div>
-        <span>${escapeHtml(path.budgetFeasibility?.status === "over_budget" ? "预算需调整" : "可继续执行")}</span>
+        <span>${escapeHtml(path.statusLabel || (path.status === "stale" ? "已过期，需要重新分析" : "等待确认"))}</span>
       </div>
       ${staleNotice}
+      <p>${escapeHtml(path.summary || "系统推荐，尚未完成购买确认。")}</p>
       <p>${escapeHtml(path.supplierNote || "航班和酒店最终价格、库存与付款均需在原平台确认/支付。")}</p>
       <div class="recommended-execution-grid">
         <section>
@@ -4256,7 +4337,9 @@ function renderFlightForceItem(label, score) {
 
 function renderTripEffortSection(tripEffort) {
   if (!tripEffort?.overall || !tripEffort?.days?.length) {
-    return '<p class="analysis-empty">旅行消耗力分析会在行程分析完成后显示。</p>';
+    return appState.analysis?.isStale
+      ? '<p class="analysis-empty">当前行程条件已变化，旧旅行消耗力分析已失效，请重新分析。</p>'
+      : '<p class="analysis-empty">旅行消耗力分析会在行程分析完成后显示。</p>';
   }
 
   return `
@@ -4967,10 +5050,12 @@ function renderAssistantExecutionSummary(path) {
   return `
     <div class="preview-card assistant-sync-card">
       <p class="eyebrow">推荐执行方案</p>
-      <h3>${escapeHtml(path.status === "stale" ? "方案已过期，需要重新分析" : "Katris 已替你选好默认路径")}</h3>
+      <h3>${escapeHtml(path.status === "stale" ? "方案已过期，需要重新分析" : "推荐方案已生成，等待你确认")}</h3>
+      <p><strong>状态：</strong>${escapeHtml(path.statusLabel || (path.status === "stale" ? "已过期，需要重新分析" : "等待确认"))}</p>
       <p><strong>航班：</strong>${escapeHtml(firstFlight ? `${firstFlight.airline || firstFlight.carrierCode} · ${firstFlight.departure || "-"} – ${firstFlight.arrival || "-"} · ${firstFlight.priceLabel || `${firstFlight.price || ""} ${firstFlight.currency || ""}`}` : "使用外部查询链接确认。")}</p>
       <p><strong>酒店：</strong>${escapeHtml(firstHotel ? `${firstHotel.name}${firstHotel.address ? ` · ${firstHotel.address}` : ""}` : "使用原平台查询确认。")}</p>
       <p><strong>路线锚点：</strong>${escapeHtml(anchorText || "等待地点数据返回。")}</p>
+      <p>${escapeHtml(path.summary || "系统推荐，尚未完成购买确认。")}</p>
       <p>${escapeHtml(path.supplierNote || "航班和酒店最终价格、库存与付款均需在原平台确认/支付。")}</p>
     </div>
   `;
