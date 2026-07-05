@@ -15,6 +15,7 @@ const promptTemplate = {
 - 不允许伪造真实价格
 - 如果信息不足，必须明确标注“推定”
 - 使用提供的分析结果作为航班、酒店、地点和交通的事实来源
+- 如果 payload 中包含 confirmedPreferences，必须把它当作已经由用户确认过的关键偏好，而不是自行覆盖
 - Put the required Chinese output sections inside "uiSections"
 - For every city, include at least 8 hotels and 8 attractions or place ideas
 - For each day, include 3 to 5 planned items
