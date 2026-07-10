@@ -6,18 +6,36 @@
   <title>Katris Travel AI | Nordic Escapes</title>
   <meta
     name="description"
-    content="A calm Nordic-inspired travel homepage with itinerary planning, live flight search, real place data, and AI-guided journeys."
+    content="Katris turns rough travel ideas into structured, bookable itineraries with route planning, flight context, hotel links, and AI-guided trip design."
   />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23193d35'/%3E%3Cpath d='M32 11l5.4 15.6L54 32l-16.6 5.4L32 53l-5.4-15.6L10 32l16.6-5.4L32 11z' fill='%23fffdf7'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
+    <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="liquidNoise" />
+      <feGaussianBlur in="liquidNoise" stdDeviation="1.8" result="softNoise" />
+      <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="18" xChannelSelector="R" yChannelSelector="G" result="refracted" />
+      <feColorMatrix
+        in="refracted"
+        type="matrix"
+        values="1 0 0 0 0.02  0 1 0 0 0.025  0 0 1 0 0.04  0 0 0 0.92 0"
+        result="edgeTint"
+      />
+      <feBlend in="SourceGraphic" in2="edgeTint" mode="screen" />
+    </filter>
+  </svg>
   <div class="page-shell">
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Katris Travel AI home">
         <span class="brand-mark" aria-hidden="true">✦</span>
         <span class="brand-copy">
           <strong>Katris Travel AI</strong>
-          <span>Nordic journeys shaped with calm intelligence</span>
+          <span>Routes, stays, days, and booking context</span>
         </span>
       </a>
 
@@ -29,45 +47,40 @@
 
       <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
     </header>
-
-    <nav class="page-pagination" aria-label="Section pagination">
-      <button class="pagination-arrow" id="pagination-prev" type="button">Previous</button>
-      <ul class="pagination-list">
-        <li><button class="pagination-link is-active" type="button" data-section-target="#overview" aria-current="page">1</button></li>
-        <li><button class="pagination-link" type="button" data-section-target="#destinations">2</button></li>
-        <li><button class="pagination-link" type="button" data-section-target="#planner">3</button></li>
-        <li><button class="pagination-link" type="button" data-section-target="#assistant">4</button></li>
-      </ul>
-      <button class="pagination-arrow" id="pagination-next" type="button">Next</button>
-    </nav>
-
     <main id="top">
       <section class="hero-section" id="overview">
         <div class="hero-copy">
-          <p class="eyebrow">Nordic Minimal Nature</p>
-          <h1>Explore still landscapes, luminous skies, and thoughtful Nordic travel.</h1>
+          <p class="eyebrow">Trip planning with real decision points</p>
+          <h1>Plan the route, compare the stay, then move toward booking.</h1>
           <p class="hero-text">
-            A calm travel homepage designed to inspire exploration across fjords, forests, coastal villages,
-              and northern light routes—while connecting live travel data to AI-guided planning.
+            Katris turns a rough travel idea into a usable brief: daily pacing, likely neighborhoods,
+            hotel shortlists, flight context, places to visit, and a clear note on what is provider-confirmed or externally checked.
           </p>
 
+          <svg class="hero-route-motion" viewBox="0 0 680 150" role="img" aria-label="Animated route from idea to booking">
+            <path class="hero-route-path" d="M22 108 C 150 18, 260 124, 364 58 S 548 16, 654 94" />
+            <circle class="hero-route-dot" cx="22" cy="108" r="7" />
+            <circle class="hero-route-dot" cx="364" cy="58" r="7" />
+            <circle class="hero-route-dot" cx="654" cy="94" r="7" />
+          </svg>
+
           <div class="hero-actions">
-            <button class="primary-button" type="button" data-scroll-target="#planner">Build a journey</button>
-            <button class="secondary-button" type="button" data-scroll-target="#assistant">Meet the assistant</button>
+            <button class="primary-button" type="button" data-scroll-target="#planner">Build my trip</button>
+            <button class="secondary-button" type="button" data-scroll-target="#destinations">View ready templates</button>
           </div>
 
           <dl class="hero-stats" aria-label="Highlights">
             <div>
-              <dt>4</dt>
-              <dd>signature regions</dd>
+              <dt>14</dt>
+              <dd>days parsed from plain text</dd>
             </div>
             <div>
-              <dt>Calm</dt>
-              <dd>atmosphere first</dd>
+              <dt>8+</dt>
+              <dd>hotel and place options</dd>
             </div>
             <div>
-              <dt>Future-ready</dt>
-              <dd>AI planning hooks</dd>
+              <dt>Clear</dt>
+              <dd>supplier clarity before checkout</dd>
             </div>
           </dl>
         </div>
@@ -75,19 +88,19 @@
         <aside class="hero-panel" aria-label="Featured Nordic inspiration">
           <div class="hero-image-card northern-lights">
             <div class="image-overlay">
-              <span>Featured escape</span>
-              <strong>Lofoten &amp; Arctic coast</strong>
-              <p>Glass-water harbors, mountain silhouettes, and slow scenic discovery.</p>
+              <span>Planner example</span>
+              <strong>Reusable route template</strong>
+              <p>A finished structure for route, stay, daily rhythm, and next booking steps.</p>
             </div>
           </div>
 
           <div class="season-card">
-            <p class="eyebrow">Seasonal rhythm</p>
-            <h2>Designed for light, weather, and quiet movement.</h2>
+            <p class="eyebrow">Decision flow</p>
+            <h2>Plan first, compare next, book with context.</h2>
             <ul>
-              <li><span aria-hidden="true"></span>Summer coastlines and midnight sun</li>
-              <li><span aria-hidden="true"></span>Autumn forests and design-led stays</li>
-              <li><span aria-hidden="true"></span>Winter aurora routes and soft snow landscapes</li>
+              <li><span aria-hidden="true"></span>Route, budget, dates, and traveler count</li>
+              <li><span aria-hidden="true"></span>Daily itinerary with fatigue-aware pacing</li>
+              <li><span aria-hidden="true"></span>Hotels, places, flights, and external booking paths</li>
             </ul>
           </div>
         </aside>
@@ -114,10 +127,10 @@
       <section class="destinations-section" id="destinations">
         <div class="section-heading">
           <p class="eyebrow">Nordic landscapes</p>
-          <h2>Start with a region that matches your pace.</h2>
+          <h2>Choose a ready-made travel direction.</h2>
           <p>
-            The homepage introduces a curated set of destination moods so planning can branch into richer
-            AI recommendations, flight options, and place data.
+            Each card opens a prepared route template with real places, suggested pacing, and reusable planning
+            prompts. Use it as a starting point, then send it into the planner.
           </p>
         </div>
 
@@ -158,28 +171,94 @@
             </span>
           </button>
         </div>
+
+        <article class="destination-template" id="destination-template" aria-live="polite">
+          <div class="template-media" aria-hidden="true"></div>
+          <div class="template-copy">
+            <p class="eyebrow" id="template-kicker">Norway / 7 days</p>
+            <h3 id="template-title">Fjord Quiet: Bergen, Flam, and Aurlandsfjord</h3>
+            <p id="template-summary">
+              A prepared route for travelers who want scenery, slow ferry movement, compact towns, and quiet stays.
+            </p>
+            <dl class="template-meta">
+              <div>
+                <dt>Best for</dt>
+                <dd id="template-best">scenery, ferry crossings, design cabins</dd>
+              </div>
+              <div>
+                <dt>Base</dt>
+                <dd id="template-base">Bergen + Flam</dd>
+              </div>
+              <div>
+                <dt>Use next</dt>
+                <dd id="template-action">Copy into the planner</dd>
+              </div>
+            </dl>
+            <div class="template-days" id="template-days">
+              <article><span>Day 1</span><p>Bergen arrival, Bryggen walk, quiet harbor dinner.</p></article>
+              <article><span>Day 2</span><p>Flam Railway, Aurlandsfjord viewpoint, slow evening by the water.</p></article>
+              <article><span>Day 3</span><p>Ferry movement, cabin check-in, flexible weather buffer.</p></article>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="planner-section" id="planner">
         <div class="section-heading">
           <p class="eyebrow">Live planning workspace</p>
-          <h2>Shape an itinerary with a calm, guided planner.</h2>
+          <h2>Build the trip step by step.</h2>
           <p>
-            This planner combines front-end itinerary parsing with live flight search, place lookup, and AI-ready
-            planning responses.
+            Add the route, budget, dates, and traveler count. Katris then turns the input into a structured plan
+            with transparent data status.
           </p>
+        </div>
+
+        <div class="liquid-plan-stage" aria-label="Travel plan quick controls">
+          <div class="liquid-sky-backdrop" aria-hidden="true"></div>
+          <nav class="liquid-glass-nav" aria-label="Travel plan dropdown">
+            <button
+              class="liquid-trigger"
+              type="button"
+              data-liquid-menu-toggle
+              aria-expanded="false"
+              aria-controls="liquid-plan-menu"
+            >
+              <span class="liquid-trigger-clone" aria-hidden="true">Travel Plan</span>
+              <span>Travel Plan</span>
+            </button>
+            <div class="liquid-menu" id="liquid-plan-menu" hidden>
+              <button type="button" data-liquid-action="recommended">Recommended path</button>
+              <button type="button" data-liquid-action="saved">Save current trip</button>
+              <button type="button" data-liquid-action="suppliers">Supplier checkout</button>
+              <button type="button" data-liquid-action="monitor">Operations status</button>
+            </div>
+          </nav>
+          <article class="liquid-menu-detail" id="liquid-menu-detail" aria-live="polite">
+            <p class="eyebrow">Liquid glass control</p>
+            <h3>Choose the next planning surface.</h3>
+            <p>
+              This menu opens real planner actions: jump to the recommended path, save the trip locally,
+              review external hotel payment flow, or inspect provider status before launch.
+            </p>
+          </article>
         </div>
 
         <div class="planner-layout">
           <form class="planner-form" id="planner-form">
             <div class="form-grid">
-              <label>
-                <span>Departure</span>
-                <input id="from" name="from" placeholder="New York" autocomplete="off" />
-              </label>
+              <div class="departure-budget-group">
+                <label class="departure-field">
+                  <span>Departure</span>
+                  <input id="from" name="from" placeholder="London" autocomplete="off" />
+                </label>
+                <label class="budget-field">
+                  <span>Budget</span>
+                  <input id="budget" name="budget" placeholder="800 bucks" autocomplete="off" />
+                </label>
+              </div>
               <label>
                 <span>Destination</span>
-                <input id="to" name="to" placeholder="Bergen" autocomplete="off" />
+                <input id="to" name="to" placeholder="Frankfurt" autocomplete="off" />
               </label>
               <label>
                 <span>Travel date</span>
@@ -192,20 +271,12 @@
                   <option value="5 nights">5 nights</option>
                   <option value="7 nights" selected>7 nights</option>
                   <option value="10+ nights">10+ nights</option>
+                  <option value="2 weeks">2 weeks</option>
                 </select>
               </label>
               <label>
                 <span>Travelers</span>
                 <input id="people" name="people" type="number" min="1" value="2" />
-              </label>
-              <label>
-                <span>Budget style</span>
-                <select id="budget" name="budget">
-                  <option value="Balanced" selected>Balanced</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Luxury">Luxury</option>
-                  <option value="Flexible">Flexible</option>
-                </select>
               </label>
             </div>
 
@@ -231,11 +302,13 @@
               <button class="primary-button" id="analyze-planner" type="submit">Analyze itinerary</button>
               <button class="ghost-button" type="button" id="reset-planner">Reset</button>
             </div>
+
+            <div id="preference-gate" class="preference-gate" hidden></div>
           </form>
 
           <aside class="planner-preview" aria-live="polite">
-            <div class="preview-card">
-              <p class="eyebrow">Itinerary preview</p>
+            <div class="preview-card route-brief-card">
+              <p class="eyebrow">Route brief</p>
               <h3 id="preview-title">A seven-night Nordic reset.</h3>
               <p id="preview-summary">
                 Build a trip concept to see itinerary structure, travel options, and partner-ready booking paths.
@@ -247,20 +320,24 @@
               </ul>
             </div>
 
+            <div class="planner-motion-card" aria-hidden="true">
+              <span></span>
+            </div>
+
             <div class="preview-card timeline-card">
-              <p class="eyebrow">Scaffolded flow</p>
+              <p class="eyebrow">Step flow</p>
               <div id="timeline-output" class="timeline-output">
                 <article>
-                  <span>Day 1</span>
-                  <p>Arrival, gentle check-in, and a waterfront evening walk.</p>
+                  <span>Step 1</span>
+                  <p>Collect route, date, traveler count, and budget.</p>
                 </article>
                 <article>
-                  <span>Day 2</span>
-                  <p>Scenic movement through landscape highlights with room for AI-generated detail.</p>
+                  <span>Step 2</span>
+                  <p>Generate pacing, stays, places, and transport context.</p>
                 </article>
                 <article>
-                  <span>Day 3+</span>
-                  <p>Itinerary cards adapt as route parsing and live travel options return.</p>
+                  <span>Step 3</span>
+                  <p>Compare provider data, external booking links, and final supplier confirmation steps.</p>
                 </article>
               </div>
             </div>
@@ -271,6 +348,12 @@
                 <p class="analysis-empty">Analyze an itinerary to see flights, hotels, transport, and summary.</p>
               </div>
             </div>
+
+            <div class="preview-card ops-monitor-card" id="ops-monitor" aria-live="polite">
+              <p class="eyebrow">Operations status</p>
+              <h3>Waiting for the first plan.</h3>
+              <p>Provider and local-save status will appear after a trip is generated.</p>
+            </div>
           </aside>
         </div>
       </section>
@@ -278,10 +361,10 @@
       <section class="assistant-section" id="assistant">
         <div class="section-heading compact">
           <p class="eyebrow">AI assistant</p>
-          <h2>Ask for structured travel guidance and route ideas.</h2>
+          <h2>Generate a structured travel plan.</h2>
           <p>
-            The assistant stores conversational state and calls the planning endpoint, with a structured fallback
-            when the selected AI provider is unavailable.
+            Use a short message like "Chicago to Manchester, 800 EUR, 2 weeks, 1 person." The result is rendered
+            as cards with route, hotels, places, flights, and PDF export.
           </p>
         </div>
 
@@ -304,8 +387,8 @@
 
             <div class="assistant-progress" id="assistant-progress" aria-hidden="true">
               <div class="assistant-progress-head">
-                <span id="assistant-progress-step">Calling AI provider</span>
-                <span>Auto fallback enabled</span>
+                <span id="assistant-progress-step">Preparing travel plan</span>
+                <span>Backup planning enabled</span>
               </div>
               <div class="assistant-progress-track">
                 <span id="assistant-progress-bar"></span>
@@ -327,13 +410,32 @@
           </div>
 
           <aside class="assistant-sidebar">
+            <div id="assistant-flight-summary" aria-live="polite"></div>
             <div class="preview-card">
-              <p class="eyebrow">Integration hooks</p>
-              <h3>Connected services</h3>
-              <ul class="hook-list">
-                <li><strong>AI Request Hook</strong><span><code>requestAiPlan(state)</code> OpenRouter / Mistral / Groq / Gemini</span></li>
-                <li><strong>Parser Hook</strong><span><code>parseItineraryDraft(response)</code> structured JSON</span></li>
-                <li><strong>Booking Hook</strong><span><code>prepareBookingPayload(plan)</code> Travelpayouts-ready payload</span></li>
+              <p class="eyebrow">Nordic winter notes</p>
+              <h3>Real places to anchor a route.</h3>
+              <ul class="hook-list destination-notes">
+                <li>
+                  <strong>Levi, Finland</strong>
+                  <span>
+                    Finland's Lapland ski village pairs fell skiing with sauna culture, reindeer routes, and quiet Arctic evenings.
+                    <em>Address: Hissitie 8, 99130 Levi, Finland.</em>
+                  </span>
+                </li>
+                <li>
+                  <strong>Trysil, Norway</strong>
+                  <span>
+                    Norway's large family-friendly ski area is shaped around mountain cabins, groomed forest pistes, and relaxed after-ski.
+                    <em>Address: Velkomstvegen 10, 2420 Trysil, Norway.</em>
+                  </span>
+                </li>
+                <li>
+                  <strong>Ruka, Finland</strong>
+                  <span>
+                    A Kuusamo fell resort known for long winter light, ski-jump heritage, snowy spruce forests, and Finnish sauna rituals.
+                    <em>Address: Rukatunturintie 9, 93830 Rukatunturi, Finland.</em>
+                  </span>
+                </li>
               </ul>
             </div>
           </aside>
@@ -342,6 +444,7 @@
     </main>
   </div>
 
-  <script src="script.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="script.js" defer></script>
 </body>
 </html>

@@ -4,7 +4,12 @@ type AiProvider = {
   name: string;
   key?: string;
   model: string;
-  run: (prompt: string, provider: AiProvider) => Promise<any>;
+  run: (prompt: PromptMessages, provider: AiProvider) => Promise<any>;
+};
+
+type PromptMessages = {
+  system: string;
+  user: string;
 };
 
 export const promptTemplate = {
@@ -225,18 +230,22 @@ export const promptTemplate = {
   `,
 };
 
-function buildPrompt(payload: any) {
-  return `
+function buildPrompt(payload: any): PromptMessages {
+  return {
+    system: `
 ${promptTemplate.system}
 
 Runtime rule:
 - Return only valid JSON. Do not wrap the response in markdown.
 - Keep the JSON keys exactly as specified below so the website can render it.
 - Put the required Chinese output sections inside "uiSections".
-- For every city, include at least 5 hotels and 5 attractions.
+- For every city, include at least 8 hotels and 8 attractions or place ideas.
+- If live hotel/place data is unavailable, still return 8 clearly marked fallback/external options with booking/search context.
 - For each day, include 3 to 5 planned items.
 - Hotel recommendations can be confirmed on Katris, but final payment may happen through external booking links.
 - Flight prices are real only when provider data is present in the input state; otherwise mark estimates as 推定.
+- Use the supplied analysis object as the source of truth for flights, hotels, places, transport, provider status, and external booking links.
+- If analysis provider status says fallback/mock/external, describe it transparently and never present it as live inventory.
 
 Base input template:
 ${promptTemplate.inputTemplate}
@@ -246,6 +255,9 @@ ${promptTemplate.outputTemplate}
 
 Hard constraints:
 ${promptTemplate.hardConstraints}
+`,
+    user: `
+User request and current site state:
 
 Input state:
 ${JSON.stringify(payload, null, 2)}
@@ -279,15 +291,158 @@ JSON schema:
     }
   ],
   "bookingNotes": ["string"]
-}`;
+}`,
+  };
+}
+
+function getTripDayCount(tripLength: unknown) {
+  const text = String(tripLength || "").toLowerCase();
+  const weekMatch = text.match(/(\d+)\s*weeks?/);
+  const dayMatch = text.match(/(\d+)\s*days?/);
+  const nightMatch = text.match(/(\d+)\s*nights?/);
+
+  if (weekMatch) {
+    return Number(weekMatch[1]) * 7;
+  }
+
+  if (dayMatch) {
+    return Number(dayMatch[1]);
+  }
+
+  if (nightMatch) {
+    return Number(nightMatch[1]) + 1;
+  }
+
+  return 7;
+}
+
+function getStopDayCount(totalDays: number, stopCount: number, stopIndex: number) {
+  const base = Math.floor(totalDays / stopCount);
+  const remainder = totalDays % stopCount;
+  return Math.max(1, base + (stopIndex < remainder ? 1 : 0));
+}
+
+const VERIFIED_CITY_PLACES: Record<string, Array<{ name: string; category: string; address: string; reason: string }>> = {
+  "new york": [
+    { name: "The Metropolitan Museum of Art", category: "Museum", address: "1000 5th Ave, New York, NY 10028", reason: "Major museum anchor for a focused culture block." },
+    { name: "New York Public Library, Stephen A. Schwarzman Building", category: "Architecture", address: "476 5th Ave, New York, NY 10018", reason: "A strong Midtown architecture and reading-room stop." },
+    { name: "Chelsea Market", category: "Food", address: "75 9th Ave, New York, NY 10011", reason: "Practical lunch base with many vendors and easy indoor pacing." },
+    { name: "The High Line", category: "Urban walk", address: "Gansevoort St. to W 34th St, New York, NY 10011", reason: "Elevated linear park that works well after Chelsea Market." },
+    { name: "Museum of Modern Art", category: "Museum", address: "11 W 53rd St, New York, NY 10019", reason: "Weather-proof art block near central Midtown routes." },
+    { name: "Central Park", category: "Park", address: "59th St to 110th St, New York, NY 10022", reason: "Use for daylight walking, recovery time, and flexible pacing." },
+    { name: "Brooklyn Bridge Park", category: "Scenery", address: "334 Furman St, Brooklyn, NY 11201", reason: "Waterfront views and a calmer evening route after Lower Manhattan." },
+    { name: "Katz's Delicatessen", category: "Restaurant", address: "205 E Houston St, New York, NY 10002", reason: "Classic Lower East Side lunch stop; reserve buffer time for queues." },
+  ],
+};
+
+function getVerifiedPlaces(city: string) {
+  return VERIFIED_CITY_PLACES[String(city || "").trim().toLowerCase()] || [];
+}
+
+function buildFallbackPlace(city: string, index: number, fallbackTitle: string) {
+  const places = getVerifiedPlaces(city);
+  const place = places[index % Math.max(places.length, 1)];
+
+  if (!place) {
+    return {
+      title: fallbackTitle,
+      detail: "Do not invent a venue or address here. Connect live Places data or confirm the exact Google Maps result before showing it to users.",
+    };
+  }
+
+  return {
+    title: place.name,
+    detail: `${place.address}. ${place.reason}`,
+  };
+}
+
+function buildFallbackDays(city: string, dayCount: number, startDay: number) {
+  const templates = [
+    {
+      theme: `${city} arrival and orientation`,
+      items: [
+        { time: "Morning", title: "Arrival and transfer buffer", detail: "Keep the first block flexible for transport and check-in. No venue address is assigned until arrival timing is known." },
+        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 1, "Verified orientation stop needed") },
+        { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
+      ],
+    },
+    {
+      theme: `${city} culture and scenery`,
+      items: [
+        { time: "Morning", ...buildFallbackPlace(city, 0, "Verified museum needed") },
+        { time: "Midday", ...buildFallbackPlace(city, 2, "Verified food stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 3, "Verified walking route needed") },
+        { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
+      ],
+    },
+    {
+      theme: `${city} local rhythm`,
+      items: [
+        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or neighborhood anchor needed") },
+        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
+        { time: "Afternoon", ...buildFallbackPlace(city, 4, "Verified gallery or architecture stop needed") },
+        { time: "Evening", title: "Short evening walk", detail: "End with a low-friction route near dinner." },
+      ],
+    },
+    {
+      theme: `${city} nature and rest`,
+      items: [
+        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or open-air route needed") },
+        { time: "Midday", title: "Lunch near confirmed route", detail: "Choose the restaurant only after the route start is fixed; do not display a fake address." },
+        { time: "Afternoon", ...buildFallbackPlace(city, 6, "Verified viewpoint or waterfront needed") },
+        { time: "Evening", title: "Quiet dinner", detail: "Protect recovery time before the next day." },
+      ],
+    },
+    {
+      theme: `${city} logistics and flexible experience`,
+      items: [
+        { time: "Morning", title: "Hotel and booking review", detail: "Compare location, commute, and external live-rate links." },
+        { time: "Midday", title: "Transport confirmation", detail: "Check airport, rail, or taxi timing before committing." },
+        { time: "Afternoon", title: "Flexible experience block", detail: "Choose one activity based on weather and fatigue." },
+        { time: "Evening", title: "Next-day prep", detail: "Keep route notes, bags, and tickets ready." },
+      ],
+    },
+  ];
+
+  return Array.from({ length: dayCount }, (_, index) => {
+    const template = templates[index % templates.length];
+    return {
+      day: `Day ${startDay + index}`,
+      theme: template.theme,
+      items: template.items,
+    };
+  });
 }
 
 function buildFallbackPlan(payload: any) {
   const planner = payload?.planner || payload || {};
   const analysis = planner.analysis || payload?.analysis || {};
   const stops = analysis.stops?.length ? analysis.stops : [{ city: planner.to || "Nordic journey", date: planner.date || "" }];
+  const totalDays = getTripDayCount(planner.tripLength);
+  let dayCursor = 1;
   const cities = stops.map((stop: any, stopIndex: number) => {
     const city = stop.city || "Destination";
+    const dayCount = getStopDayCount(totalDays, stops.length, stopIndex);
+    const days = buildFallbackDays(city, dayCount, dayCursor);
+    dayCursor += dayCount;
+
+    const verifiedPlaces = getVerifiedPlaces(city);
+    const attractions = verifiedPlaces.length
+      ? verifiedPlaces.map((place) => ({
+          name: place.name,
+          category: place.category,
+          address: place.address,
+          reason: place.reason,
+        }))
+      : [
+          {
+            name: `${city} verified place lookup required`,
+            category: "Live data needed",
+            address: "",
+            reason: "Katris should not invent place names or addresses here. Connect Geoapify/Google Places or open external map search before presenting concrete stops.",
+          },
+        ];
 
     return {
       city,
@@ -297,36 +452,12 @@ function buildFallbackPlan(payload: any) {
         { name: `${city} Garden Residence`, style: "Quiet stay", reason: "Good for recovery time and slower mornings." },
         { name: `${city} Harbour Hotel`, style: "Scenic", reason: "Useful when the trip prioritizes views and low-friction evenings." },
         { name: `${city} Design Suites`, style: "Design", reason: "A polished option for a premium travel mood." },
+        { name: `${city} Station Hotel`, style: "Transit-friendly", reason: "Practical for early departures, rail transfers, and lower-friction luggage days." },
+        { name: `${city} Apartment Hotel`, style: "Long stay", reason: "Useful for a two-week trip where laundry, kitchen access, and routine matter." },
+        { name: `${city} Spa Hotel`, style: "Recovery", reason: "A calmer option for rest days and fatigue management." },
       ],
-      attractions: [
-        { name: `${city} Old Quarter`, category: "Culture", reason: "A compact first walk with orientation value." },
-        { name: `${city} Waterfront`, category: "Scenery", reason: "Best for soft light, cafes, and low-friction exploration." },
-        { name: `${city} Design Museum`, category: "Design", reason: "A strong indoor anchor for weather-proof planning." },
-        { name: `${city} Market Hall`, category: "Food", reason: "Useful for local snacks and casual lunches." },
-        { name: `${city} Lookout Route`, category: "Landscape", reason: "A scenic way to end the afternoon." },
-      ],
-      days: [
-        {
-          day: `Day ${stopIndex * 2 + 1}`,
-          theme: `${city} arrival and orientation`,
-          items: [
-            { time: "Morning", title: "Arrival buffer", detail: "Keep the first block flexible for transport and check-in." },
-            { time: "Midday", title: "Neighbourhood lunch", detail: "Choose a nearby local restaurant before heavy sightseeing." },
-            { time: "Afternoon", title: `${city} Old Quarter`, detail: "Walk the historic core and identify cafes or galleries for later." },
-            { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
-          ],
-        },
-        {
-          day: `Day ${stopIndex * 2 + 2}`,
-          theme: `${city} culture and scenery`,
-          items: [
-            { time: "Morning", title: `${city} Design Museum`, detail: "Start with an indoor cultural anchor." },
-            { time: "Midday", title: `${city} Market Hall`, detail: "Build lunch around local vendors and seasonal produce." },
-            { time: "Afternoon", title: `${city} Lookout Route`, detail: "Plan a scenic route with photo stops and rest time." },
-            { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
-          ],
-        },
-      ],
+      attractions,
+      days,
     };
   });
 
@@ -341,7 +472,7 @@ function buildFallbackPlan(payload: any) {
             "【每日计划】",
             ...entry.days.map(
               (day: any) =>
-                `${day.day} · ${day.theme}\n- 上午：${day.items[0]?.title || "推定行程"}\n- 下午：${day.items[2]?.title || day.items[1]?.title || "推定行程"}\n- 晚上：${day.items[3]?.title || "酒店与晚餐衔接"}\n- 疲劳度：中低`,
+                `${day.day} · ${day.theme}\n- 上午：${day.items[0]?.title || "推定行程"}｜${day.items[0]?.detail || "需要实时地点数据确认。"}\n- 中午：${day.items[1]?.title || "推定行程"}｜${day.items[1]?.detail || "需要实时地点数据确认。"}\n- 下午：${day.items[2]?.title || "推定行程"}｜${day.items[2]?.detail || "需要实时地点数据确认。"}\n- 晚上：${day.items[3]?.title || "酒店与晚餐衔接"}｜${day.items[3]?.detail || "根据酒店位置确认。"}\n- 疲劳度：中低`,
             ),
           ].join("\n"),
         )
@@ -407,7 +538,7 @@ function getProviderQueue() {
   return selected ? [selected, ...providers.filter((provider) => provider.name !== preferred)] : providers;
 }
 
-async function runOpenRouter(prompt: string, provider: AiProvider) {
+async function runOpenRouter(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://openrouter.ai/api/v1/chat/completions",
     key: provider.key || "",
@@ -420,7 +551,7 @@ async function runOpenRouter(prompt: string, provider: AiProvider) {
   });
 }
 
-async function runMistral(prompt: string, provider: AiProvider) {
+async function runMistral(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://api.mistral.ai/v1/chat/completions",
     key: provider.key || "",
@@ -429,7 +560,7 @@ async function runMistral(prompt: string, provider: AiProvider) {
   });
 }
 
-async function runGroq(prompt: string, provider: AiProvider) {
+async function runGroq(prompt: PromptMessages, provider: AiProvider) {
   return runOpenAiCompatibleChat({
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: provider.key || "",
@@ -442,7 +573,7 @@ async function runOpenAiCompatibleChat(options: {
   url: string;
   key: string;
   model: string;
-  prompt: string;
+  prompt: PromptMessages;
   headers?: Record<string, string>;
 }) {
   const response = await fetch(options.url, {
@@ -457,8 +588,12 @@ async function runOpenAiCompatibleChat(options: {
       model: options.model,
       messages: [
         {
+          role: "system",
+          content: options.prompt.system,
+        },
+        {
           role: "user",
-          content: options.prompt,
+          content: options.prompt.user,
         },
       ],
       temperature: 0.6,
@@ -476,7 +611,7 @@ async function runOpenAiCompatibleChat(options: {
   return parseJsonFromText(text);
 }
 
-async function runGemini(prompt: string, provider: AiProvider) {
+async function runGemini(prompt: PromptMessages, provider: AiProvider) {
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent`, {
     method: "POST",
     signal: getTimeoutSignal(),
@@ -488,7 +623,7 @@ async function runGemini(prompt: string, provider: AiProvider) {
       contents: [
         {
           role: "user",
-          parts: [{ text: prompt }],
+          parts: [{ text: `${prompt.system}\n\n${prompt.user}` }],
         },
       ],
       generationConfig: {

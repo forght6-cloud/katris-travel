@@ -2,11 +2,11 @@ declare const process: { env: Record<string, string | undefined> };
 
 const GEOAPIFY_GEOCODING_URL = "https://api.geoapify.com/v1/geocode/search";
 const GEOAPIFY_PLACES_URL = "https://api.geoapify.com/v2/places";
-const DEFAULT_CATEGORIES = [
-  "tourism.sights",
-  "tourism.attraction",
-  "entertainment.museum",
-].join(",");
+const CATEGORY_GROUPS = {
+  attractions: "tourism.sights,tourism.attraction,entertainment.museum",
+  dining: "catering.restaurant,catering.food_court",
+  transit: "public_transport",
+};
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   amsterdam: { lat: 52.3676, lon: 4.9041 },
@@ -26,10 +26,12 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   "hong kong": { lat: 22.3193, lon: 114.1694 },
   istanbul: { lat: 41.0082, lon: 28.9784 },
   kyoto: { lat: 35.0116, lon: 135.7681 },
+  "las vegas": { lat: 36.1716, lon: -115.1391 },
   lisbon: { lat: 38.7223, lon: -9.1393 },
   london: { lat: 51.5072, lon: -0.1276 },
   "los angeles": { lat: 34.0522, lon: -118.2437 },
   madrid: { lat: 40.4168, lon: -3.7038 },
+  manchester: { lat: 53.4808, lon: -2.2426 },
   milan: { lat: 45.4642, lon: 9.19 },
   munich: { lat: 48.1351, lon: 11.582 },
   "new york": { lat: 40.7128, lon: -74.006 },
@@ -49,6 +51,159 @@ const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   zurich: { lat: 47.3769, lon: 8.5417 },
 };
 
+const VERIFIED_CITY_PLACES: Record<string, Array<Omit<NormalizedPlace, "id" | "mapsUrl">>> = {
+  manchester: [
+    {
+      name: "Manchester Art Gallery",
+      category: "Museum",
+      summary: "Central collection spanning historic painting, decorative arts, and contemporary exhibitions.",
+      address: "Mosley Street, Manchester, M2 3JL, United Kingdom",
+    },
+    {
+      name: "Science and Industry Museum",
+      category: "Museum",
+      summary: "Manchester's industrial history presented on the former Liverpool Road station site.",
+      address: "Liverpool Road, Manchester, M3 4FP, United Kingdom",
+    },
+    {
+      name: "Manchester Cathedral",
+      category: "Architecture",
+      summary: "A medieval city landmark that anchors a walk through Manchester's historic core.",
+      address: "Victoria Street, Manchester, M3 1SX, United Kingdom",
+    },
+    {
+      name: "National Football Museum",
+      category: "Museum",
+      summary: "A focused cultural stop covering English football history and supporter culture.",
+      address: "Todd Street, Manchester, M4 3BG, United Kingdom",
+    },
+    {
+      name: "People's History Museum",
+      category: "Museum",
+      summary: "Social-history galleries centered on working lives, democracy, and civic movements.",
+      address: "Left Bank, Spinningfields, Manchester, M3 3ER, United Kingdom",
+    },
+    {
+      name: "Mackie Mayor",
+      category: "Restaurant",
+      summary: "A restored market hall with several independent food counters for a flexible lunch stop.",
+      address: "1 Eagle Street, Manchester, M4 5BU, United Kingdom",
+    },
+    {
+      name: "Manchester Victoria Station",
+      category: "Transit",
+      summary: "Main rail and tram interchange beside the cathedral and National Football Museum.",
+      address: "Victoria Station Approach, Manchester, M3 1NZ, United Kingdom",
+    },
+    {
+      name: "Manchester Piccadilly Station",
+      category: "Transit",
+      summary: "Manchester's principal intercity rail station and a practical city-center arrival anchor.",
+      address: "Piccadilly Station, Manchester, M60 7RA, United Kingdom",
+    },
+  ],
+  "new york": [
+    {
+      name: "The Metropolitan Museum of Art",
+      category: "Museum",
+      summary: "Major museum anchor for a focused culture block.",
+      address: "1000 5th Ave, New York, NY 10028",
+    },
+    {
+      name: "New York Public Library, Stephen A. Schwarzman Building",
+      category: "Architecture",
+      summary: "A strong Midtown architecture and reading-room stop.",
+      address: "476 5th Ave, New York, NY 10018",
+    },
+    {
+      name: "Chelsea Market",
+      category: "Food",
+      summary: "Practical lunch base with many vendors and easy indoor pacing.",
+      address: "75 9th Ave, New York, NY 10011",
+    },
+    {
+      name: "The High Line",
+      category: "Urban walk",
+      summary: "Elevated linear park that works well after Chelsea Market.",
+      address: "Gansevoort St. to W 34th St, New York, NY 10011",
+    },
+    {
+      name: "Museum of Modern Art",
+      category: "Museum",
+      summary: "Weather-proof art block near central Midtown routes.",
+      address: "11 W 53rd St, New York, NY 10019",
+    },
+    {
+      name: "Central Park",
+      category: "Park",
+      summary: "Use for daylight walking, recovery time, and flexible pacing.",
+      address: "59th St to 110th St, New York, NY 10022",
+    },
+    {
+      name: "Brooklyn Bridge Park",
+      category: "Scenery",
+      summary: "Waterfront views and a calmer evening route after Lower Manhattan.",
+      address: "334 Furman St, Brooklyn, NY 11201",
+    },
+    {
+      name: "Katz's Delicatessen",
+      category: "Restaurant",
+      summary: "Classic Lower East Side lunch stop; reserve buffer time for queues.",
+      address: "205 E Houston St, New York, NY 10002",
+    },
+  ],
+  "las vegas": [
+    {
+      name: "Harry Reid International Airport",
+      category: "Airport",
+      summary: "Arrival anchor for airport transfer timing.",
+      address: "5757 Wayne Newton Blvd, Las Vegas, NV 89119",
+    },
+    {
+      name: "Bellagio Conservatory & Botanical Gardens",
+      category: "Sight",
+      summary: "High-impact indoor garden stop on the Strip.",
+      address: "3600 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Venetian Resort Las Vegas",
+      category: "Architecture",
+      summary: "Indoor architecture, canals, dining, and low-friction walking.",
+      address: "3355 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "The Mob Museum",
+      category: "Museum",
+      summary: "Clear cultural anchor for Downtown Las Vegas.",
+      address: "300 Stewart Ave, Las Vegas, NV 89101",
+    },
+    {
+      name: "Peppermill Restaurant and Fireside Lounge",
+      category: "Restaurant",
+      summary: "Classic Las Vegas lunch or late breakfast stop on the Strip.",
+      address: "2985 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "High Roller",
+      category: "Viewpoint",
+      summary: "Simple timed viewpoint with strong evening skyline value.",
+      address: "3545 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "MGM Grand Monorail Station",
+      category: "Transit",
+      summary: "Useful Las Vegas Monorail connection point for Strip movement.",
+      address: "3799 S Las Vegas Blvd, Las Vegas, NV 89109",
+    },
+    {
+      name: "Fremont Street Experience",
+      category: "Evening route",
+      summary: "Downtown evening walk with clear route boundaries.",
+      address: "425 Fremont St, Las Vegas, NV 89101",
+    },
+  ],
+};
+
 type NormalizedPlace = {
   id: string;
   name: string;
@@ -59,6 +214,34 @@ type NormalizedPlace = {
   lat?: number;
   lon?: number;
 };
+
+function getVerifiedFallbackPlaces(city: string, limit: number): NormalizedPlace[] {
+  const places = VERIFIED_CITY_PLACES[city.trim().toLowerCase()] || [];
+
+  return places.slice(0, limit).map((place, index) => ({
+    id: `verified-${city}-${index + 1}`,
+    ...place,
+    mapsUrl: buildMapsUrl(`${place.name} ${place.address}`, 0, 0),
+  }));
+}
+
+function mergeVerifiedAndLivePlaces(city: string, livePlaces: NormalizedPlace[], limit: number) {
+  const verifiedPlaces = getVerifiedFallbackPlaces(city, limit);
+  const seen = new Set<string>();
+  const merged: NormalizedPlace[] = [];
+
+  [...verifiedPlaces, ...livePlaces].forEach((place) => {
+    const key = `${place.name}|${place.address}`.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    merged.push(place);
+  });
+
+  return merged.slice(0, limit);
+}
 
 async function geocodeCity(city: string) {
   const knownCenter = CITY_CENTER_MAP[city.trim().toLowerCase()];
@@ -107,11 +290,42 @@ async function searchGeoapifyPlaces(city: string, limit: number) {
   }
 
   const center = await geocodeCity(city);
+  const attractionLimit = Math.max(1, Math.ceil(limit * 0.5));
+  const diningLimit = limit >= 3 ? Math.max(1, Math.floor(limit * 0.25)) : 0;
+  const transitLimit = Math.max(0, limit - attractionLimit - diningLimit);
+  const searches = [
+    searchGeoapifyCategoryGroup(CATEGORY_GROUPS.attractions, center, attractionLimit, apiKey),
+    diningLimit
+      ? searchGeoapifyCategoryGroup(CATEGORY_GROUPS.dining, center, diningLimit, apiKey)
+      : Promise.resolve([]),
+    transitLimit
+      ? searchGeoapifyCategoryGroup(CATEGORY_GROUPS.transit, center, transitLimit, apiKey)
+      : Promise.resolve([]),
+  ];
+  const results = await Promise.allSettled(searches);
+  const places = results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+
+  if (!places.length) {
+    const firstFailure = results.find((result) => result.status === "rejected");
+    throw firstFailure?.status === "rejected"
+      ? firstFailure.reason
+      : new Error("Geoapify returned no places for this city.");
+  }
+
+  return places.slice(0, limit);
+}
+
+async function searchGeoapifyCategoryGroup(
+  categories: string,
+  center: { lat: number; lon: number },
+  limit: number,
+  apiKey: string,
+) {
   const requestUrl = new URL(GEOAPIFY_PLACES_URL);
-  requestUrl.searchParams.set("categories", DEFAULT_CATEGORIES);
+  requestUrl.searchParams.set("categories", categories);
   requestUrl.searchParams.set("filter", `circle:${center.lon},${center.lat},14000`);
   requestUrl.searchParams.set("bias", `proximity:${center.lon},${center.lat}`);
-  requestUrl.searchParams.set("limit", String(Math.max(limit * 2, 12)));
+  requestUrl.searchParams.set("limit", String(Math.max(limit * 3, 6)));
   requestUrl.searchParams.set("apiKey", apiKey);
 
   const response = await fetch(requestUrl.toString());
@@ -167,6 +381,8 @@ function getReadableCategory(categories: string[]) {
   const categorySet = new Set(categories);
 
   if (categorySet.has("entertainment.museum")) return "Museum";
+  if ([...categorySet].some((category) => category.startsWith("catering"))) return "Restaurant";
+  if ([...categorySet].some((category) => category.startsWith("public_transport"))) return "Transit";
   if ([...categorySet].some((category) => category.startsWith("tourism.sights"))) return "Sight";
   if ([...categorySet].some((category) => category.startsWith("tourism.attraction"))) return "Attraction";
   return "Local place";
@@ -202,19 +418,24 @@ export default async function handler(req: any, res: any) {
 
   try {
     const places = await searchGeoapifyPlaces(city, limit);
+    const mergedPlaces = mergeVerifiedAndLivePlaces(city, places, limit);
+    const hasVerifiedPlaces = getVerifiedFallbackPlaces(city, 1).length > 0;
 
     res.status(200).json({
-      provider: "geoapify",
+      provider: hasVerifiedPlaces && mergedPlaces.length ? "verified + geoapify" : "geoapify",
       city,
-      places,
+      places: mergedPlaces,
       warning: places.length ? "" : "Geoapify returned no places for this city.",
     });
   } catch (error: any) {
+    const fallbackPlaces = getVerifiedFallbackPlaces(city, limit);
     res.status(200).json({
-      provider: "fallback",
+      provider: fallbackPlaces.length ? "verified fallback" : "fallback",
       city,
-      places: [],
-      warning: error?.message || "Geoapify places search failed.",
+      places: fallbackPlaces,
+      warning: fallbackPlaces.length
+        ? `Geoapify unavailable; returned verified static addresses for ${city}.`
+        : error?.message || "Geoapify places search failed.",
     });
   }
 }
