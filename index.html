@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="taste-pass.css" />
 </head>
 <body>
   <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
@@ -85,13 +86,49 @@
           </dl>
         </div>
 
-        <aside class="hero-panel" aria-label="Featured Nordic inspiration">
-          <div class="hero-image-card northern-lights">
-            <div class="image-overlay">
-              <span>Planner example</span>
-              <strong>Reusable route template</strong>
-              <p>A finished structure for route, stay, daily rhythm, and next booking steps.</p>
-            </div>
+        <aside class="hero-panel hero-panel--masonry" aria-label="Featured Nordic inspiration">
+          <div class="hero-masonry" aria-hidden="true">
+            <article class="masonry-card tall fjord-glass">
+              <div class="masonry-overlay">
+                <span>Fjord light</span>
+                <strong>Quiet waterlines</strong>
+              </div>
+            </article>
+
+            <article class="masonry-card short pine-mist">
+              <div class="masonry-overlay">
+                <span>Forest hush</span>
+                <strong>Pine air</strong>
+              </div>
+            </article>
+
+            <article class="masonry-card medium harbor-blue">
+              <div class="masonry-overlay">
+                <span>Coastal stillness</span>
+                <strong>Harbor calm</strong>
+              </div>
+            </article>
+
+            <article class="masonry-card short aurora-soft">
+              <div class="masonry-overlay">
+                <span>Winter glow</span>
+                <strong>Night light</strong>
+              </div>
+            </article>
+
+            <article class="masonry-card tall cabin-frost">
+              <div class="masonry-overlay">
+                <span>Design stay</span>
+                <strong>Warm interior</strong>
+              </div>
+            </article>
+
+            <article class="masonry-card medium ferry-line">
+              <div class="masonry-overlay">
+                <span>Movement</span>
+                <strong>Slow crossings</strong>
+              </div>
+            </article>
           </div>
 
           <div class="season-card">
@@ -285,7 +322,10 @@
               <textarea
                 id="notes"
                 name="notes"
-                placeholder="Example:\n2026-06-01 Paris\n2026-06-04 Rome\n2026-06-07 Stockholm"
+                placeholder="Example:
+2026-06-01 Paris
+2026-06-04 Rome
+2026-06-07 Stockholm"
               ></textarea>
             </label>
 
@@ -446,5 +486,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="script.js" defer></script>
+  <script src="hero-gsap.js" defer></script>
 </body>
 </html>
