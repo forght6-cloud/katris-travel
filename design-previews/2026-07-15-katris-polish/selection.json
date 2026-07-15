@@ -1,0 +1,10 @@
+{
+  "selected": null,
+  "dials": {
+    "visualVariance": 7,
+    "motionIntensity": 5,
+    "informationDensity": 4
+  },
+  "adjustments": "",
+  "status": "awaiting-user-selection"
+}
