@@ -43,6 +43,7 @@ function initHeroWaterfall() {
   let currentScene = 0;
   let resizeFrame = 0;
 
+  masonry.removeAttribute("aria-hidden");
   masonry.dataset.waterfall = "interactive";
   masonry.setAttribute("aria-live", "polite");
   masonry.setAttribute("aria-label", "Interactive Nordic landscape. Click a panel to change the scene.");
@@ -201,5 +202,5 @@ window.addEventListener("DOMContentLoaded", () => {
   const resync = () => window.dispatchEvent(new Event("resize"));
   requestAnimationFrame(() => requestAnimationFrame(resync));
   window.setTimeout(resync, 250);
-  document.fonts?.ready.then(resync).catch(() => {});
+  if (document.fonts?.ready) document.fonts.ready.then(resync).catch(() => {});
 });
