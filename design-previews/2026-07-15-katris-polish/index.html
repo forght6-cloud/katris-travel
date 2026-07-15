@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#f4f6f8" />
+  <title>Katris Travel · 四方向设计样机</title>
+  <style>
+    :root {
+      --shell-bg: #f4f6f8;
+      --shell-surface: rgba(255, 255, 255, 0.92);
+      --shell-ink: #101114;
+      --shell-muted: #626873;
+      --shell-line: rgba(16, 17, 20, 0.12);
+      --shell-accent: #0066ff;
+      --shell-accent-strong: #0052cc;
+      --shell-focus: rgba(0, 102, 255, 0.34);
+      --shell-radius: 24px;
+      --shell-shadow: 0 24px 70px rgba(15, 23, 42, 0.12), 0 2px 12px rgba(15, 23, 42, 0.06);
+      --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--shell-ink);
+      font-family: var(--system-font);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(115, 179, 255, 0.2), transparent 26rem),
+        radial-gradient(circle at 94% 18%, rgba(255, 186, 132, 0.18), transparent 28rem),
+        var(--shell-bg);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
+    button,
+    input,
+    textarea {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--shell-focus);
+      outline-offset: 3px;
+    }
+
+    .preview-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 64px;
+      padding: 12px clamp(16px, 3vw, 36px);
+      border-bottom: 1px solid var(--shell-line);
+      background: rgba(247, 249, 251, 0.82);
+      backdrop-filter: blur(22px) saturate(150%);
+    }
+
+    .toolbar-title {
+      display: grid;
+      gap: 2px;
+    }
+
+    .toolbar-title strong {
+      font-size: 0.94rem;
+      letter-spacing: -0.01em;
+    }
+
+    .toolbar-title span,
+    .toolbar-state {
+      color: var(--shell-muted);
+      font-size: 0.76rem;
+    }
+
+    .toolbar-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      text-align: right;
+    }
+
+    .key-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--shell-muted);
+      font-size: 0.76rem;
+    }
+
+    kbd {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--shell-line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--shell-ink);
+      font-family: inherit;
+      font-size: 0.7rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .page {
+      width: min(1460px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: clamp(28px, 5vw, 72px) 0 80px;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      gap: clamp(26px, 5vw, 70px);
+      align-items: end;
+      margin-bottom: 32px;
+    }
+
+    .intro-copy {
+      max-width: 900px;
+    }
+
+    .intro-label {
+      margin: 0 0 14px;
+      color: #0066ff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .intro h1 {
+      max-width: 15ch;
+      margin: 0;
+      font-size: clamp(2.4rem, 6.3vw, 6.5rem);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+
+    .intro-copy > p:last-child {
+      max-width: 68ch;
+      margin: 24px 0 0;
+      color: var(--shell-muted);
+      font-size: clamp(1rem, 1.5vw, 1.18rem);
+      line-height: 1.65;
+    }
+
+    .dials {
+      display: grid;
+      gap: 18px;
+      padding: 22px;
+      border: 1px solid var(--shell-line);
+      border-radius: var(--shell-radius);
+      background: var(--shell-surface);
+      box-shadow: 0 16px 44px rgba(15, 23, 42, 0.08);
+    }
+
+    .dials h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.015em;
+    }
+
+    .dial {
+      display: grid;
+      gap: 9px;
+    }
+
+    .dial-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--shell-muted);
+      font-size: 0.84rem;
+    }
+
+    .dial output {
+      color: var(--shell-ink);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      min-height: 44px;
+      accent-color: var(--shell-accent);
+      cursor: pointer;
+    }
+
+    .directions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .direction-card {
+      display: grid;
+      gap: 18px;
+      padding: 18px;
+      border: 1px solid var(--shell-line);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: var(--shell-shadow);
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .direction-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 102, 255, 0.28);
+      box-shadow: 0 28px 84px rgba(15, 23, 42, 0.15), 0 3px 14px rgba(15, 23, 42, 0.07);
+    }
+
+    .direction-card.is-selected {
+      border-color: rgba(0, 102, 255, 0.78);
+      box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12), var(--shell-shadow);
+    }
+
+    .direction-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .direction-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .direction-letter {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #101114;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .direction-name strong {
+      overflow: hidden;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #eaf3ff;
+      color: #0057d8;
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .mockup-stage {
+      position: relative;
+      overflow: hidden;
+      min-height: 330px;
+      border-radius: 22px;
+      background: #dfe6ed;
+      isolation: isolate;
+    }
+
+    .mockup-stage::after {
+      content: "方向样机";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 8;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.28);
+      color: #fff;
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      backdrop-filter: blur(12px);
+    }
+
+    .mockup {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .meta-block {
+      display: grid;
+      gap: 7px;
+      width: 100%;
+      min-width: 0;
+      padding: 14px 15px;
+      border-radius: 16px;
+      background: #f2f4f7;
+    }
+
+    .meta-block strong {
+      font-size: 0.86rem;
+    }
+
+    .meta-block span {
+      color: var(--shell-muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .pick-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: #101114;
+      color: #fff;
+      font-weight: 760;
+      cursor: pointer;
+      transition: transform 150ms ease, background-color 150ms ease;
+    }
+
+    .pick-button:hover {
+      background: #26282e;
+      transform: translateY(-1px);
+    }
+
+    .pick-button:active {
+      transform: translateY(0) scale(0.985);
+    }
+
+    /* Direction A · Horizon Cinema */
+    .dir-a {
+      color: #fff;
+      background:
+        linear-gradient(90deg, rgba(7, 27, 52, 0.62), rgba(7, 27, 52, 0.08) 66%),
+        linear-gradient(180deg, transparent 54%, rgba(9, 23, 39, 0.66)),
+        url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1400&q=82") center / cover;
+    }
+
+    .a-nav {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 20px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .a-brand,
+    .a-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .a-mark {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #0c3f74;
+    }
+
+    .a-copy {
+      position: absolute;
+      left: 28px;
+      bottom: 30px;
+      z-index: 2;
+      max-width: 58%;
+    }
+
+    .a-copy small,
+    .a-route small {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 0.62rem;
+      font-weight: 760;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .a-copy h3 {
+      max-width: 9ch;
+      margin: 0;
+      font-size: clamp(2rem, 4.8vw, 3.8rem);
+      line-height: 0.9;
+      letter-spacing: -0.065em;
+    }
+
+    .a-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .mini-primary,
+    .mini-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 13px;
+      border: 0;
+      border-radius: 999px;
+      font-size: 0.66rem;
+      font-weight: 730;
+    }
+
+    .mini-primary {
+      background: #fff;
+      color: #0b2e50;
+    }
+
+    .mini-secondary {
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      backdrop-filter: blur(12px);
+    }
+
+    .a-route {
+      position: absolute;
+      right: 22px;
+      bottom: 26px;
+      z-index: 3;
+      width: 33%;
+      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(18px) saturate(140%);
+    }
+
+    .a-route strong {
+      display: block;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    .a-route-line {
+      position: relative;
+      height: 2px;
+      margin: 17px 0 11px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .a-route-line::before,
+    .a-route-line::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffca7a;
+      transform: translateY(-50%);
+    }
+
+    .a-route-line::before { left: 0; }
+    .a-route-line::after { right: 0; }
+
+    .a-route span {
+      font-size: 0.62rem;
+      opacity: 0.82;
+    }
+
+    /* Direction B · Atlas Editorial */
+    .dir-b {
+      color: #171717;
+      background: #f4efe6;
+    }
+
+    .dir-b::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.42;
+      background-image:
+        linear-gradient(rgba(28, 28, 28, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(28, 28, 28, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .b-nav {
+      position: absolute;
+      top: 18px;
+      left: 22px;
+      right: 22px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(23, 23, 23, 0.25);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .b-copy {
+      position: absolute;
+      left: 24px;
+      top: 78px;
+      z-index: 2;
+      width: 48%;
+    }
+
+    .b-index {
+      color: #e14f2b;
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+
+    .b-copy h3 {
+      margin: 8px 0 12px;
+      font-size: clamp(2rem, 4.3vw, 3.4rem);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .b-copy p {
+      max-width: 36ch;
+      margin: 0;
+      color: #5f5b55;
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+
+    .b-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .b-actions .mini-primary {
+      background: #171717;
+      color: #fff;
+    }
+
+    .b-actions .mini-secondary {
+      border-color: rgba(23, 23, 23, 0.24);
+      background: transparent;
+      color: #171717;
+    }
+
+    .b-map {
+      position: absolute;
+      top: 76px;
+      right: 24px;
+      bottom: 24px;
+      z-index: 2;
+      width: 43%;
+      overflow: hidden;
+      border-radius: 18px 18px 60px 18px;
+      background:
+        linear-gradient(180deg, rgba(22, 40, 48, 0.12), rgba(22, 40, 48, 0.48)),
+        url("https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=900&q=82") center / cover;
+    }
+
+    .b-path {
+      position: absolute;
+      inset: 18% 10% auto 12%;
+      height: 48%;
+      border-top: 3px solid #f2623b;
+      border-right: 3px solid #f2623b;
+      border-radius: 0 90% 0 0;
+      transform: rotate(-9deg);
+    }
+
+    .b-place {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(244, 239, 230, 0.9);
+      font-size: 0.66rem;
+      line-height: 1.45;
+    }
+
+    /* Direction C · Journey OS */
+    .dir-c {
+      color: #101114;
+      background:
+        radial-gradient(circle at 80% 8%, rgba(116, 198, 255, 0.55), transparent 29%),
+        radial-gradient(circle at 14% 90%, rgba(255, 205, 154, 0.44), transparent 30%),
+        #f8fbff;
+    }
+
+    .c-nav {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      right: 18px;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 38px;
+      padding: 0 8px 0 12px;
+      border: 1px solid rgba(18, 32, 48, 0.09);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 10px 30px rgba(34, 76, 110, 0.08);
+      backdrop-filter: blur(18px);
+      font-size: 0.66rem;
+      font-weight: 750;
+    }
+
+    .c-nav button {
+      min-height: 30px;
+      padding: 0 11px;
+      border: 0;
+      border-radius: 10px;
+      background: #0a72ff;
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 760;
+    }
+
+    .c-copy {
+      position: absolute;
+      left: 26px;
+      top: 77px;
+      z-index: 2;
+      width: 46%;
+    }
+
+    .c-copy span {
+      color: #0066ff;
+      font-size: 0.64rem;
+      font-weight: 780;
+    }
+
+    .c-copy h3 {
+      margin: 7px 0 10px;
+      font-size: clamp(2rem, 4.2vw, 3.3rem);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .c-copy p {
+      margin: 0;
+      color: #5b6673;
+      font-size: 0.7rem;
+      line-height: 1.5;
+    }
+
+    .c-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .c-actions .mini-primary {
+      background: #101114;
+      color: #fff;
+    }
+
+    .c-actions .mini-secondary {
+      border-color: rgba(16, 17, 20, 0.15);
+      background: rgba(255, 255, 255, 0.82);
+      color: #101114;
+    }
+
+    .c-bento {
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      bottom: 20px;
+      z-index: 2;
+      display: grid;
+      width: 47%;
+      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-rows: 1fr 0.78fr;
+      gap: 9px;
+    }
+
+    .c-tile {
+      overflow: hidden;
+      border: 1px solid rgba(16, 17, 20, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: 0 14px 32px rgba(36, 82, 118, 0.1);
+      backdrop-filter: blur(16px);
+    }
+
+    .c-photo {
+      grid-row: span 2;
+      position: relative;
+      background:
+        linear-gradient(180deg, transparent 48%, rgba(10, 34, 52, 0.58)),
+        url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=82") center / cover;
+    }
+
+    .c-photo span {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 720;
+    }
+
+    .c-ai,
+    .c-price {
+      display: grid;
+      align-content: space-between;
+      padding: 12px;
+    }
+
+    .c-ai strong,
+    .c-price strong {
+      font-size: 0.72rem;
+      line-height: 1.3;
+    }
+
+    .c-orb {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 28%, #fff, transparent 23%),
+        conic-gradient(from 30deg, #55b8ff, #f7b56f, #8be0d1, #55b8ff);
+      box-shadow: 0 8px 20px rgba(0, 102, 255, 0.2);
+      animation: float-orb 4.8s ease-in-out infinite;
+    }
+
+    .c-price span {
+      color: #0a72ff;
+      font-size: 1.25rem;
+      font-weight: 850;
+      letter-spacing: -0.04em;
+    }
+
+    /* Direction D · Social Compass */
+    .dir-d {
+      color: #14202d;
+      background: #fff8ef;
+    }
+
+    .d-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 19%;
+      background: #1558d6;
+    }
+
+    .d-band::after {
+      content: "";
+      position: absolute;
+      right: -38px;
+      top: 46px;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #ff744f;
+      box-shadow: 0 76px 0 #ffd36a, 0 152px 0 #78d8bf;
+    }
+
+    .d-nav {
+      position: absolute;
+      top: 18px;
+      left: 22%;
+      right: 18px;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.66rem;
+      font-weight: 800;
+    }
+
+    .d-copy {
+      position: absolute;
+      left: 22%;
+      top: 68px;
+      z-index: 2;
+      width: 35%;
+    }
+
+    .d-copy small {
+      color: #1558d6;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .d-copy h3 {
+      margin: 7px 0 10px;
+      font-size: clamp(1.8rem, 3.8vw, 3rem);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+    }
+
+    .d-copy p {
+      margin: 0;
+      color: #5f6872;
+      font-size: 0.68rem;
+      line-height: 1.45;
+    }
+
+    .d-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .d-actions .mini-primary {
+      background: #1558d6;
+      color: #fff;
+    }
+
+    .d-actions .mini-secondary {
+      border-color: rgba(20, 32, 45, 0.18);
+      background: transparent;
+      color: #14202d;
+    }
+
+    .d-social {
+      position: absolute;
+      top: 62px;
+      right: 18px;
+      bottom: 18px;
+      z-index: 2;
+      display: grid;
+      width: 39%;
+      grid-template-columns: 1fr 0.78fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .d-video,
+    .d-map,
+    .d-community {
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(20, 32, 45, 0.1);
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(83, 63, 39, 0.1);
+    }
+
+    .d-video {
+      grid-row: span 2;
+      position: relative;
+      background:
+        linear-gradient(180deg, transparent 50%, rgba(16, 25, 34, 0.55)),
+        url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=82") center / cover;
+    }
+
+    .d-video::before {
+      content: "▶";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.88);
+      color: #1558d6;
+      font-size: 0.68rem;
+      transform: translate(-50%, -50%);
+    }
+
+    .d-video span {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      color: #fff;
+      font-size: 0.64rem;
+      font-weight: 700;
+    }
+
+    .d-map,
+    .d-community {
+      display: grid;
+      align-content: space-between;
+      padding: 10px;
+      font-size: 0.62rem;
+    }
+
+    .d-map {
+      background:
+        radial-gradient(circle at 70% 35%, rgba(21, 88, 214, 0.15) 0 4px, transparent 5px),
+        linear-gradient(135deg, #edf5ff, #dbe8ff);
+    }
+
+    .d-community {
+      background: #fff;
+    }
+
+    .avatars {
+      display: flex;
+      margin-top: 8px;
+    }
+
+    .avatars span {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      margin-left: -5px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: #ff744f;
+      color: #fff;
+      font-size: 0.54rem;
+      font-weight: 800;
+    }
+
+    .avatars span:first-child { margin-left: 0; }
+    .avatars span:nth-child(2) { background: #1558d6; }
+    .avatars span:nth-child(3) { background: #78bfae; }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .comparison article {
+      padding: 18px;
+      border: 1px solid var(--shell-line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .comparison strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+    }
+
+    .comparison p {
+      margin: 0;
+      color: var(--shell-muted);
+      font-size: 0.78rem;
+      line-height: 1.55;
+    }
+
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(12, 15, 20, 0.44);
+      backdrop-filter: blur(10px);
+    }
+
+    .dialog-backdrop[hidden] {
+      display: none;
+    }
+
+    .selection-dialog {
+      width: min(520px, 100%);
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 32px 100px rgba(0, 0, 0, 0.25);
+    }
+
+    .selection-dialog h2 {
+      margin: 0 0 8px;
+      font-size: 1.45rem;
+      letter-spacing: -0.035em;
+    }
+
+    .selection-dialog > p {
+      margin: 0 0 16px;
+      color: var(--shell-muted);
+      line-height: 1.5;
+    }
+
+    .dialog-dials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .dialog-dials span {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #eef3f8;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .selection-dialog label {
+      display: grid;
+      gap: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .selection-dialog textarea {
+      width: 100%;
+      min-height: 112px;
+      resize: vertical;
+      padding: 13px;
+      border: 1px solid rgba(16, 17, 20, 0.18);
+      border-radius: 14px;
+      color: var(--shell-ink);
+      background: #fff;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .dialog-actions button {
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 12px;
+      font-weight: 720;
+      cursor: pointer;
+    }
+
+    .dialog-cancel {
+      border: 1px solid rgba(16, 17, 20, 0.14);
+      background: #fff;
+      color: var(--shell-ink);
+    }
+
+    .dialog-confirm {
+      border: 1px solid var(--shell-accent);
+      background: var(--shell-accent);
+      color: #fff;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 80;
+      max-width: min(540px, calc(100% - 32px));
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: #101114;
+      color: #fff;
+      font-size: 0.84rem;
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 180ms ease, opacity 180ms ease;
+    }
+
+    .toast.is-visible {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    @keyframes float-orb {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
+    @media (max-width: 1040px) {
+      .intro {
+        grid-template-columns: 1fr;
+      }
+
+      .dials {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .dials h2 {
+        grid-column: 1 / -1;
+      }
+
+      .comparison {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 820px) {
+      .preview-toolbar {
+        align-items: flex-start;
+      }
+
+      .toolbar-meta {
+        display: none;
+      }
+
+      .directions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup-stage {
+        min-height: 310px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100% - 20px, 1460px);
+        padding-top: 30px;
+      }
+
+      .intro h1 {
+        font-size: clamp(2.35rem, 15vw, 4.3rem);
+      }
+
+      .dials {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup-stage {
+        min-height: 360px;
+      }
+
+      .a-copy,
+      .b-copy,
+      .c-copy,
+      .d-copy {
+        width: auto;
+        max-width: 58%;
+      }
+
+      .a-route,
+      .b-map,
+      .c-bento,
+      .d-social {
+        width: 38%;
+      }
+
+      .direction-card {
+        padding: 12px;
+        border-radius: 24px;
+      }
+
+      .dialog-actions {
+        flex-direction: column-reverse;
+      }
+
+      .dialog-actions button {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="preview-toolbar">
+    <div class="toolbar-title">
+      <strong>Katris Travel · 风格试衣间</strong>
+      <span>方向样机，不是最终网站；选择后才进入正式实现。</span>
+    </div>
+    <div class="toolbar-meta">
+      <span class="key-hint"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> 快速选择</span>
+      <span class="toolbar-state" id="toolbar-state" aria-live="polite">尚未选择</span>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="intro" aria-labelledby="preview-title">
+      <div class="intro-copy">
+        <p class="intro-label">Design Read</p>
+        <h1 id="preview-title">同一套功能，四种完全不同的品牌气质。</h1>
+        <p>读取为：面向自主旅行者的全能旅行规划官网。保留所有既有按钮、表单、ID、API 与社交能力，只重做视觉层级、图像语言、空间节奏和克制动效。</p>
+      </div>
+
+      <section class="dials" aria-labelledby="dial-title">
+        <h2 id="dial-title">设计拨盘</h2>
+        <label class="dial">
+          <span class="dial-head"><span>视觉冒险度</span><output id="variance-output">7/10</output></span>
+          <input id="variance" type="range" min="1" max="10" value="7" data-qmdp-output="variance-output" />
+        </label>
+        <label class="dial">
+          <span class="dial-head"><span>动效强度</span><output id="motion-output">5/10</output></span>
+          <input id="motion" type="range" min="1" max="10" value="5" data-qmdp-output="motion-output" />
+        </label>
+        <label class="dial">
+          <span class="dial-head"><span>信息密度</span><output id="density-output">4/10</output></span>
+          <input id="density" type="range" min="1" max="10" value="4" data-qmdp-output="density-output" />
+        </label>
+      </section>
+    </section>
+
+    <section class="directions-grid" aria-label="四个设计方向">
+      <article class="direction-card" data-card="A">
+        <header class="direction-head">
+          <div class="direction-name">
+            <span class="direction-letter">A</span>
+            <strong>Horizon Cinema · 地平线电影感</strong>
+          </div>
+        </header>
+
+        <div class="mockup-stage">
+          <div class="mockup dir-a">
+            <div class="a-nav">
+              <span class="a-brand"><span class="a-mark">KT</span> Katris Travel</span>
+              <span class="a-nav-links">Destinations · Plan · Assistant</span>
+            </div>
+            <div class="a-copy">
+              <small>Travel planning with atmosphere</small>
+              <h3>Move toward the horizon.</h3>
+              <div class="a-actions">
+                <span class="mini-primary">Build my trip</span>
+                <span class="mini-secondary">View ready templates</span>
+              </div>
+            </div>
+            <aside class="a-route">
+              <small>Live route</small>
+              <strong>Oslo → Bergen → Flam</strong>
+              <div class="a-route-line"></div>
+              <span>7 nights · 2 travelers · supplier-ready</span>
+            </aside>
+          </div>
+        </div>
+
+        <div class="meta-block">
+          <strong>气质：沉浸、明亮、情绪先行</strong>
+          <span>记忆点是整幅地平线影像和右下角实时路线玻璃舱；适合强调“先被目的地吸引，再进入规划”。</span>
+        </div>
+        <button class="pick-button qmdp-pick-button" type="button" data-direction="A" data-name="Horizon Cinema · 地平线电影感" data-qmdp-native-handler="true">选择 A · 地平线电影感</button>
+      </article>
+
+      <article class="direction-card" data-card="B">
+        <header class="direction-head">
+          <div class="direction-name">
+            <span class="direction-letter">B</span>
+            <strong>Atlas Editorial · 旅行图志</strong>
+          </div>
+        </header>
+
+        <div class="mockup-stage">
+          <div class="mockup dir-b">
+            <div class="b-nav"><span>Katris Travel Atlas</span><span>Destinations / Plan / Assistant</span></div>
+            <div class="b-copy">
+              <span class="b-index">Route No. 07</span>
+              <h3>Plan with the clarity of an atlas.</h3>
+              <p>路线、日期、住宿区域与真实供应商状态，像一份可以执行的旅行图志一样展开。</p>
+              <div class="b-actions">
+                <span class="mini-primary">Start planning</span>
+                <span class="mini-secondary">View ready templates</span>
+              </div>
+            </div>
+            <div class="b-map">
+              <span class="b-path"></span>
+              <div class="b-place"><strong>Bergen / Flam</strong><br />Ferry context · cabin shortlist · local notes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-block">
+          <strong>气质：编辑、权威、路线结构清楚</strong>
+          <span>记忆点是纸质地图网格与橙红路线线条；适合把 Katris 塑造成可信赖的旅行研究与决策工具。</span>
+        </div>
+        <button class="pick-button qmdp-pick-button" type="button" data-direction="B" data-name="Atlas Editorial · 旅行图志" data-qmdp-native-handler="true">选择 B · 旅行图志</button>
+      </article>
+
+      <article class="direction-card" data-card="C">
+        <header class="direction-head">
+          <div class="direction-name">
+            <span class="direction-letter">C</span>
+            <strong>Journey OS · 旅行操作系统</strong>
+          </div>
+          <span class="badge">推荐</span>
+        </header>
+
+        <div class="mockup-stage">
+          <div class="mockup dir-c">
+            <div class="c-nav"><span>KT · Katris Travel</span><button type="button">Start planning</button></div>
+            <div class="c-copy">
+              <span>All-in-one travel intelligence</span>
+              <h3>Your trip, already taking shape.</h3>
+              <p>把 AI、目的地、价格上下文与社交发现压缩进一个清晰、明亮、可操作的系统。</p>
+              <div class="c-actions">
+                <span class="mini-primary">Build my trip</span>
+                <span class="mini-secondary">View ready templates</span>
+              </div>
+            </div>
+            <div class="c-bento">
+              <div class="c-tile c-photo"><span>Nordic coast · live inspiration</span></div>
+              <div class="c-tile c-ai"><div class="c-orb"></div><strong>AI route ready in 3 steps</strong></div>
+              <div class="c-tile c-price"><strong>Supplier context</strong><span>8+</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-block">
+          <strong>气质：高级消费科技、轻盈、功能集中</strong>
+          <span>记忆点是发光路线球与非对称 Bento；最适合保留你现有复杂能力，同时让用户第一眼看懂“这是全能旅行系统”。</span>
+        </div>
+        <button class="pick-button qmdp-pick-button" type="button" data-direction="C" data-name="Journey OS · 旅行操作系统" data-qmdp-native-handler="true">选择 C · 旅行操作系统</button>
+      </article>
+
+      <article class="direction-card" data-card="D">
+        <header class="direction-head">
+          <div class="direction-name">
+            <span class="direction-letter">D</span>
+            <strong>Social Compass · 社交罗盘</strong>
+          </div>
+        </header>
+
+        <div class="mockup-stage">
+          <div class="mockup dir-d">
+            <span class="d-band"></span>
+            <div class="d-nav"><span>Katris Travel</span><span>Explore · Forum · Shorts · Plan</span></div>
+            <div class="d-copy">
+              <small>People, places, plans</small>
+              <h3>Travel ideas should feel alive.</h3>
+              <p>把当地短视频、社区讨论、地图与 AI 计划放进同一条发现路径。</p>
+              <div class="d-actions">
+                <span class="mini-primary">Start planning</span>
+                <span class="mini-secondary">Meet the assistant</span>
+              </div>
+            </div>
+            <div class="d-social">
+              <div class="d-video"><span>Local guide · California coast</span></div>
+              <div class="d-map"><strong>Live map</strong><span>3 places saved</span></div>
+              <div class="d-community"><strong>Community now</strong><div class="avatars"><span>A</span><span>M</span><span>J</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-block">
+          <strong>气质：鲜活、社交、内容与工具并重</strong>
+          <span>记忆点是彩色功能轨道与“短视频＋地图＋社区”三联屏；最能凸显你强调的社交增长能力。</span>
+        </div>
+        <button class="pick-button qmdp-pick-button" type="button" data-direction="D" data-name="Social Compass · 社交罗盘" data-qmdp-native-handler="true">选择 D · 社交罗盘</button>
+      </article>
+    </section>
+
+    <section class="comparison" aria-label="方向差异说明">
+      <article><strong>A · 情绪优先</strong><p>最强旅游氛围，规划模块作为沉浸画面上的行动层出现。</p></article>
+      <article><strong>B · 权威优先</strong><p>最像旅行研究工具，适合强调路线真实性、价格来源和决策依据。</p></article>
+      <article><strong>C · 产品优先</strong><p>功能、品牌和视觉最均衡，适合长期扩展酒店、机票、餐厅、地图和 AI。</p></article>
+      <article><strong>D · 社交优先</strong><p>让社区与短视频成为产品记忆点，适合强化内容传播和用户停留。</p></article>
+    </section>
+  </main>
+
+  <div class="dialog-backdrop" id="dialog-backdrop" hidden>
+    <section class="selection-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <h2 id="dialog-title">确认设计方向</h2>
+      <p id="dialog-description">确认后不会自动修改正式网站，只会记录你的选择，等待下一步执行指令。</p>
+      <div class="dialog-dials" id="dialog-dials"></div>
+      <label for="adjustments">调整建议（可选）
+        <textarea id="adjustments" placeholder="例如：保留 C 的布局，但使用 A 的图片氛围……"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button class="dialog-cancel" id="dialog-cancel" type="button">取消</button>
+        <button class="dialog-confirm" id="dialog-confirm" type="button">确认并记录</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const inputs = {
+        variance: document.getElementById("variance"),
+        motion: document.getElementById("motion"),
+        density: document.getElementById("density")
+      };
+
+      const outputs = {
+        variance: document.getElementById("variance-output"),
+        motion: document.getElementById("motion-output"),
+        density: document.getElementById("density-output")
+      };
+
+      const dialog = document.getElementById("dialog-backdrop");
+      const dialogTitle = document.getElementById("dialog-title");
+      const dialogDials = document.getElementById("dialog-dials");
+      const adjustments = document.getElementById("adjustments");
+      const cancelButton = document.getElementById("dialog-cancel");
+      const confirmButton = document.getElementById("dialog-confirm");
+      const toolbarState = document.getElementById("toolbar-state");
+      const toast = document.getElementById("toast");
+      const pickButtons = [...document.querySelectorAll(".pick-button")];
+      let pending = null;
+      let lastFocused = null;
+      let toastTimer = null;
+
+      function readDials() {
+        return {
+          visualVariance: Number(inputs.variance.value),
+          motionIntensity: Number(inputs.motion.value),
+          informationDensity: Number(inputs.density.value)
+        };
+      }
+
+      function updateDial(key) {
+        outputs[key].textContent = `${inputs[key].value}/10`;
+      }
+
+      Object.keys(inputs).forEach((key) => {
+        inputs[key].addEventListener("input", () => updateDial(key));
+      });
+
+      function openDialog(button) {
+        pending = {
+          id: button.dataset.direction,
+          name: button.dataset.name
+        };
+        lastFocused = document.activeElement;
+        const dials = readDials();
+        dialogTitle.textContent = `确认选择 ${pending.id} · ${pending.name}`;
+        dialogDials.innerHTML = `
+          <span>视觉冒险度 ${dials.visualVariance}/10</span>
+          <span>动效强度 ${dials.motionIntensity}/10</span>
+          <span>信息密度 ${dials.informationDensity}/10</span>
+        `;
+        adjustments.value = "";
+        dialog.hidden = false;
+        document.body.style.overflow = "hidden";
+        requestAnimationFrame(() => adjustments.focus());
+      }
+
+      function closeDialog() {
+        dialog.hidden = true;
+        document.body.style.overflow = "";
+        if (lastFocused instanceof HTMLElement) lastFocused.focus();
+      }
+
+      function showToast(message) {
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 3200);
+      }
+
+      async function confirmSelection() {
+        if (!pending) return;
+        const payload = {
+          id: pending.id,
+          label: pending.id,
+          name: pending.name,
+          notes: "Katris Travel polish direction",
+          dials: readDials(),
+          adjustments: adjustments.value.trim(),
+          recordedAt: new Date().toISOString()
+        };
+
+        localStorage.setItem("katris-design-selection", JSON.stringify(payload));
+        document.querySelectorAll(".direction-card").forEach((card) => {
+          card.classList.toggle("is-selected", card.dataset.card === pending.id);
+        });
+        toolbarState.textContent = `已选择 ${pending.id} · ${pending.name}`;
+
+        const shareText = `选 ${pending.id}：${pending.name}；拨盘：视觉冒险度 ${payload.dials.visualVariance}/10，动效强度 ${payload.dials.motionIntensity}/10，信息密度 ${payload.dials.informationDensity}/10；建议：${payload.adjustments || "无"}`;
+        try {
+          await navigator.clipboard.writeText(shareText);
+          showToast(`已选择方向 ${pending.id}，选择内容已复制；请回到对话发送。`);
+        } catch (error) {
+          showToast(`已选择方向 ${pending.id}；请回到对话告诉我你的选择。`);
+        }
+        closeDialog();
+      }
+
+      pickButtons.forEach((button) => {
+        button.addEventListener("click", () => openDialog(button));
+      });
+
+      cancelButton.addEventListener("click", closeDialog);
+      confirmButton.addEventListener("click", confirmSelection);
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) closeDialog();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!dialog.hidden) {
+          if (event.key === "Escape") closeDialog();
+          return;
+        }
+        if (["1", "2", "3", "4"].includes(event.key)) {
+          const button = pickButtons[Number(event.key) - 1];
+          if (button) openDialog(button);
+        }
+      });
+
+      const saved = localStorage.getItem("katris-design-selection");
+      if (saved) {
+        try {
+          const payload = JSON.parse(saved);
+          const card = document.querySelector(`[data-card="${payload.id}"]`);
+          if (card) card.classList.add("is-selected");
+          toolbarState.textContent = `上次选择 ${payload.id} · ${payload.name}`;
+        } catch (error) {
+          localStorage.removeItem("katris-design-selection");
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
