@@ -99,6 +99,7 @@ function initHeroWaterfall() {
     updateLabels(scene);
     syncSceneGeometry();
 
+    document.querySelectorAll("[data-hero-scene]").forEach((element) => delete element.dataset.heroScene);
     const destinationButton = document.querySelector(`[data-region="${scene.region}"]`);
     if (destinationButton) destinationButton.dataset.heroScene = "current";
 
@@ -196,4 +197,9 @@ function initHeroWaterfall() {
 window.addEventListener("DOMContentLoaded", () => {
   loadFeatureLayer();
   initHeroWaterfall();
+
+  const resync = () => window.dispatchEvent(new Event("resize"));
+  requestAnimationFrame(() => requestAnimationFrame(resync));
+  window.setTimeout(resync, 250);
+  document.fonts?.ready.then(resync).catch(() => {});
 });
