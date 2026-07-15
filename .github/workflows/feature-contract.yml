@@ -1,0 +1,28 @@
+name: Feature Contract Checks
+
+on:
+  push:
+    branches:
+      - feat/d70-c15-b15-unified
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run contract tests
+        run: node --test tests/*.test.mjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check script.js
+          node --check hero-gsap.js
+          node --check features.js
