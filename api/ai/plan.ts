@@ -598,7 +598,6 @@ async function runOpenAiCompatibleChat(options: {
         },
       ],
       temperature: 0.6,
-      response_format: { type: "json_object" },
     }),
   });
 
