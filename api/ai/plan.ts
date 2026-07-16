@@ -586,6 +586,7 @@ async function runOpenAiCompatibleChat(options: {
     },
     body: JSON.stringify({
       model: options.model,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -651,8 +652,24 @@ function extractGeminiText(data: any) {
 }
 
 function parseJsonFromText(text: string) {
-  const cleaned = text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-  return JSON.parse(cleaned);
+  const cleaned = text
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+
+    throw new Error("AI response did not contain valid JSON.");
+  }
 }
 
 export default async function handler(req: any, res: any) {
