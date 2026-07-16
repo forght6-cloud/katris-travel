@@ -92,16 +92,18 @@
 
         <div class="lumora-hero-content">
           <nav class="lumora-nav" aria-label="Homepage sections">
-            <a class="lumora-wordmark" href="#top">Katris</a>
+            <a class="lumora-wordmark" href="#top">KT MG · Katris Travel AI</a>
             <div class="lumora-nav-links liquid-ui">
-              <a href="#destinations">Templates</a>
-              <a href="#planner">Planner</a>
-              <a href="#assistant">Assistant</a>
               <a href="#planner" class="lumora-pill-cta">Start</a>
             </div>
           </nav>
 
           <div class="lumora-center">
+            <div class="katris-brand-imprint" aria-label="Katris brand imprint">
+              <span>KT MG</span>
+              <span>Route Intelligence</span>
+              <span>Supplier-aware travel studio</span>
+            </div>
             <p class="lumora-kicker liquid-ui">AI travel planning with supplier-aware booking paths</p>
             <h1>Plan a trip without losing the thread.</h1>
             <p>
@@ -109,10 +111,32 @@
               flight context, map anchors, and external booking handoff.
             </p>
 
-            <div class="lumora-actions liquid-ui">
-              <button class="primary-button" type="button" data-scroll-target="#planner">Generate structured travel plan</button>
-              <button class="secondary-button" type="button" data-scroll-target="#destinations">View templates</button>
-            </div>
+            <form class="katris-login-entry liquid-ui" data-home-login-form>
+              <label class="sr-only" for="home-login-email">Email address</label>
+              <input id="home-login-email" name="email" type="email" placeholder="Email address" autocomplete="email" required />
+              <button type="submit">Continue</button>
+            </form>
+          </div>
+
+          <div class="lumora-bottom">
+            <dl class="lumora-stats" aria-label="Katris product status">
+              <div>
+                <dt>Plan</dt>
+                <dd>route, stays, days</dd>
+              </div>
+              <div>
+                <dt>Compare</dt>
+                <dd>flights and hotels</dd>
+              </div>
+              <div>
+                <dt>Handoff</dt>
+                <dd>supplier checkout</dd>
+              </div>
+              <div>
+                <dt>Export</dt>
+                <dd>PDF itinerary</dd>
+              </div>
+            </dl>
 
             <div class="lumora-video-tabs" aria-label="Homepage scene selector">
               <button class="is-active" type="button" data-hero-video-tab="0">Golden Hour</button>
@@ -121,25 +145,6 @@
               <button type="button" data-hero-video-tab="3">Quiet Dawn</button>
             </div>
           </div>
-
-          <dl class="lumora-stats" aria-label="Katris product status">
-            <div>
-              <dt>Plan</dt>
-              <dd>route, stays, days</dd>
-            </div>
-            <div>
-              <dt>Compare</dt>
-              <dd>flights and hotels</dd>
-            </div>
-            <div>
-              <dt>Handoff</dt>
-              <dd>supplier checkout</dd>
-            </div>
-            <div>
-              <dt>Export</dt>
-              <dd>PDF itinerary</dd>
-            </div>
-          </dl>
         </div>
       </section>
 

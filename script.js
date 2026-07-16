@@ -432,6 +432,7 @@ function initializeHomepage() {
   bindSectionTracking();
   bindDestinationCards();
   bindHeroVideoTabs();
+  bindHomeLoginForm();
   bindPlannerForm();
   bindPreferenceGate();
   bindAssistant();
@@ -470,7 +471,7 @@ function initHeroGsapAnimation() {
     (context) => {
       const { reduceMotion, desktop } = context.conditions;
       if (reduceMotion) {
-        gsap.set([".lumora-kicker", ".lumora-center h1", ".lumora-center > p", ".lumora-actions", ".lumora-video-tabs button", ".lumora-stats div"], {
+        gsap.set([".lumora-kicker", ".lumora-center h1", ".lumora-center > p", ".katris-login-entry", ".lumora-video-tabs button", ".lumora-stats div"], {
           autoAlpha: 1,
           y: 0,
           scale: 1,
@@ -483,7 +484,7 @@ function initHeroGsapAnimation() {
         .from(".lumora-kicker", { autoAlpha: 0, y: 14 })
         .from(".lumora-center h1", { autoAlpha: 0, y: 24 }, "<0.1")
         .from(".lumora-center > p", { autoAlpha: 0, y: 16 }, "<0.12")
-        .from(".lumora-actions", { autoAlpha: 0, y: 12 }, "<0.12")
+        .from(".katris-login-entry", { autoAlpha: 0, y: 12 }, "<0.12")
         .from(".lumora-video-tabs button", { autoAlpha: 0, y: 10, stagger: 0.06 }, "<0.12")
         .from(".lumora-stats div", { autoAlpha: 0, y: 8, stagger: 0.05 }, "<0.08");
     },
@@ -498,6 +499,17 @@ function bindHeroVideoTabs() {
     return;
   }
 
+  videos.forEach((video) => {
+    if (video.readyState >= 2) {
+      video.classList.add("is-ready");
+      return;
+    }
+
+    video.addEventListener("loadeddata", () => {
+      video.classList.add("is-ready");
+    }, { once: true });
+  });
+
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       const targetIndex = tab.dataset.heroVideoTab;
@@ -511,6 +523,31 @@ function bindHeroVideoTabs() {
         }
       });
     });
+  });
+}
+
+function bindHomeLoginForm() {
+  const form = document.querySelector("[data-home-login-form]");
+  if (!form) {
+    return;
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = form.querySelector('input[name="email"]');
+    const email = String(input?.value || "").trim();
+
+    if (!email) {
+      return;
+    }
+
+    try {
+      localStorage.setItem("katris-travel:login-email", email);
+    } catch {
+      // Local storage can be unavailable in private contexts; navigation still works.
+    }
+
+    navigateToSection("#planner");
   });
 }
 

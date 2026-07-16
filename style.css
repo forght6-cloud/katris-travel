@@ -362,7 +362,7 @@ main {
   transition: opacity 900ms ease;
 }
 
-.hero-video.is-active {
+.hero-video.is-active.is-ready {
   opacity: 1;
 }
 
@@ -396,9 +396,12 @@ main {
 
 .lumora-wordmark {
   color: #fff;
-  font-family: "Times New Roman", Times, serif;
-  font-size: 1.7rem;
-  font-style: italic;
+  font-family: var(--display);
+  font-size: 0.92rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-decoration: none;
 }
 
@@ -447,7 +450,6 @@ main {
 
 .lumora-nav-links .lumora-pill-cta {
   min-height: 38px;
-  margin-left: 4px;
   border-radius: 999px;
   background: #fff;
   color: #050606;
@@ -459,6 +461,29 @@ main {
   align-content: center;
   padding: 40px 0 28px;
   text-align: center;
+}
+
+.katris-brand-imprint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  margin: 0 0 16px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.katris-brand-imprint span {
+  position: relative;
+}
+
+.katris-brand-imprint span + span::before {
+  content: "/";
+  margin-right: 12px;
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .lumora-kicker {
@@ -488,7 +513,8 @@ main {
   line-height: 1.65;
 }
 
-.lumora-actions {
+.lumora-actions,
+.katris-login-entry {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -496,6 +522,46 @@ main {
   margin-top: 28px;
   padding: 8px;
   border-radius: 999px;
+}
+
+.katris-login-entry {
+  width: min(100%, 430px);
+  flex-wrap: nowrap;
+  padding: 6px;
+}
+
+.katris-login-entry input {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  flex: 1;
+  min-height: 46px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 0 16px;
+}
+
+.katris-login-entry input::placeholder {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.katris-login-entry input:focus {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.katris-login-entry button {
+  position: relative;
+  z-index: 1;
+  min-height: 46px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #050606;
+  padding: 0 22px;
+  font-weight: 850;
 }
 
 .lumora-actions .primary-button,
@@ -519,12 +585,18 @@ main {
   color: #fff;
 }
 
+.lumora-bottom {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
 .lumora-video-tabs {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 18px;
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .lumora-video-tabs button {
