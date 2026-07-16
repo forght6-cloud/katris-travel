@@ -6,6 +6,9 @@ const APIFY_BOOKING_ACTOR_ID = "oeiQgfg5fsmIJB7Cn";
 const APIFY_API_BASE_URL = "https://api.apify.com/v2";
 const HASDATA_GOOGLE_HOTELS_URL = "https://api.hasdata.com/scrape/google/hotels";
 const HOTEL_CATEGORIES = "accommodation.hotel,accommodation.apartment,accommodation.guest_house";
+const APIFY_TIMEOUT_MS = 18000;
+const HASDATA_TIMEOUT_MS = 15000;
+const GEOAPIFY_TIMEOUT_MS = 8000;
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   amsterdam: { lat: 52.3676, lon: 4.9041 },
@@ -65,6 +68,20 @@ type HotelResult = {
   provider: string;
 };
 
+async function fetchWithTimeout(url: string, options: any = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function searchApifyHotels(
   apiToken: string,
   city: string,
@@ -75,10 +92,10 @@ async function searchApifyHotels(
 ) {
   const actorId = process.env.APIFY_BOOKING_ACTOR_ID || APIFY_BOOKING_ACTOR_ID;
   const requestUrl = new URL(`${APIFY_API_BASE_URL}/acts/${actorId}/run-sync-get-dataset-items`);
-  requestUrl.searchParams.set("timeout", "90");
+  requestUrl.searchParams.set("timeout", "18");
   requestUrl.searchParams.set("memory", "4096");
 
-  const response = await fetch(requestUrl.toString(), {
+  const response = await fetchWithTimeout(requestUrl.toString(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiToken}`,
@@ -100,7 +117,7 @@ async function searchApifyHotels(
       children: 0,
       minMaxPrice: "0-999999",
     }),
-  });
+  }, APIFY_TIMEOUT_MS);
   const responseText = await response.text();
 
   if (!responseText.trim()) {
@@ -206,11 +223,11 @@ async function searchHasDataHotels(
   requestUrl.searchParams.set("checkInDate", date);
   requestUrl.searchParams.set("checkOutDate", checkoutDate);
 
-  const response = await fetch(requestUrl.toString(), {
+  const response = await fetchWithTimeout(requestUrl.toString(), {
     headers: {
       "x-api-key": apiKey,
     },
-  });
+  }, HASDATA_TIMEOUT_MS);
   const responseText = await response.text();
 
   if (!responseText.trim()) {
@@ -330,7 +347,7 @@ async function geocodeCity(city: string) {
   requestUrl.searchParams.set("type", "city");
   requestUrl.searchParams.set("apiKey", apiKey);
 
-  const response = await fetch(requestUrl.toString());
+  const response = await fetchWithTimeout(requestUrl.toString(), {}, GEOAPIFY_TIMEOUT_MS);
   const data = await response.json();
 
   if (!response.ok) {
@@ -364,7 +381,7 @@ async function searchGeoapifyHotels(city: string, date: string, checkoutDate: st
   requestUrl.searchParams.set("limit", String(Math.max(limit * 2, 12)));
   requestUrl.searchParams.set("apiKey", apiKey);
 
-  const response = await fetch(requestUrl.toString());
+  const response = await fetchWithTimeout(requestUrl.toString(), {}, GEOAPIFY_TIMEOUT_MS);
   const data = await response.json();
 
   if (!response.ok) {
