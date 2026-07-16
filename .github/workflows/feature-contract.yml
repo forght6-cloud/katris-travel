@@ -3,7 +3,7 @@ name: Feature Contract Checks
 on:
   push:
     branches:
-      - feat/d70-c15-b15-unified
+      - feat/pure-d-social-journey
   pull_request:
     branches:
       - main
