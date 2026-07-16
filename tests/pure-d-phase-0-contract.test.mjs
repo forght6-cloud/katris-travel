@@ -80,7 +80,7 @@ test("protects every current static ID and mandatory visible control", async () 
 });
 
 test("protects planner, assistant, and local-community form contracts", async () => {
-  const [html, feature] = await Promise.all([read("index.html"), read("features.js")]);
+  const html = await read("index.html");
 
   ["from", "budget", "to", "date", "tripLength", "people", "notes", "pillars"].forEach((name) => {
     assert.match(html, new RegExp(`name=["']${name}["']`), `Missing planner field: ${name}`);
@@ -98,14 +98,14 @@ test("protects planner, assistant, and local-community form contracts", async ()
     "form contract",
   );
   includesAll(
-    feature,
+    html,
     ['id="community-form"', 'name="name"', 'name="route"', 'name="note"', "maxlength=\"30\"", "maxlength=\"220\"", "required"],
     "local-community form contract",
   );
 });
 
 test("protects current D-layer modules, actions, and navigation targets", async () => {
-  const feature = await read("features.js");
+  const [html, feature] = await Promise.all([read("index.html"), read("features.js")]);
 
   [
     "discover",
@@ -120,15 +120,15 @@ test("protects current D-layer modules, actions, and navigation targets", async 
     "route-board",
     "route-board-grid",
     "route-board-status",
-  ].forEach((id) => hasId(feature, id));
+  ].forEach((id) => hasId(html, id));
 
   includesAll(
-    feature,
+    `${html}\n${feature}`,
     [
-      '["Discover", "#discover"]',
-      '["Guides", "#guides"]',
-      '["Community", "#community"]',
-      '["Route board", "#route-board"]',
+      'href="#discover"',
+      'href="#guides"',
+      'href="#community"',
+      'id="route-board"',
       "All routes",
       "Nature",
       "City",
@@ -139,9 +139,10 @@ test("protects current D-layer modules, actions, and navigation targets", async 
       "Clear route board",
       "Use in planner",
       "Ask assistant",
-      "Play guide",
-      "Pause guide",
-      "Use tip in planner",
+      "Play",
+      "Pause",
+      "Use in my trip",
+      "Ask assistant about this",
       "Use this route",
     ],
     "D-layer control",
@@ -230,7 +231,7 @@ test("protects existing navigation, planner, assistant, booking, and export beha
     read("features.js"),
   ]);
 
-  includesAll(html, ['href="#destinations"', 'href="#planner"', 'href="#assistant"', "style.css", "taste-pass.css", "script.js", "hero-gsap.js"], "static product shell");
+  includesAll(html, ['href="#destinations"', 'href="#planner"', 'href="#assistant"', "style.css", "script.js", "features.js", "hero-gsap.js"], "static product shell");
   includesAll(
     script,
     [
@@ -253,7 +254,7 @@ test("protects existing navigation, planner, assistant, booking, and export beha
     ],
     "behavior owner",
   );
-  includesAll(hero, ["loadFeatureLayer", "features.css", "features.js", "initHeroWaterfall"], "current feature and hero loader");
+  includesAll(hero, ["initSocialJourneyHero", "window.initSocialJourneyHero", "prefers-reduced-motion: reduce"], "single hero controller");
   includesAll(feature, ["useRoute", "syncBoard", "navigator.clipboard.writeText", "Saved in this browser. It was not published online."], "D-layer behavior");
 });
 

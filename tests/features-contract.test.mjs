@@ -8,45 +8,37 @@ function includesAll(source, values, label) {
   values.forEach((value) => assert.ok(source.includes(value), `Missing ${label}: ${value}`));
 }
 
-test("loads the feature layer without replacing legacy assets", async () => {
-  const [hero, html] = await Promise.all([read("hero-gsap.js"), read("index.html")]);
-  includesAll(hero, ["features.css", "features.js", "DOMContentLoaded"], "feature loader");
-  includesAll(html, ["style.css", "taste-pass.css", "script.js", "hero-gsap.js"], "legacy asset");
+test("loads the Pure D feature layer directly inside the static product", async () => {
+  const [html, hero] = await Promise.all([read("index.html"), read("hero-gsap.js")]);
+  includesAll(html, ["style.css", "script.js", "features.js", "hero-gsap.js"], "static asset");
+  assert.doesNotMatch(html, /taste-pass\.css|features\.css/);
+  assert.doesNotMatch(hero, /createElement\(["'](?:link|script)["']\)|append\(feature/);
 });
 
-test("implements the planned D-led functional modules", async () => {
-  const feature = await read("features.js");
-  includesAll(
-    feature,
-    [
-      'id="discover"',
-      'id="guides"',
-      'id="community"',
-      'id="route-board"',
-      "Use in planner",
-      "Ask assistant",
-      "Save local note",
-      "Copy route board",
-      "katris-travel:feature-state-v2",
-    ],
-    "planned feature",
-  );
+test("implements the required Pure D information architecture", async () => {
+  const html = await read("index.html");
+  const orderedIds = ["overview", "discover", "guides", "destinations", "community", "saved", "planner", "assistant", "booking-status"];
+  orderedIds.reduce((lastIndex, id) => {
+    const index = html.indexOf(`id="${id}"`);
+    assert.ok(index > lastIndex, `${id} must appear after the previous Pure D section`);
+    return index;
+  }, -1);
+  includesAll(html, ["site-header", "site-footer", "mobile-nav"], "product shell");
 });
 
 test("feature modules feed existing planner and assistant hooks", async () => {
   const feature = await read("features.js");
-  includesAll(feature, ["#to", "#tripLength", "#budget", "#notes", 'input[name="pillars"]', "#assistant-input", "#planner", "#assistant"], "integration hook");
+  includesAll(feature, ["#to", "#tripLength", "#budget", "#notes", 'input[name="pillars"]', "#assistant-input", "#planner", "#assistant", "setContext"], "integration hook");
 });
 
-test("community preview is explicitly browser-local", async () => {
-  const feature = await read("features.js");
-  assert.match(feature, /Saved in this browser/);
-  assert.match(feature, /It was not published online/);
+test("saved and community content remain explicitly browser-local", async () => {
+  const [html, feature] = await Promise.all([read("index.html"), read("features.js")]);
+  includesAll(html, ["Local-only storage", "not cloud-synced", 'id="saved-grid"', 'id="saved-video-grid"', 'id="followed-topic-list"'], "local save disclosure");
+  includesAll(feature, ["katris-travel:feature-state-v2", "Saved in this browser. It was not published online.", "state.savedVideos", "state.followedTopics"], "local state");
   assert.doesNotMatch(feature, /fetch\s*\([^)]*community/i);
 });
 
-test("feature styling retains reduced-motion support", async () => {
-  const css = await read("features.css");
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.match(css, /@keyframes guideProgress/);
+test("all social content has a useful plan, assistant, save, share, or follow action", async () => {
+  const feature = await read("features.js");
+  includesAll(feature, ["data-use", "data-ask", "data-save", "data-share-route", "data-follow-topic", "data-tip", "data-video-ask", "data-share-post"], "social action");
 });
