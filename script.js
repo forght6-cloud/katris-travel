@@ -431,6 +431,7 @@ function initializeHomepage() {
   bindAnchorNavigation();
   bindSectionTracking();
   bindDestinationCards();
+  bindHeroVideoTabs();
   bindPlannerForm();
   bindPreferenceGate();
   bindAssistant();
@@ -469,7 +470,7 @@ function initHeroGsapAnimation() {
     (context) => {
       const { reduceMotion, desktop } = context.conditions;
       if (reduceMotion) {
-        gsap.set([".hero-copy h1", ".hero-text", ".hero-actions", ".hero-stats div", ".hero-panel"], {
+        gsap.set([".lumora-kicker", ".lumora-center h1", ".lumora-center > p", ".lumora-actions", ".lumora-video-tabs button", ".lumora-stats div"], {
           autoAlpha: 1,
           y: 0,
           scale: 1,
@@ -477,39 +478,40 @@ function initHeroGsapAnimation() {
         return;
       }
 
-      const routePath = hero.querySelector(".hero-route-path");
-      const routeLength = routePath?.getTotalLength?.() || 0;
-
-      if (routePath && routeLength) {
-        gsap.set(routePath, {
-          strokeDasharray: routeLength,
-          strokeDashoffset: routeLength,
-        });
-      }
-
       const timeline = gsap.timeline({ defaults: { duration: 0.72, ease: "power3.out" } });
       timeline
-        .from(".hero-copy h1", { autoAlpha: 0, y: 24 })
-        .from(".hero-text", { autoAlpha: 0, y: 18 }, "<0.12")
-        .from(".hero-route-motion", { autoAlpha: 0, y: 10 }, "<0.08")
-        .to(routePath, { strokeDashoffset: 0, duration: desktop ? 1.15 : 0.78, ease: "power2.inOut" }, "<")
-        .from(".hero-route-dot", { autoAlpha: 0, scale: 0.55, stagger: 0.18, transformOrigin: "50% 50%" }, "<0.22")
-        .from(".hero-actions", { autoAlpha: 0, y: 12 }, "<0.18")
-        .from(".hero-stats div", { autoAlpha: 0, y: 16, stagger: 0.08 }, "<0.06")
-        .from(".hero-panel", { autoAlpha: 0, x: desktop ? 22 : 0, y: desktop ? 0 : 14 }, "<0.12");
-
-      const imageCard = hero.querySelector(".hero-image-card");
-      if (imageCard) {
-        gsap.to(imageCard, {
-          y: desktop ? -10 : -5,
-          duration: 5.5,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-        });
-      }
+        .from(".lumora-kicker", { autoAlpha: 0, y: 14 })
+        .from(".lumora-center h1", { autoAlpha: 0, y: 24 }, "<0.1")
+        .from(".lumora-center > p", { autoAlpha: 0, y: 16 }, "<0.12")
+        .from(".lumora-actions", { autoAlpha: 0, y: 12 }, "<0.12")
+        .from(".lumora-video-tabs button", { autoAlpha: 0, y: 10, stagger: 0.06 }, "<0.12")
+        .from(".lumora-stats div", { autoAlpha: 0, y: 8, stagger: 0.05 }, "<0.08");
     },
   );
+}
+
+function bindHeroVideoTabs() {
+  const tabs = Array.from(document.querySelectorAll("[data-hero-video-tab]"));
+  const videos = Array.from(document.querySelectorAll("[data-hero-video]"));
+
+  if (!tabs.length || !videos.length) {
+    return;
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const targetIndex = tab.dataset.heroVideoTab;
+      document.querySelector(".lumora-hero")?.setAttribute("data-hero-scene", targetIndex);
+      tabs.forEach((entry) => entry.classList.toggle("is-active", entry === tab));
+      videos.forEach((video) => {
+        const isActive = video.dataset.heroVideo === targetIndex;
+        video.classList.toggle("is-active", isActive);
+        if (isActive) {
+          video.play?.().catch(() => {});
+        }
+      });
+    });
+  });
 }
 
 function buildTripStoragePayload(reason = "auto") {

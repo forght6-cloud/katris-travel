@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="has-lumora-home">
   <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
     <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
       <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="liquidNoise" />
@@ -48,62 +48,99 @@
       <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
     </header>
     <main id="top">
-      <section class="hero-section" id="overview">
-        <div class="hero-copy">
-          <p class="eyebrow">Trip planning with real decision points</p>
-          <h1>Plan the route, compare the stay, then move toward booking.</h1>
-          <p class="hero-text">
-            Katris turns a rough travel idea into a usable brief: daily pacing, likely neighborhoods,
-            hotel shortlists, flight context, places to visit, and a clear note on what is provider-confirmed or externally checked.
-          </p>
+      <section class="hero-section lumora-hero" id="overview" data-hero-scene="0">
+        <div class="hero-video-stack" aria-hidden="true">
+          <video
+            class="hero-video is-active"
+            data-hero-video="0"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+          <video
+            class="hero-video"
+            data-hero-video="1"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+          <video
+            class="hero-video"
+            data-hero-video="2"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+          <video
+            class="hero-video"
+            data-hero-video="3"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+        </div>
 
-          <svg class="hero-route-motion" viewBox="0 0 680 150" role="img" aria-label="Animated route from idea to booking">
-            <path class="hero-route-path" d="M22 108 C 150 18, 260 124, 364 58 S 548 16, 654 94" />
-            <circle class="hero-route-dot" cx="22" cy="108" r="7" />
-            <circle class="hero-route-dot" cx="364" cy="58" r="7" />
-            <circle class="hero-route-dot" cx="654" cy="94" r="7" />
-          </svg>
+        <div class="lumora-overlay" aria-hidden="true"></div>
 
-          <div class="hero-actions">
-            <button class="primary-button" type="button" data-scroll-target="#planner">Build my trip</button>
-            <button class="secondary-button" type="button" data-scroll-target="#destinations">View ready templates</button>
+        <div class="lumora-hero-content">
+          <nav class="lumora-nav" aria-label="Homepage sections">
+            <a class="lumora-wordmark" href="#top">Katris</a>
+            <div class="lumora-nav-links liquid-ui">
+              <a href="#destinations">Templates</a>
+              <a href="#planner">Planner</a>
+              <a href="#assistant">Assistant</a>
+              <a href="#planner" class="lumora-pill-cta">Start</a>
+            </div>
+          </nav>
+
+          <div class="lumora-center">
+            <p class="lumora-kicker liquid-ui">AI travel planning with supplier-aware booking paths</p>
+            <h1>Plan a trip without losing the thread.</h1>
+            <p>
+              Katris turns a rough travel idea into a structured route, daily plan, hotel shortlist,
+              flight context, map anchors, and external booking handoff.
+            </p>
+
+            <div class="lumora-actions liquid-ui">
+              <button class="primary-button" type="button" data-scroll-target="#planner">Generate structured travel plan</button>
+              <button class="secondary-button" type="button" data-scroll-target="#destinations">View templates</button>
+            </div>
+
+            <div class="lumora-video-tabs" aria-label="Homepage scene selector">
+              <button class="is-active" type="button" data-hero-video-tab="0">Golden Hour</button>
+              <button type="button" data-hero-video-tab="1">Still Water</button>
+              <button type="button" data-hero-video-tab="2">Deep Woods</button>
+              <button type="button" data-hero-video-tab="3">Quiet Dawn</button>
+            </div>
           </div>
 
-          <dl class="hero-stats" aria-label="Highlights">
+          <dl class="lumora-stats" aria-label="Katris product status">
             <div>
-              <dt>14</dt>
-              <dd>days parsed from plain text</dd>
+              <dt>Plan</dt>
+              <dd>route, stays, days</dd>
             </div>
             <div>
-              <dt>8+</dt>
-              <dd>hotel and place options</dd>
+              <dt>Compare</dt>
+              <dd>flights and hotels</dd>
             </div>
             <div>
-              <dt>Clear</dt>
-              <dd>supplier clarity before checkout</dd>
+              <dt>Handoff</dt>
+              <dd>supplier checkout</dd>
+            </div>
+            <div>
+              <dt>Export</dt>
+              <dd>PDF itinerary</dd>
             </div>
           </dl>
         </div>
-
-        <aside class="hero-panel" aria-label="Featured Nordic inspiration">
-          <div class="hero-image-card northern-lights">
-            <div class="image-overlay">
-              <span>Planner example</span>
-              <strong>Reusable route template</strong>
-              <p>A finished structure for route, stay, daily rhythm, and next booking steps.</p>
-            </div>
-          </div>
-
-          <div class="season-card">
-            <p class="eyebrow">Decision flow</p>
-            <h2>Plan first, compare next, book with context.</h2>
-            <ul>
-              <li><span aria-hidden="true"></span>Route, budget, dates, and traveler count</li>
-              <li><span aria-hidden="true"></span>Daily itinerary with fatigue-aware pacing</li>
-              <li><span aria-hidden="true"></span>Hotels, places, flights, and external booking paths</li>
-            </ul>
-          </div>
-        </aside>
       </section>
 
       <section class="inspiration-strip" aria-label="Travel atmosphere highlights">
