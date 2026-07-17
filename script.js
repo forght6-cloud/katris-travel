@@ -422,10 +422,46 @@ const VERIFIED_CITY_PLACES = {
 };
 
 const SECTION_SELECTORS = ["#overview", "#destinations", "#planner", "#assistant"];
+const KATRIS_VIEWS = new Set(["home", "plan", "trip"]);
+
+function getKatrisView() {
+  const view = new URLSearchParams(window.location.search).get("view");
+  return KATRIS_VIEWS.has(view) ? view : "home";
+}
+
+function setKatrisView(view, { replace = false } = {}) {
+  const nextView = KATRIS_VIEWS.has(view) ? view : "home";
+  const url = new URL(window.location.href);
+
+  if (nextView === "home") {
+    url.searchParams.delete("view");
+  } else {
+    url.searchParams.set("view", nextView);
+  }
+
+  window.history[replace ? "replaceState" : "pushState"]({}, "", url);
+  document.body.dataset.katrisView = nextView;
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function bindKatrisViewLinks() {
+  document.querySelectorAll("[data-katris-view-link]").forEach((element) => {
+    element.addEventListener("click", (event) => {
+      event.preventDefault();
+      setKatrisView(element.dataset.katrisViewLink);
+    });
+  });
+
+  window.addEventListener("popstate", () => {
+    setKatrisView(getKatrisView(), { replace: true });
+  });
+}
 
 function initializeHomepage() {
+  document.body.dataset.katrisView = getKatrisView();
   appState.currentSectionIndex = getInitialSectionIndex();
   restoreTripStateFromStorage();
+  bindKatrisViewLinks();
   bindScrollButtons();
   bindOverviewDoubleClick();
   bindAnchorNavigation();
@@ -547,7 +583,7 @@ function bindHomeLoginForm() {
       // Local storage can be unavailable in private contexts; navigation still works.
     }
 
-    navigateToSection("#planner");
+    setKatrisView("plan");
   });
 }
 
@@ -1209,6 +1245,7 @@ async function runPlannerAnalysis() {
     renderAnalysisResults(result);
     sendAssistantMessage(result.summary);
     saveTripStateToStorage("analysis_complete");
+    setKatrisView("trip");
   } catch (error) {
     renderAnalysisResults({ error: "Unable to analyze the itinerary right now. Please review the itinerary text and try again." });
     console.error(error);
@@ -1484,7 +1521,7 @@ async function searchFlights(origin, destination, date) {
   }
 
   try {
-    const response = await fetch("/api/amadeus", {
+    const response = await fetch("/api/flights/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1543,7 +1580,7 @@ async function searchHotels(city, date, checkoutDate = getCheckoutDate(date), ad
   const safeDate = date || getFallbackTravelDate();
 
   try {
-    const response = await fetch("/api/booking", {
+    const response = await fetch("/api/hotels/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1680,7 +1717,7 @@ function getDateAfterDays(date, days) {
 
 async function searchAttractions(city) {
   try {
-    const response = await fetch("/api/google-places", {
+    const response = await fetch("/api/places/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -4548,6 +4585,7 @@ async function handleAssistantPrompt(userMessage) {
   const analysis = await analyzeTripPlan(buildAssistantItineraryText(userMessage));
   appState.analysis = analysis;
   renderAnalysisResults(analysis);
+  setKatrisView("trip");
 
   const plannerState = getPlannerPayload();
   const aiResponse = await requestAiPlan({
@@ -4678,7 +4716,7 @@ function getPlannerPayload() {
 }
 
 async function requestAiPlan(state) {
-  const response = await fetch("/api/generate-plan", {
+  const response = await fetch("/api/ai/plan", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -4720,14 +4758,13 @@ function formatAiPlanMessage(plan, provider, warning) {
     fallback: "结构化备用规划",
   };
   const providerText = providerLabels[provider] || "结构化规划";
-  const warningText = warning ? ` ${warning}` : "";
   const sections = formatAiSections(plan.uiSections);
 
   if (sections) {
-    return `${plan.title || "Travel plan"} (${providerText}).\n${plan.summary || ""}\n\n${sections}${warningText ? `\n\n${warningText}` : ""}`;
+    return `${plan.title || "Travel plan"} (${providerText}).\n${plan.summary || ""}\n\n${sections}`;
   }
 
-  return `${plan.title || "Travel plan"} (${providerText}). ${plan.summary || ""} ${citySummaries}. ${bookingNotes}${warningText}`;
+  return `${plan.title || "Travel plan"} (${providerText}). ${plan.summary || ""} ${citySummaries}. ${bookingNotes}`;
 }
 
 function formatAiSections(sections) {
@@ -5275,9 +5312,12 @@ function getAiProviderLabel(provider) {
 function formatProviderName(provider) {
   const normalized = String(provider || "").toLowerCase();
   if (!normalized) return "外部查询链接";
-  if (normalized.includes("apify") || normalized.includes("booking") || normalized.includes("hasdata")) return "真实酒店数据";
+  if (normalized.includes("apify") || normalized.includes("booking")) return "真实酒店数据";
   if (normalized.includes("amadeus") || normalized.includes("aviationstack")) return "真实航班数据";
-  if (normalized.includes("geoapify") || normalized.includes("verified")) return "已核验地点数据";
+  if (normalized.includes("hasdata")) return "实时供应商数据";
+  if (normalized.includes("verified + geoapify")) return "已核验地点数据";
+  if (normalized.includes("geoapify")) return "地点与住宿数据";
+  if (normalized.includes("verified")) return "已核验地点数据";
   if (normalized.includes("mock") || normalized.includes("fallback")) return "备用结果";
   if (normalized.includes("external")) return "外部查询链接";
   if (normalized.includes("openrouter") || normalized.includes("mistral") || normalized.includes("groq") || normalized.includes("gemini")) return "实时 AI 规划";
@@ -5291,7 +5331,10 @@ function formatDataStatus(provider, status, message = "") {
   const confidence = ["mock", "fallback", "external"].some((item) => normalized.includes(item))
     ? "需在原平台最终确认"
     : "可用于当前规划";
-  return message ? `${truthLabel} · ${confidence} · ${message}` : `${truthLabel} · ${confidence}`;
+  const updateLabel = message
+    ? (confidence === "需在原平台最终确认" ? "可打开原平台继续确认" : "数据已返回")
+    : "";
+  return updateLabel ? `${truthLabel} · ${confidence} · ${updateLabel}` : `${truthLabel} · ${confidence}`;
 }
 
 function setAssistantLoadingState(isLoading) {

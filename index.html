@@ -11,10 +11,10 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23193d35'/%3E%3Cpath d='M32 11l5.4 15.6L54 32l-16.6 5.4L32 53l-5.4-15.6L10 32l16.6-5.4L32 11z' fill='%23fffdf7'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="has-lumora-home">
+<body class="has-lumora-home" data-katris-view="home">
   <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
     <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
       <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="liquidNoise" />
@@ -31,7 +31,7 @@
   </svg>
   <div class="page-shell">
     <header class="site-header">
-      <a class="brand" href="#top" aria-label="Katris Travel AI home">
+      <a class="brand" href="?view=home" data-katris-view-link="home" aria-label="Katris Travel AI home">
         <span class="brand-mark" aria-hidden="true">✦</span>
         <span class="brand-copy">
           <strong>Katris Travel AI</strong>
@@ -41,14 +41,14 @@
 
       <nav class="site-nav" aria-label="Primary navigation">
         <a href="#destinations">Destinations</a>
-        <a href="#planner">Plan</a>
-        <a href="#assistant">Assistant</a>
+        <a href="?view=plan" data-katris-view-link="plan">Plan</a>
+        <a href="?view=trip" data-katris-view-link="trip">Assistant</a>
       </nav>
 
-      <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
+      <button class="nav-cta" type="button" data-katris-view-link="plan">Start planning</button>
     </header>
     <main id="top">
-      <section class="hero-section lumora-hero" id="overview" data-hero-scene="0">
+      <section class="hero-section lumora-hero" id="overview" data-hero-scene="0" data-katris-view-surface="home">
         <div class="hero-video-stack" aria-hidden="true">
           <video
             class="hero-video is-active"
@@ -92,9 +92,9 @@
 
         <div class="lumora-hero-content">
           <nav class="lumora-nav" aria-label="Homepage sections">
-            <a class="lumora-wordmark" href="#top">KT MG · Katris Travel AI</a>
+            <a class="lumora-wordmark" href="?view=home" data-katris-view-link="home">KT MG · Katris Travel AI</a>
             <div class="lumora-nav-links liquid-ui">
-              <a href="#planner" class="lumora-pill-cta">Start</a>
+              <a href="?view=plan" class="lumora-pill-cta" data-katris-view-link="plan">Start</a>
             </div>
           </nav>
 
@@ -148,7 +148,7 @@
         </div>
       </section>
 
-      <section class="inspiration-strip" aria-label="Travel atmosphere highlights">
+      <section class="inspiration-strip" aria-label="Travel atmosphere highlights" data-katris-view-surface="home">
         <article>
           <p class="eyebrow">Landscape</p>
           <h3>Wide horizons</h3>
@@ -166,7 +166,7 @@
         </article>
       </section>
 
-      <section class="destinations-section" id="destinations">
+      <section class="destinations-section" id="destinations" data-katris-view-surface="home">
         <div class="section-heading">
           <p class="eyebrow">Nordic landscapes</p>
           <h2>Choose a ready-made travel direction.</h2>
@@ -245,8 +245,8 @@
         </article>
       </section>
 
-      <section class="planner-section" id="planner">
-        <div class="section-heading">
+      <section class="planner-section" id="planner" data-katris-view-surface="workspace">
+        <div class="section-heading" data-katris-view-surface="plan">
           <p class="eyebrow">Live planning workspace</p>
           <h2>Build the trip step by step.</h2>
           <p>
@@ -255,7 +255,7 @@
           </p>
         </div>
 
-        <div class="liquid-plan-stage" aria-label="Travel plan quick controls">
+        <div class="liquid-plan-stage" aria-label="Travel plan quick controls" data-katris-view-surface="plan">
           <div class="liquid-sky-backdrop" aria-hidden="true"></div>
           <nav class="liquid-glass-nav" aria-label="Travel plan dropdown">
             <button
@@ -286,7 +286,7 @@
         </div>
 
         <div class="planner-layout">
-          <form class="planner-form" id="planner-form">
+          <form class="planner-form" id="planner-form" data-katris-view-surface="plan">
             <div class="form-grid">
               <div class="departure-budget-group">
                 <label class="departure-field">
@@ -348,7 +348,7 @@
             <div id="preference-gate" class="preference-gate" hidden></div>
           </form>
 
-          <aside class="planner-preview" aria-live="polite">
+          <aside class="planner-preview" aria-live="polite" data-katris-view-surface="trip">
             <div class="preview-card route-brief-card">
               <p class="eyebrow">Route brief</p>
               <h3 id="preview-title">A seven-night Nordic reset.</h3>
@@ -400,7 +400,7 @@
         </div>
       </section>
 
-      <section class="assistant-section" id="assistant">
+      <section class="assistant-section" id="assistant" data-katris-view-surface="trip">
         <div class="section-heading compact">
           <p class="eyebrow">AI assistant</p>
           <h2>Generate a structured travel plan.</h2>

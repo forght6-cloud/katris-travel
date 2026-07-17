@@ -4,11 +4,7 @@ import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
 const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const generatePlanApi = readFileSync(new URL("../api/generate-plan.js", import.meta.url), "utf8");
-const amadeusApi = readFileSync(new URL("../api/amadeus.js", import.meta.url), "utf8");
-const googlePlacesApi = readFileSync(new URL("../api/google-places.js", import.meta.url), "utf8");
-const bookingApi = readFileSync(new URL("../api/booking.js", import.meta.url), "utf8");
-const tripcomApi = readFileSync(new URL("../api/tripcom.js", import.meta.url), "utf8");
+const aiPlanApi = readFileSync(new URL("../api/ai/plan.ts", import.meta.url), "utf8");
 
 assert.match(
   script,
@@ -143,100 +139,73 @@ assert.match(
 );
 
 assert.match(
-  generatePlanApi,
-  /role:\s*"system"[\s\S]*role:\s*"user"/,
-  "Generate-plan should send separate system and user messages to OpenAI.",
+  aiPlanApi,
+  /role:\s*["']system["'][\s\S]*role:\s*["']user["']/,
+  "The normalized AI route should send separate system and user messages.",
 );
 
 assert.match(
-  generatePlanApi,
-  /at least 8 hotels and 8 attractions/,
-  "Strong assistant template should require richer hotel and place coverage.",
+  aiPlanApi,
+  /hardConstraints|outputTemplate/,
+  "The normalized AI route should retain structured output constraints.",
 );
 
 assert.match(
-  generatePlanApi,
-  /confirmedPreferences/,
-  "Server-side planning prompt should respect confirmed user preferences when they are provided.",
-);
-
-assert.match(
-  script,
-  /fetch\("\/api\/booking"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 hotel options per city from the relative booking endpoint.",
-);
-
-assert.match(
-  bookingApi,
-  /placeholder/i,
-  "Booking route should currently be a placeholder route.",
-);
-
-assert.match(
-  tripcomApi,
-  /placeholder/i,
-  "Trip.com route should currently be a placeholder route.",
+  aiPlanApi,
+  /promptTemplate/,
+  "The normalized AI route should retain the Katris prompt template.",
 );
 
 assert.match(
   script,
-  /fetch\("\/api\/google-places"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 place options per city from the local backend.",
+  /fetch\("\/api\/flights\/search"/,
+  "Flight searches should use the normalized flight endpoint.",
 );
 
 assert.match(
   script,
-  /fetch\("\/api\/amadeus"/,
-  "Flight searches should go through the relative Amadeus endpoint.",
+  /fetch\("\/api\/hotels\/search"[\s\S]*?limit:\s*8/,
+  "Hotel searches should request eight normalized hotel options.",
 );
 
 assert.match(
   script,
-  /fetch\("\/api\/generate-plan"/,
-  "AI plan generation should go through the relative generate-plan endpoint.",
+  /fetch\("\/api\/places\/search"[\s\S]*?limit:\s*8/,
+  "Place searches should request eight normalized place options.",
 );
 
 assert.match(
   script,
-  /addEventListener\("dblclick"[\s\S]*?navigateToSection\("#planner"/,
-  "The landing page should support a double-click path into the planner section.",
+  /fetch\("\/api\/ai\/plan"/,
+  "AI plan generation should use the normalized AI endpoint.",
 );
 
 assert.match(
-  googlePlacesApi,
-  /placeholder/i,
-  "Google places route should currently be a placeholder route.",
+  indexHtml,
+  /data-katris-view-surface/,
+  "The page should declare route-addressable workspace surfaces.",
 );
 
 assert.match(
-  amadeusApi,
-  /oauth2\/token/,
-  "Amadeus route should request an OAuth token before searching flights.",
+  script,
+  /function setKatrisView\(/,
+  "The browser should manage Home, Plan, and Trip views.",
 );
 
-assert.match(
-  amadeusApi,
-  /flight-offers/,
-  "Amadeus route should call Flight Offers Search.",
+assert.doesNotMatch(
+  script,
+  /fetch\("\/api\/(?:amadeus|booking|google-places|generate-plan)"/,
+  "The browser should not call placeholder API routes.",
 );
 
-assert.match(
-  generatePlanApi,
-  /api\.openai\.com/,
-  "Generate-plan route should call OpenAI from the server.",
-);
-
-assert.ok(
-  existsSync(new URL("../api/generate-plan.js", import.meta.url)),
-  "generate-plan.js should exist in the api root.",
-);
-assert.ok(existsSync(new URL("../api/amadeus.js", import.meta.url)), "amadeus.js should exist in the api root.");
-assert.ok(
-  existsSync(new URL("../api/google-places.js", import.meta.url)),
-  "google-places.js should exist in the api root.",
-);
-assert.ok(existsSync(new URL("../api/booking.js", import.meta.url)), "booking.js should exist in the api root.");
-assert.ok(existsSync(new URL("../api/tripcom.js", import.meta.url)), "tripcom.js should exist in the api root.");
+for (const route of [
+  "../api/flights/search.ts",
+  "../api/hotels/search.ts",
+  "../api/places/search.ts",
+  "../api/ai/plan.ts",
+]) {
+  assert.ok(existsSync(new URL(route, import.meta.url)), `${route} should exist for the normalized browser data flow.`);
+}
 
 const context = {
   document: { addEventListener() {} },

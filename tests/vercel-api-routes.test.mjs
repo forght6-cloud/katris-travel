@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -138,3 +139,12 @@ function createMockResponse() {
 }
 
 console.log("vercel api routes ok");
+
+for (const route of [
+  "../api/flights/search.ts",
+  "../api/hotels/search.ts",
+  "../api/places/search.ts",
+  "../api/ai/plan.ts",
+]) {
+  assert.ok(existsSync(new URL(route, import.meta.url)), `${route} should exist for the normalized browser data flow.`);
+}
