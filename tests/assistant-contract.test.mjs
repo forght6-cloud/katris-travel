@@ -156,6 +156,19 @@ assert.match(
   "The normalized AI route should retain the Katris prompt template.",
 );
 
+for (const source of ["analysis.dailyPlans", 'getAnalysisOptions(analysis, "attractions"', 'getAnalysisOptions(analysis, "hotels"']) {
+  assert.ok(
+    aiPlanApi.includes(source),
+    `Fallback plans should reuse ${source} already returned to the browser.`,
+  );
+}
+
+assert.doesNotMatch(
+  aiPlanApi,
+  /warning:\s*`[^`]*\$\{failures\.join/,
+  "Fallback responses should not expose provider diagnostics to travelers.",
+);
+
 assert.match(
   script,
   /fetch\("\/api\/flights\/search"/,

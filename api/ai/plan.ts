@@ -339,8 +339,13 @@ function getVerifiedPlaces(city: string) {
   return VERIFIED_CITY_PLACES[String(city || "").trim().toLowerCase()] || [];
 }
 
-function buildFallbackPlace(city: string, index: number, fallbackTitle: string) {
-  const places = getVerifiedPlaces(city);
+function getAnalysisOptions(analysis: any, collection: string, city: string) {
+  const match = (analysis?.[collection] || []).find((entry: any) => String(entry?.city || "").toLowerCase() === city.toLowerCase());
+  return Array.isArray(match?.options) ? match.options.filter(Boolean) : [];
+}
+
+function buildFallbackPlace(city: string, index: number, fallbackTitle: string, placeOptions: any[] = []) {
+  const places = placeOptions.length ? placeOptions : getVerifiedPlaces(city);
   const place = places[index % Math.max(places.length, 1)];
 
   if (!place) {
@@ -351,46 +356,50 @@ function buildFallbackPlace(city: string, index: number, fallbackTitle: string) 
   }
 
   return {
-    title: place.name,
-    detail: `${place.address}. ${place.reason}`,
+    title: place.name || fallbackTitle,
+    detail: `${place.address ? `${place.address}. ` : ""}${place.summary || place.reason || "Confirmed stop for this route."}`,
   };
 }
 
-function buildFallbackDays(city: string, dayCount: number, startDay: number) {
+function buildFallbackDays(city: string, dayCount: number, startDay: number, placeOptions: any[] = [], hotelOptions: any[] = []) {
+  const hotel = hotelOptions.find((option) => option?.name);
+  const hotelDetail = hotel
+    ? `${hotel.name}${hotel.address ? `, ${hotel.address}` : ""}. Keep this as the stay base until the traveler changes it.`
+    : `Keep the stay base central in ${city} until a hotel is selected.`;
   const templates = [
     {
       theme: `${city} arrival and orientation`,
       items: [
-        { time: "Morning", title: "Arrival and transfer buffer", detail: "Keep the first block flexible for transport and check-in. No venue address is assigned until arrival timing is known." },
-        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
-        { time: "Afternoon", ...buildFallbackPlace(city, 1, "Verified orientation stop needed") },
-        { time: "Evening", title: "Hotel shortlist", detail: "Pick one or two hotel candidates before opening external live rates." },
+        { time: "09:30", title: "Arrival and transfer buffer", detail: `Allow airport or station transfer time, then head to ${hotelDetail}` },
+        { time: "12:00", ...buildFallbackPlace(city, 5, "Lunch stop", placeOptions) },
+        { time: "14:00", ...buildFallbackPlace(city, 1, "Orientation stop", placeOptions) },
+        { time: "18:30", title: "Hotel check-in and local evening", detail: hotelDetail },
       ],
     },
     {
       theme: `${city} culture and scenery`,
       items: [
-        { time: "Morning", ...buildFallbackPlace(city, 0, "Verified museum needed") },
-        { time: "Midday", ...buildFallbackPlace(city, 2, "Verified food stop needed") },
-        { time: "Afternoon", ...buildFallbackPlace(city, 3, "Verified walking route needed") },
+        { time: "09:15", ...buildFallbackPlace(city, 0, "Museum or cultural stop", placeOptions) },
+        { time: "11:30", ...buildFallbackPlace(city, 5, "Lunch stop", placeOptions) },
+        { time: "13:45", ...buildFallbackPlace(city, 2, "Walking route", placeOptions) },
         { time: "Evening", title: "External booking pass", detail: "Use hotel and transport links for payment confirmation." },
       ],
     },
     {
       theme: `${city} local rhythm`,
       items: [
-        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or neighborhood anchor needed") },
-        { time: "Midday", ...buildFallbackPlace(city, 7, "Verified lunch stop needed") },
-        { time: "Afternoon", ...buildFallbackPlace(city, 4, "Verified gallery or architecture stop needed") },
+        { time: "09:30", ...buildFallbackPlace(city, 2, "Local anchor", placeOptions) },
+        { time: "11:45", ...buildFallbackPlace(city, 5, "Lunch stop", placeOptions) },
+        { time: "14:00", ...buildFallbackPlace(city, 4, "Gallery or architecture stop", placeOptions) },
         { time: "Evening", title: "Short evening walk", detail: "End with a low-friction route near dinner." },
       ],
     },
     {
       theme: `${city} nature and rest`,
       items: [
-        { time: "Morning", ...buildFallbackPlace(city, 5, "Verified park or open-air route needed") },
-        { time: "Midday", title: "Lunch near confirmed route", detail: "Choose the restaurant only after the route start is fixed; do not display a fake address." },
-        { time: "Afternoon", ...buildFallbackPlace(city, 6, "Verified viewpoint or waterfront needed") },
+        { time: "09:15", ...buildFallbackPlace(city, 3, "Open-air route", placeOptions) },
+        { time: "11:30", ...buildFallbackPlace(city, 5, "Lunch stop", placeOptions) },
+        { time: "13:45", ...buildFallbackPlace(city, 6, "Viewpoint or transit anchor", placeOptions) },
         { time: "Evening", title: "Quiet dinner", detail: "Protect recovery time before the next day." },
       ],
     },
@@ -424,12 +433,24 @@ function buildFallbackPlan(payload: any) {
   const cities = stops.map((stop: any, stopIndex: number) => {
     const city = stop.city || "Destination";
     const dayCount = getStopDayCount(totalDays, stops.length, stopIndex);
-    const days = buildFallbackDays(city, dayCount, dayCursor);
+    const placeOptions = getAnalysisOptions(analysis, "attractions", city);
+    const hotelOptions = getAnalysisOptions(analysis, "hotels", city);
+    const plannedDays = (analysis.dailyPlans || []).find((entry: any) => String(entry?.city || "").toLowerCase() === city.toLowerCase())?.days;
+    const days = Array.isArray(plannedDays) && plannedDays.length
+      ? plannedDays
+      : buildFallbackDays(city, dayCount, dayCursor, placeOptions, hotelOptions);
     dayCursor += dayCount;
 
     const verifiedPlaces = getVerifiedPlaces(city);
-    const attractions = verifiedPlaces.length
-      ? verifiedPlaces.map((place) => ({
+    const attractions = placeOptions.length
+      ? placeOptions.slice(0, 8).map((place: any) => ({
+          name: place.name,
+          category: place.category || "Place",
+          address: place.address || "",
+          reason: place.summary || "Confirmed map anchor for this route.",
+        }))
+      : verifiedPlaces.length
+        ? verifiedPlaces.map((place) => ({
           name: place.name,
           category: place.category,
           address: place.address,
@@ -446,7 +467,13 @@ function buildFallbackPlan(payload: any) {
 
     return {
       city,
-      hotels: [
+      hotels: hotelOptions.length
+        ? hotelOptions.slice(0, 8).map((hotel: any) => ({
+            name: hotel.name,
+            style: hotel.rating || "Hotel",
+            reason: `${hotel.address || city}. Confirm current rate and payment with the original supplier.`,
+          }))
+        : [
         { name: `${city} Central Hotel`, style: "External booking", reason: "Confirm preference in Katris, then open live rates externally." },
         { name: `${city} Boutique Stay`, style: "Boutique", reason: "A smaller property style for local character and calmer pacing." },
         { name: `${city} Garden Residence`, style: "Quiet stay", reason: "Good for recovery time and slower mornings." },
@@ -470,9 +497,8 @@ function buildFallbackPlan(payload: any) {
         .map((entry: any) =>
           [
             "【每日计划】",
-            ...entry.days.map(
-              (day: any) =>
-                `${day.day} · ${day.theme}\n- 上午：${day.items[0]?.title || "推定行程"}｜${day.items[0]?.detail || "需要实时地点数据确认。"}\n- 中午：${day.items[1]?.title || "推定行程"}｜${day.items[1]?.detail || "需要实时地点数据确认。"}\n- 下午：${day.items[2]?.title || "推定行程"}｜${day.items[2]?.detail || "需要实时地点数据确认。"}\n- 晚上：${day.items[3]?.title || "酒店与晚餐衔接"}｜${day.items[3]?.detail || "根据酒店位置确认。"}\n- 疲劳度：中低`,
+            ...entry.days.map((day: any) =>
+              `${day.day} · ${day.theme}\n${(day.items || []).map((item: any) => `- ${item.time || "计划"}：${item.title || "推定行程"}｜${item.detail || "根据当前路线安排。"}`).join("\n")}\n- 疲劳度：中低`,
             ),
           ].join("\n"),
         )
@@ -488,7 +514,7 @@ function buildFallbackPlan(payload: any) {
     bookingNotes: [
       "Flight prices are live only when the HasData provider returns results.",
       "Hotels are shortlisted in Katris and paid through external booking links until a contracted hotel API is approved.",
-      "Set OPENROUTER_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, or a working GEMINI_API_KEY to use a live AI provider.",
+      "When a live AI provider is unavailable, Katris uses the current flight, hotel, place, and timing data to keep the plan executable.",
     ],
   };
 }
@@ -699,7 +725,7 @@ export default async function handler(req: any, res: any) {
   res.status(200).json({
     provider: "fallback",
     plan: buildFallbackPlan(payload),
-    warning: `Live AI provider unavailable; fallback planning engine returned structured recommendations. ${failures.join(" | ")}`,
+    warning: "Live AI is temporarily unavailable. Katris prepared this structured plan from the current flight, hotel, place, and timing data.",
   });
 }
 

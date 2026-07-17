@@ -4734,7 +4734,9 @@ async function requestAiPlan(state) {
 function parseItineraryDraft(response) {
   return {
     provider: response.provider || "unknown",
-    warning: response.warning || "",
+    warning: response.provider === "fallback" && response.warning
+      ? "Live AI is temporarily unavailable. Katris prepared a structured plan from the current trip data."
+      : "",
     plan: response.plan || null,
   };
 }
