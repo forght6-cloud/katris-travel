@@ -15,7 +15,6 @@
     initialized = true;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const gsap = window.gsap;
     const copyItems = [
       hero.querySelector(".hero-copy .eyebrow"),
       hero.querySelector(".hero-copy h1"),
@@ -31,15 +30,46 @@
 
     [...copyItems, ...storyItems].forEach((element) => element.setAttribute("data-hero-reveal", ""));
 
-    if (reducedMotion || !gsap) {
+    if (reducedMotion || typeof Element.prototype.animate !== "function") {
       revealWithoutMotion(hero);
       return;
     }
 
-    const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
-    timeline
-      .fromTo(storyItems, { autoAlpha: 0, y: 26, scale: 0.985 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.66, stagger: 0.06 })
-      .fromTo(copyItems, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.52, stagger: 0.045 }, "-=0.42");
+    const animateGroup = (items, options) => {
+      items.forEach((element, index) => {
+        element.style.opacity = "0";
+        element.style.transform = options.startTransform;
+        const animation = element.animate(
+          [
+            { opacity: 0, transform: options.startTransform },
+            { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
+          ],
+          {
+            duration: options.duration,
+            delay: options.delay + index * options.stagger,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            fill: "forwards",
+          },
+        );
+        animation.addEventListener("finish", () => {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }, { once: true });
+      });
+    };
+
+    animateGroup(storyItems, {
+      startTransform: "translate3d(0, 26px, 0) scale(0.985)",
+      duration: 660,
+      delay: 0,
+      stagger: 60,
+    });
+    animateGroup(copyItems, {
+      startTransform: "translate3d(0, 18px, 0) scale(1)",
+      duration: 520,
+      delay: 240,
+      stagger: 45,
+    });
   }
 
   window.initSocialJourneyHero = initSocialJourneyHero;

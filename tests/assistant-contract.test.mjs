@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
+const heroAnimation = readFileSync(new URL("../hero-gsap.js", import.meta.url), "utf8");
 const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const generatePlanApi = readFileSync(new URL("../api/generate-plan.js", import.meta.url), "utf8");
 const amadeusApi = readFileSync(new URL("../api/amadeus.js", import.meta.url), "utf8");
@@ -82,16 +83,22 @@ assert.doesNotMatch(
   "Landing page copy should not describe provider state with mock/fallback jargon.",
 );
 
-assert.match(
+assert.doesNotMatch(
   indexHtml,
   /cdnjs\.cloudflare\.com\/ajax\/libs\/gsap/,
-  "Homepage should load GSAP for the final front-page animation layer.",
+  "Homepage animation should not block initialization on a third-party script.",
+);
+
+assert.match(
+  heroAnimation,
+  /Element\.prototype\.animate/,
+  "Homepage should use the browser animation API for the finite hero sequence.",
 );
 
 assert.match(
   script,
   /function initHeroGsapAnimation/,
-  "Homepage should initialize a GSAP hero animation when GSAP is available.",
+  "Homepage should hand off to the single hero animation controller.",
 );
 
 assert.match(

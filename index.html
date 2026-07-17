@@ -64,14 +64,14 @@
           <button class="secondary-button" type="button" data-scroll-target="#destinations">View ready templates</button>
         </div>
 
-        <dl class="hero-stats" aria-label="Product promises">
+        <dl class="hero-stats">
           <div><dt>Finite</dt><dd>curated discovery, not an endless feed</dd></div>
           <div><dt>Connected</dt><dd>every useful card can enter your plan</dd></div>
           <div><dt>Clear</dt><dd>AI, provider, and external data stay labeled</dd></div>
         </dl>
       </div>
 
-      <div class="hero-panel" aria-label="Travel discovery preview">
+      <div class="hero-panel" role="group" aria-label="Travel discovery preview">
         <article class="hero-story hero-story--primary">
           <img
             src="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=1200&amp;q=88"
@@ -101,11 +101,11 @@
           </div>
         </article>
 
-        <aside class="hero-signal hero-signal--top">
+        <aside class="hero-signal hero-signal--top" aria-label="Seasonal travel signal">
           <span>Seasonal signal</span>
           <strong>Ferry timetables change after summer</strong>
         </aside>
-        <aside class="hero-signal hero-signal--bottom">
+        <aside class="hero-signal hero-signal--bottom" aria-label="Saved route preview">
           <span>Saved route</span>
           <strong>Stockholm + one island day</strong>
         </aside>
@@ -131,7 +131,7 @@
         <p>Six finite directions. Filter by mood, save what fits, or send a card into your planner or assistant.</p>
       </div>
 
-      <div class="feature-toolbar" aria-label="Filter discovery routes">
+      <div class="feature-toolbar" role="group" aria-label="Filter discovery routes">
         <div class="feature-filters">
           <button class="is-active" type="button" data-filter="all" aria-pressed="true">All routes</button>
           <button type="button" data-filter="nature" aria-pressed="false">Nature</button>
@@ -154,7 +154,7 @@
         <p>Licensed Pexels clips stay muted until you choose to play. Only one video can play at a time.</p>
       </div>
 
-      <div class="feature-toolbar" aria-label="Filter travel videos">
+      <div class="feature-toolbar" role="group" aria-label="Filter travel videos">
         <div class="feature-filters video-filters">
           <button class="is-active" type="button" data-video-filter="all" aria-pressed="true">All topics</button>
           <button type="button" data-video-filter="nature" aria-pressed="false">Nature</button>
@@ -177,7 +177,7 @@
         <p>Switch destination cards to update the original route template. The same destination logic remains in charge.</p>
       </div>
 
-      <div class="destination-grid" role="list" aria-label="Destination moods">
+      <div class="destination-grid" role="group" aria-label="Destination moods">
         <button class="destination-card is-active" type="button" data-region="fjord" aria-pressed="true">
           <span class="destination-visual">
             <img
@@ -266,7 +266,7 @@
         <p>Editorial examples and your browser-local notes are labeled separately. No fake live users, views, or comments.</p>
       </div>
 
-      <div class="topic-row" aria-label="Destination topics">
+      <div class="topic-row" role="group" aria-label="Destination topics">
         <button type="button" data-community-topic="all" class="is-active" aria-pressed="true">All notes</button>
         <button type="button" data-community-topic="Norway" aria-pressed="false">Norway</button>
         <button type="button" data-community-topic="Sweden" aria-pressed="false">Sweden</button>
@@ -280,7 +280,7 @@
           <p class="eyebrow">Browser-local note</p>
           <h3>Record one thing another traveler should know.</h3>
           <p class="form-helper">This note stays on this device. It is not published online.</p>
-          <label><span>Name</span><input name="name" maxlength="30" autocomplete="name" required /></label>
+          <label><span>Name</span><input name="name" type="text" maxlength="30" autocomplete="name" required /></label>
           <label><span>Route</span><select name="route" id="community-route"></select></label>
           <label><span>Note</span><textarea name="note" maxlength="220" rows="4" required></textarea></label>
           <button class="secondary-button" type="submit">Save local note</button>
@@ -332,7 +332,7 @@
         <span>No discovery context selected yet.</span>
       </div>
 
-      <div class="liquid-plan-stage" aria-label="Travel plan quick controls">
+      <div class="liquid-plan-stage" role="group" aria-label="Travel plan quick controls">
         <nav class="liquid-glass-nav" aria-label="Travel plan dropdown">
           <button class="liquid-trigger" type="button" data-liquid-menu-toggle aria-expanded="false" aria-controls="liquid-plan-menu">
             <span class="liquid-trigger-clone" aria-hidden="true">Travel Plan</span>
@@ -374,10 +374,10 @@
           </div>
           <div class="form-grid">
             <div class="departure-budget-group">
-              <label class="departure-field"><span>Departure</span><input id="from" name="from" placeholder="London" autocomplete="off" /></label>
-              <label class="budget-field"><span>Budget</span><input id="budget" name="budget" placeholder="1800 EUR" autocomplete="off" /></label>
+              <label class="departure-field"><span>Departure</span><input id="from" name="from" type="text" placeholder="London" autocomplete="off" /></label>
+              <label class="budget-field"><span>Budget</span><input id="budget" name="budget" type="text" placeholder="1800 EUR" autocomplete="off" /></label>
             </div>
-            <label><span>Destination</span><input id="to" name="to" placeholder="Bergen" autocomplete="off" /></label>
+            <label><span>Destination</span><input id="to" name="to" type="text" placeholder="Bergen" autocomplete="off" /></label>
             <label><span>Travel date</span><input id="date" name="date" type="date" /></label>
             <label>
               <span>Trip length</span>
@@ -413,7 +413,7 @@
           <div id="preference-gate" class="preference-gate" hidden></div>
         </form>
 
-        <aside class="planner-preview" aria-live="polite">
+        <aside class="planner-preview" aria-label="Itinerary preview" aria-live="polite">
           <div class="preview-card route-brief-card">
             <p class="eyebrow">Route brief</p>
             <h3 id="preview-title">A seven-night Nordic reset.</h3>
@@ -477,7 +477,7 @@
           </form>
         </div>
 
-        <aside class="assistant-sidebar">
+        <aside class="assistant-sidebar" aria-label="Assistant sources and flight summary">
           <div id="assistant-flight-summary" aria-live="polite"></div>
           <div class="source-legend">
             <p class="eyebrow">Source labels</p>
@@ -542,7 +542,6 @@
 
   <div class="toast" id="social-toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="script.js" defer></script>
   <script src="features.js" defer></script>
   <script src="hero-gsap.js" defer></script>

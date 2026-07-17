@@ -15,9 +15,9 @@
   --blue-dark: #075ab1;
   --cyan: #16b6d8;
   --coral: #ff6b55;
-  --coral-dark: #d94b37;
-  --green: #1c8c69;
-  --amber: #b77813;
+  --coral-dark: #c43e2c;
+  --green: #147454;
+  --amber: #9a610c;
   --red: #c84545;
   --shadow-sm: 0 8px 24px rgba(32, 76, 116, 0.08);
   --shadow-md: 0 18px 48px rgba(32, 76, 116, 0.12);
@@ -439,7 +439,7 @@ main > section,
 .hero-panel::before {
   position: absolute;
   top: 5%;
-  right: -8%;
+  right: 0;
   width: 82%;
   height: 82%;
   border-radius: 50%;
@@ -763,7 +763,7 @@ main > section,
 
 .route-mood {
   right: 14px;
-  background: rgba(255, 107, 85, 0.94);
+  background: var(--coral-dark);
   color: #fff;
 }
 
@@ -866,11 +866,15 @@ main > section,
 
 .video-section::before {
   position: absolute;
-  inset: calc(var(--section-space) - 34px) -100vw -36px;
+  top: calc(var(--section-space) - 34px);
+  bottom: -36px;
+  left: 50%;
+  width: 100vw;
   z-index: -1;
   border-block: 1px solid #d9e9f5;
   background: linear-gradient(135deg, #edf8ff, #f8fcff 55%, #fff2ed);
   content: "";
+  transform: translateX(-50%);
 }
 
 .video-stream {
@@ -2083,11 +2087,15 @@ textarea:focus {
 
 .assistant-section::before {
   position: absolute;
-  inset: calc(var(--section-space) - 30px) -100vw -44px;
+  top: calc(var(--section-space) - 30px);
+  bottom: -44px;
+  left: 50%;
+  width: 100vw;
   z-index: -1;
   border-block: 1px solid #d9e7f3;
   background: #eef7ff;
   content: "";
+  transform: translateX(-50%);
 }
 
 .context-ribbon--assistant {
@@ -2571,7 +2579,7 @@ textarea:focus {
   }
 
   h1 {
-    font-size: clamp(2.85rem, 13vw, 5rem);
+    font-size: clamp(2.75rem, 11vw, 4.4rem);
   }
 
   .hero-stats {
@@ -2621,6 +2629,20 @@ textarea:focus {
   .feature-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  button:not([hidden]),
+  a[href] {
+    min-height: 44px;
+  }
+
+  a[href] {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .travel-pillars label {
+    min-height: 44px;
   }
 
   .discovery-card,
