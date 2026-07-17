@@ -13,7 +13,7 @@ function hasId(source, id) {
 }
 
 test("protects every current static ID and mandatory visible control", async () => {
-  const html = await read("index.html");
+  const html = await read("app.html");
 
   [
     "top",
@@ -80,7 +80,7 @@ test("protects every current static ID and mandatory visible control", async () 
 });
 
 test("protects planner, assistant, and local-community form contracts", async () => {
-  const html = await read("index.html");
+  const html = await read("app.html");
 
   ["from", "budget", "to", "date", "tripLength", "people", "notes", "pillars"].forEach((name) => {
     assert.match(html, new RegExp(`name=["']${name}["']`), `Missing planner field: ${name}`);
@@ -105,7 +105,7 @@ test("protects planner, assistant, and local-community form contracts", async ()
 });
 
 test("protects current D-layer modules, actions, and navigation targets", async () => {
-  const [html, feature] = await Promise.all([read("index.html"), read("features.js")]);
+  const [html, feature] = await Promise.all([read("app.html"), read("features.js")]);
 
   [
     "discover",
@@ -150,7 +150,7 @@ test("protects current D-layer modules, actions, and navigation targets", async 
 });
 
 test("protects static and dynamically rendered data hooks", async () => {
-  const [html, script, feature] = await Promise.all([read("index.html"), read("script.js"), read("features.js")]);
+  const [html, script, feature] = await Promise.all([read("app.html"), read("script.js"), read("features.js")]);
 
   includesAll(
     html,
@@ -225,7 +225,7 @@ test("protects API paths, serverless entry files, and local-storage keys", async
 
 test("protects existing navigation, planner, assistant, booking, and export behavior ownership", async () => {
   const [html, script, hero, feature] = await Promise.all([
-    read("index.html"),
+    read("app.html"),
     read("script.js"),
     read("hero-gsap.js"),
     read("features.js"),

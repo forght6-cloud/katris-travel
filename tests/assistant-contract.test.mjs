@@ -4,7 +4,7 @@ import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
 const heroAnimation = readFileSync(new URL("../hero-gsap.js", import.meta.url), "utf8");
-const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const indexHtml = readFileSync(new URL("../app.html", import.meta.url), "utf8");
 const generatePlanApi = readFileSync(new URL("../api/generate-plan.js", import.meta.url), "utf8");
 const amadeusApi = readFileSync(new URL("../api/amadeus.js", import.meta.url), "utf8");
 const googlePlacesApi = readFileSync(new URL("../api/google-places.js", import.meta.url), "utf8");

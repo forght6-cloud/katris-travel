@@ -3,583 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f7fbff" />
-  <title>Katris Travel AI | Discover, shape, and book a better trip</title>
+  <meta name="theme-color" content="#050607" />
+  <title>Ke | Katris Travel AI</title>
   <meta
     name="description"
-    content="Discover useful travel ideas, save the ones that fit, and turn them into a structured route with planning and provider context in one flow."
+    content="Enter Katris through a cinematic travel shell, then continue into the AI travel execution workspace."
   />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b74e5'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial' font-size='34' font-weight='700' fill='white'%3EK%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050607'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Times New Roman' font-size='34' font-style='italic' fill='white'%3EKe%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="landing.css" />
 </head>
 <body>
-  <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
-    <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="liquidNoise" />
-      <feGaussianBlur in="liquidNoise" stdDeviation="1.8" result="softNoise" />
-      <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="10" xChannelSelector="R" yChannelSelector="G" result="refracted" />
-      <feColorMatrix in="refracted" type="matrix" values="1 0 0 0 0.02  0 1 0 0 0.025  0 0 1 0 0.04  0 0 0 0.92 0" result="edgeTint" />
-      <feBlend in="SourceGraphic" in2="edgeTint" mode="screen" />
-    </filter>
-  </svg>
+  <a class="skip-link" href="#landing-main">Skip to content</a>
 
-  <a class="skip-link" href="#overview">Skip to content</a>
+  <section class="landing-shell" aria-labelledby="landing-title">
+    <div class="video-stage" aria-hidden="true">
+      <video class="scene-video is-active" muted autoplay loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted autoplay loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted autoplay loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted autoplay loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4" type="video/mp4" />
+      </video>
+      <img
+        class="train-overlay"
+        src="https://soft-zoom-63098134.figma.site/_assets/v11/0b4a435b2df2747593c43d7a1c9b4578f7d8d90c.png"
+        alt=""
+      />
+    </div>
 
-  <header class="site-header" data-header>
-    <a class="brand" href="#top" aria-label="Katris Travel AI home">
-      <span class="brand-mark" aria-hidden="true">K</span>
-      <span class="brand-copy">
-        <strong>Katris</strong>
-        <span>Social journey planner</span>
-      </span>
-    </a>
+    <header class="landing-nav">
+      <a class="wordmark" href="/" aria-label="Ke home">Ke</a>
+      <nav class="nav-links" aria-label="Landing navigation">
+        <a href="app.html#discover">Discover</a>
+        <a href="app.html#destinations">Templates</a>
+        <a href="app.html#planner">Planner</a>
+        <a href="app.html#assistant">Assistant</a>
+        <a class="nav-pill" href="app.html">Enter</a>
+      </nav>
+      <a class="mobile-enter liquid-glass" href="app.html" aria-label="Enter Katris">Enter</a>
+    </header>
 
-    <nav class="site-nav" aria-label="Primary navigation">
-      <a href="#discover">Discover</a>
-      <a href="#destinations">Destinations</a>
-      <a href="#community">Community</a>
-      <a href="#saved">Saved</a>
-      <a href="#planner">Plan</a>
-      <a href="#assistant">Assistant</a>
-    </nav>
-
-    <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
-  </header>
-
-  <main id="top">
-    <section class="hero-section" id="overview" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow"><span class="signal-dot" aria-hidden="true"></span>Ideas become routes here</p>
-        <h1 id="hero-title">Find a trip worth saving. Shape it without leaving the flow.</h1>
-        <p class="hero-text">
-          Discover useful routes, real travel cautions, and licensed short videos. Save the pieces that fit,
-          then carry them straight into one calm planning workspace.
+    <main class="landing-content" id="landing-main">
+      <div class="copy-panel">
+        <p class="eyebrow liquid-glass">AI travel execution workflow</p>
+        <h1 id="landing-title">
+          <span class="mobile-title-line">A cinematic front door</span>
+          <span class="mobile-title-line">for trips that need</span>
+          <span class="mobile-title-line">a real plan.</span>
+        </h1>
+        <p class="landing-text">
+          Step through the atmosphere first, then continue into Katris to discover routes, save useful signals,
+          and turn the right idea into an execution-ready travel workspace.
         </p>
-
-        <div class="hero-actions">
-          <button class="primary-button" type="button" data-scroll-target="#planner">Build my trip</button>
-          <button class="secondary-button" type="button" data-scroll-target="#destinations">View ready templates</button>
+        <div class="landing-actions">
+          <a class="primary-action" href="app.html">Enter Katris</a>
+          <a class="secondary-action liquid-glass" href="app.html#destinations">View route templates</a>
         </div>
-
-        <dl class="hero-stats">
-          <div><dt>Finite</dt><dd>curated discovery, not an endless feed</dd></div>
-          <div><dt>Connected</dt><dd>every useful card can enter your plan</dd></div>
-          <div><dt>Clear</dt><dd>AI, provider, and external data stay labeled</dd></div>
-        </dl>
       </div>
 
-      <div class="hero-panel" role="group" aria-label="Travel discovery preview">
-        <article class="hero-story hero-story--primary">
-          <video
-            class="motion-media"
-            muted
-            loop
-            autoplay
-            playsinline
-            preload="metadata"
-            poster="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=1200&amp;q=88"
-            aria-hidden="true"
-          >
-            <source src="https://www.pexels.com/download/video/5208612/" type="video/mp4" />
-          </video>
-          <img
-            src="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=1200&amp;q=88"
-            alt="A quiet Nordic fjord between steep green mountains"
-            width="900"
-            height="1200"
-            fetchpriority="high"
-          />
-          <div class="story-overlay">
-            <span>Route remix · Norway</span>
-            <strong>Seven nights by rail and ferry</strong>
-            <button type="button" data-hero-route="fjord">Use this direction</button>
-          </div>
-        </article>
-
-        <article class="hero-story hero-story--side">
-          <video
-            class="motion-media"
-            muted
-            loop
-            autoplay
-            playsinline
-            preload="metadata"
-            poster="https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&amp;fit=crop&amp;w=900&amp;q=86"
-            aria-hidden="true"
-          >
-            <source src="https://www.pexels.com/download/video/12637601/" type="video/mp4" />
-          </video>
-          <img
-            src="https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&amp;fit=crop&amp;w=900&amp;q=86"
-            alt="Colorful Copenhagen harbor buildings beside calm water"
-            width="900"
-            height="640"
-            fetchpriority="high"
-          />
-          <div class="story-overlay compact">
-            <span>Creator-style guide</span>
-            <strong>Copenhagen at a slower pace</strong>
-          </div>
-        </article>
-
-        <aside class="hero-signal hero-signal--top" aria-label="Seasonal travel signal">
-          <span>Seasonal signal</span>
-          <strong>Ferry timetables change after summer</strong>
-        </aside>
-        <aside class="hero-signal hero-signal--bottom" aria-label="Saved route preview">
-          <span>Saved route</span>
-          <strong>Stockholm + one island day</strong>
-        </aside>
-      </div>
-    </section>
-
-    <section class="social-proof-strip" aria-label="How Katris connects discovery to planning">
-      <p>One travel flow</p>
-      <ol>
-        <li><span>01</span>Discover</li>
-        <li><span>02</span>Save context</li>
-        <li><span>03</span>Build the route</li>
-        <li><span>04</span>Check providers</li>
-      </ol>
-    </section>
-
-    <section class="feature-section discover-section" id="discover" aria-labelledby="discover-title">
-      <div class="feature-heading">
-        <div>
-          <p class="eyebrow">Curated discovery</p>
-          <h2 id="discover-title">Useful ideas, with a next move.</h2>
+      <aside class="motion-console liquid-glass" aria-label="Live travel motion preview">
+        <div class="console-head">
+          <span>Live route signals</span>
+          <strong data-active-scene>Golden Hour</strong>
         </div>
-        <p>Six finite directions. Filter by mood, save what fits, or send a card into your planner or assistant.</p>
-      </div>
-
-      <div class="feature-toolbar" role="group" aria-label="Filter discovery routes">
-        <div class="feature-filters">
-          <button class="is-active" type="button" data-filter="all" aria-pressed="true">All routes</button>
-          <button type="button" data-filter="nature" aria-pressed="false">Nature</button>
-          <button type="button" data-filter="city" aria-pressed="false">City</button>
-          <button type="button" data-filter="winter" aria-pressed="false">Winter</button>
-        </div>
-        <span id="discovery-count" class="result-count" aria-live="polite"></span>
-      </div>
-
-      <div class="discovery-grid" id="discovery-grid" aria-live="polite" aria-busy="false"></div>
-      <div class="module-state" id="discovery-state" hidden role="status"></div>
-    </section>
-
-    <section class="feature-section video-section" id="guides" aria-labelledby="video-title">
-      <div class="feature-heading">
-        <div>
-          <p class="eyebrow">Short-video travel stream</p>
-          <h2 id="video-title">Watch one detail. Use it in the trip.</h2>
-        </div>
-        <p>Licensed Pexels clips stay muted until you choose to play. Only one video can play at a time.</p>
-      </div>
-
-      <div class="feature-toolbar" role="group" aria-label="Filter travel videos">
-        <div class="feature-filters video-filters">
-          <button class="is-active" type="button" data-video-filter="all" aria-pressed="true">All topics</button>
-          <button type="button" data-video-filter="nature" aria-pressed="false">Nature</button>
-          <button type="button" data-video-filter="city" aria-pressed="false">City</button>
-          <button type="button" data-video-filter="water" aria-pressed="false">Water routes</button>
-        </div>
-        <p class="source-note">Source attribution appears on every clip.</p>
-      </div>
-
-      <div class="video-stream" id="guidance-grid" aria-live="polite"></div>
-      <div class="module-state" id="video-state" hidden role="status"></div>
-    </section>
-
-    <section class="destinations-section" id="destinations" aria-labelledby="routes-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Ready-made directions</p>
-          <h2 id="routes-title">Start with a route that already has a point of view.</h2>
-        </div>
-        <p>Switch destination cards to update the original route template. The same destination logic remains in charge.</p>
-      </div>
-
-      <div class="destination-grid" role="group" aria-label="Destination moods">
-        <button class="destination-card is-active" type="button" data-region="fjord" aria-pressed="true">
-          <span class="destination-visual">
-            <video muted loop autoplay playsinline preload="metadata" poster="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=900&amp;q=84" aria-hidden="true">
+        <div class="motion-stack">
+          <article class="motion-card is-large">
+            <video muted autoplay loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=900&amp;q=84">
               <source src="https://www.pexels.com/download/video/5208612/" type="video/mp4" />
             </video>
-            <img
-              src="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&amp;fit=crop&amp;w=900&amp;q=84"
-              alt=""
-              width="900"
-              height="720"
-              loading="lazy"
-            />
-          </span>
-          <span class="destination-copy"><span class="route-country">Norway</span><strong>Fjord Quiet</strong><span>7 nights · rail + ferry · slow scenery</span></span>
-        </button>
-
-        <button class="destination-card" type="button" data-region="forest" aria-pressed="false">
-          <span class="destination-visual">
-            <video muted loop autoplay playsinline preload="metadata" poster="https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&amp;fit=crop&amp;w=900&amp;q=84" aria-hidden="true">
+            <span>Norway · rail + ferry</span>
+            <strong>Fjord transfer margin</strong>
+          </article>
+          <article class="motion-card">
+            <video muted autoplay loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&amp;fit=crop&amp;w=900&amp;q=84">
               <source src="https://www.pexels.com/download/video/12637601/" type="video/mp4" />
             </video>
-            <img
-              src="https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&amp;fit=crop&amp;w=900&amp;q=84"
-              alt=""
-              width="900"
-              height="720"
-              loading="lazy"
-            />
-          </span>
-          <span class="destination-copy"><span class="route-country">Sweden</span><strong>Forest + City</strong><span>5 nights · design + one island day</span></span>
-        </button>
-
-        <button class="destination-card" type="button" data-region="coast" aria-pressed="false">
-          <span class="destination-visual">
-            <video muted loop autoplay playsinline preload="metadata" poster="https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&amp;fit=crop&amp;w=900&amp;q=84" aria-hidden="true">
-              <source src="https://www.pexels.com/download/video/13600132/" type="video/mp4" />
-            </video>
-            <img
-              src="https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&amp;fit=crop&amp;w=900&amp;q=84"
-              alt=""
-              width="900"
-              height="720"
-              loading="lazy"
-            />
-          </span>
-          <span class="destination-copy"><span class="route-country">Denmark</span><strong>Coastal Simplicity</strong><span>5 nights · bike + galleries + coast</span></span>
-        </button>
-
-        <button class="destination-card" type="button" data-region="aurora" aria-pressed="false">
-          <span class="destination-visual">
-            <video muted loop autoplay playsinline preload="metadata" poster="https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&amp;fit=crop&amp;w=900&amp;q=84" aria-hidden="true">
+            <span>Stockholm · water rhythm</span>
+            <strong>One open evening</strong>
+          </article>
+          <article class="motion-card">
+            <video muted autoplay loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&amp;fit=crop&amp;w=900&amp;q=84">
               <source src="https://www.pexels.com/download/video/5701989/" type="video/mp4" />
             </video>
-            <img
-              src="https://images.unsplash.com/photo-1483347756197-71ef80e95f73?auto=format&amp;fit=crop&amp;w=900&amp;q=84"
-              alt=""
-              width="900"
-              height="720"
-              loading="lazy"
-            />
-          </span>
-          <span class="destination-copy"><span class="route-country">Finland</span><strong>Aurora Rhythm</strong><span>7 nights · cabin + winter recovery</span></span>
-        </button>
-      </div>
-
-      <article class="destination-template" id="destination-template" aria-live="polite">
-        <div class="template-media" aria-hidden="true"></div>
-        <div class="template-copy">
-          <p class="eyebrow" id="template-kicker">Norway / 7 days</p>
-          <h3 id="template-title">Fjord Quiet: Bergen, Flam, and Aurlandsfjord</h3>
-          <p id="template-summary">A prepared route for travelers who want scenery, slow ferry movement, compact towns, and quiet stays.</p>
-          <dl class="template-meta">
-            <div><dt>Best for</dt><dd id="template-best">scenery, ferry crossings, design cabins</dd></div>
-            <div><dt>Base</dt><dd id="template-base">Bergen + Flam</dd></div>
-            <div><dt>Use next</dt><dd id="template-action">Copy into the planner</dd></div>
-          </dl>
-          <div class="template-days" id="template-days">
-            <article><span>Day 1</span><p>Bergen arrival, Bryggen walk, quiet harbor dinner.</p></article>
-            <article><span>Day 2</span><p>Flam Railway, Aurlandsfjord viewpoint, slow evening by the water.</p></article>
-            <article><span>Day 3</span><p>Ferry movement, cabin check-in, flexible weather buffer.</p></article>
-          </div>
-          <div class="template-actions">
-            <button class="primary-button" type="button" data-template-use>Use in planner</button>
-            <button class="secondary-button" type="button" data-template-remix>Remix route</button>
-            <button class="ghost-button" type="button" data-template-share>Share</button>
-          </div>
-          <p class="inline-status" id="template-status" aria-live="polite"></p>
+            <span>Lapland · aurora window</span>
+            <strong>Weather-aware nights</strong>
+          </article>
         </div>
-      </article>
-    </section>
-
-    <section class="feature-section community-section" id="community" aria-labelledby="community-title">
-      <div class="feature-heading">
-        <div>
-          <p class="eyebrow">Community preview</p>
-          <h2 id="community-title">Traveler notes, without invented popularity.</h2>
+        <div class="scene-switcher" role="group" aria-label="Change cinematic scene">
+          <button class="is-active" type="button" data-scene="0">Golden Hour</button>
+          <button type="button" data-scene="1">Still Water</button>
+          <button type="button" data-scene="2">Deep Woods</button>
+          <button type="button" data-scene="3">Quiet Dawn</button>
         </div>
-        <p>Editorial examples and your browser-local notes are labeled separately. No fake live users, views, or comments.</p>
-      </div>
+      </aside>
+    </main>
 
-      <div class="topic-row" role="group" aria-label="Destination topics">
-        <button type="button" data-community-topic="all" class="is-active" aria-pressed="true">All notes</button>
-        <button type="button" data-community-topic="Norway" aria-pressed="false">Norway</button>
-        <button type="button" data-community-topic="Sweden" aria-pressed="false">Sweden</button>
-        <button type="button" data-community-topic="Denmark" aria-pressed="false">Denmark</button>
-        <button type="button" data-community-topic="Finland" aria-pressed="false">Finland</button>
-      </div>
+    <footer class="landing-footer" aria-label="Landing stats">
+      <span>Finite discovery</span>
+      <span>Provider-labeled planning</span>
+      <span>Saved route context</span>
+      <span>Execution-first assistant</span>
+    </footer>
+  </section>
 
-      <div class="community-layout">
-        <div id="community-list" class="community-list" aria-live="polite"></div>
-        <form id="community-form" class="community-form">
-          <p class="eyebrow">Browser-local note</p>
-          <h3>Record one thing another traveler should know.</h3>
-          <p class="form-helper">This note stays on this device. It is not published online.</p>
-          <label><span>Name</span><input name="name" type="text" maxlength="30" autocomplete="name" required /></label>
-          <label><span>Route</span><select name="route" id="community-route"></select></label>
-          <label><span>Note</span><textarea name="note" maxlength="220" rows="4" required></textarea></label>
-          <button class="secondary-button" type="submit">Save local note</button>
-          <p id="community-status" class="inline-status" aria-live="polite"></p>
-        </form>
-      </div>
-    </section>
-
-    <section class="feature-section saved-section" id="saved" aria-labelledby="saved-title">
-      <div class="feature-heading">
-        <div>
-          <p class="eyebrow">Saved locally</p>
-          <h2 id="saved-title">Your useful pieces, kept together.</h2>
-        </div>
-        <p>Routes, clips, and followed topics live in this browser only. Cloud sync is not claimed or implied.</p>
-      </div>
-
-      <div class="local-only-banner" role="note">
-        <span>Local-only storage</span>
-        <p>Clearing browser data will remove these collections.</p>
-      </div>
-
-      <div class="saved-layout">
-        <section class="saved-panel" aria-labelledby="saved-routes-title">
-          <div class="saved-panel-head"><h3 id="saved-routes-title">Saved trips</h3><span id="saved-route-count">0</span></div>
-          <div id="saved-grid" class="saved-grid"></div>
-        </section>
-        <section class="saved-panel" aria-labelledby="saved-videos-title">
-          <div class="saved-panel-head"><h3 id="saved-videos-title">Saved short videos</h3><span id="saved-video-count">0</span></div>
-          <div id="saved-video-grid" class="saved-grid"></div>
-        </section>
-        <section class="saved-panel saved-panel--topics" aria-labelledby="followed-title">
-          <div class="saved-panel-head"><h3 id="followed-title">Followed topics</h3><span>local</span></div>
-          <div id="followed-topic-list" class="followed-topic-list"></div>
-        </section>
-      </div>
-    </section>
-
-    <section class="planner-section" id="planner" aria-labelledby="planner-title">
-      <div class="section-heading planner-heading">
-        <div>
-          <p class="eyebrow">Planning workspace</p>
-          <h2 id="planner-title">Turn saved context into a route you can act on.</h2>
-        </div>
-        <p>Original planner logic remains central. Discovery context appears here before you generate the itinerary.</p>
-      </div>
-
-      <div class="context-ribbon" id="planner-context" aria-live="polite">
-        <span>No discovery context selected yet.</span>
-      </div>
-
-      <div class="liquid-plan-stage" role="group" aria-label="Travel plan quick controls">
-        <nav class="liquid-glass-nav" aria-label="Travel plan dropdown">
-          <button class="liquid-trigger" type="button" data-liquid-menu-toggle aria-expanded="false" aria-controls="liquid-plan-menu">
-            <span class="liquid-trigger-clone" aria-hidden="true">Travel Plan</span>
-            <span>Travel Plan</span>
-          </button>
-          <div class="liquid-menu" id="liquid-plan-menu" hidden>
-            <button type="button" data-liquid-action="recommended">Recommended path</button>
-            <button type="button" data-liquid-action="saved">Save current trip</button>
-            <button type="button" data-liquid-action="suppliers">Supplier checkout</button>
-            <button type="button" data-liquid-action="monitor">Operations status</button>
-          </div>
-        </nav>
-        <article class="liquid-menu-detail" id="liquid-menu-detail" aria-live="polite">
-          <p class="eyebrow">Quick action</p>
-          <h3>Choose the next planning surface.</h3>
-          <p>Jump to the recommended path, save locally, review external checkout, or inspect provider status.</p>
-        </article>
-      </div>
-
-      <section class="route-board" id="route-board" aria-labelledby="route-board-title">
-        <div class="route-board-head">
-          <div><p class="eyebrow">Current route board</p><h3 id="route-board-title">Keep the decision visible.</h3></div>
-          <p>Discovery source, provider state, priority, fallback, and export status.</p>
-        </div>
-        <div class="route-board-grid" id="route-board-grid"></div>
-        <div class="feature-actions">
-          <button class="secondary-button" type="button" data-open-planner>Open planner</button>
-          <button class="ghost-button" type="button" data-copy-board>Copy route board</button>
-          <button class="ghost-button" type="button" data-clear-board>Clear route board</button>
-        </div>
-        <p id="route-board-status" class="inline-status" aria-live="polite"></p>
-      </section>
-
-      <div class="planner-layout">
-        <form class="planner-form" id="planner-form">
-          <div class="form-intro">
-            <span>Trip essentials</span>
-            <p>Use plain language. You can refine the result after the first pass.</p>
-          </div>
-          <div class="form-grid">
-            <div class="departure-budget-group">
-              <label class="departure-field"><span>Departure</span><input id="from" name="from" type="text" placeholder="London" autocomplete="off" /></label>
-              <label class="budget-field"><span>Budget</span><input id="budget" name="budget" type="text" placeholder="1800 EUR" autocomplete="off" /></label>
-            </div>
-            <label><span>Destination</span><input id="to" name="to" type="text" placeholder="Bergen" autocomplete="off" /></label>
-            <label><span>Travel date</span><input id="date" name="date" type="date" /></label>
-            <label>
-              <span>Trip length</span>
-              <select id="tripLength" name="tripLength">
-                <option value="3 nights">3 nights</option>
-                <option value="5 nights">5 nights</option>
-                <option value="7 nights" selected>7 nights</option>
-                <option value="10+ nights">10+ nights</option>
-                <option value="2 weeks">2 weeks</option>
-              </select>
-            </label>
-            <label><span>Travelers</span><input id="people" name="people" type="number" min="1" value="2" /></label>
-          </div>
-
-          <label class="full-width">
-            <span>Itinerary outline</span>
-            <textarea id="notes" name="notes" placeholder="Example:&#10;2026-09-01 Bergen&#10;2026-09-04 Flam&#10;Keep one flexible weather day"></textarea>
-          </label>
-
-          <fieldset class="travel-pillars">
-            <legend>Trip priorities</legend>
-            <label><input type="checkbox" name="pillars" value="Scenery" checked />Scenery</label>
-            <label><input type="checkbox" name="pillars" value="Quiet stays" checked />Quiet stays</label>
-            <label><input type="checkbox" name="pillars" value="Local culture" />Local culture</label>
-            <label><input type="checkbox" name="pillars" value="Wellness" />Wellness</label>
-            <label><input type="checkbox" name="pillars" value="Rail or ferry" />Rail or ferry</label>
-          </fieldset>
-
-          <div class="planner-actions">
-            <button class="primary-button" id="analyze-planner" type="submit">Analyze itinerary</button>
-            <button class="ghost-button" type="button" id="reset-planner">Reset</button>
-          </div>
-          <div id="preference-gate" class="preference-gate" hidden></div>
-        </form>
-
-        <aside class="planner-preview" aria-label="Itinerary preview" aria-live="polite">
-          <div class="preview-card route-brief-card">
-            <p class="eyebrow">Route brief</p>
-            <h3 id="preview-title">A seven-night Nordic reset.</h3>
-            <p id="preview-summary">Build a trip concept to see itinerary structure, travel options, and partner-ready booking paths.</p>
-            <ul id="preview-pillars" class="preview-pillars">
-              <li>Scenery-led routing</li><li>Quiet stays</li><li>AI suggestions</li>
-            </ul>
-          </div>
-
-          <div class="preview-card timeline-card">
-            <p class="eyebrow">Step flow</p>
-            <div id="timeline-output" class="timeline-output">
-              <article><span>Step 1</span><p>Collect route, date, traveler count, and budget.</p></article>
-              <article><span>Step 2</span><p>Generate pacing, stays, places, and transport context.</p></article>
-              <article><span>Step 3</span><p>Compare provider data, external booking links, and final supplier confirmation steps.</p></article>
-            </div>
-          </div>
-
-          <div class="preview-card analysis-card">
-            <p class="eyebrow">Travel options</p>
-            <div id="analysis-results" class="analysis-results">
-              <p class="analysis-empty">Analyze an itinerary to see flights, hotels, transport, and summary.</p>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="assistant-section" id="assistant" aria-labelledby="assistant-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">AI assistant</p>
-          <h2 id="assistant-title">Ask with the context you already collected.</h2>
-        </div>
-        <p>Discovery cards can prefill the prompt. AI suggestions remain separate from verified provider data and external search.</p>
-      </div>
-
-      <div class="context-ribbon context-ribbon--assistant" id="assistant-context" aria-live="polite">
-        <span>No discovery context sent to the assistant yet.</span>
-      </div>
-
-      <div class="assistant-layout">
-        <div class="assistant-panel">
-          <div class="assistant-status"><span class="status-dot" aria-hidden="true"></span><p>Assistant ready with planning endpoint</p></div>
-          <div id="assistant-thread" class="assistant-thread" aria-live="polite">
-            <article class="message assistant"><p class="message-label">Katris Assistant</p><p>I can turn your preferences into a structured itinerary. Ask about route pacing, places, stays, or travel warnings.</p></article>
-          </div>
-
-          <div class="assistant-progress" id="assistant-progress" aria-hidden="true">
-            <div class="assistant-progress-head"><span id="assistant-progress-step">Preparing travel plan</span><span>Backup planning enabled</span></div>
-            <div class="assistant-progress-track"><span id="assistant-progress-bar"></span></div>
-          </div>
-
-          <form id="assistant-form" class="assistant-form">
-            <label class="sr-only" for="assistant-input">Ask the travel assistant</label>
-            <textarea id="assistant-input" rows="3" placeholder="Example: Turn this fjord route into a calm seven-night plan with one flexible weather day."></textarea>
-            <div class="assistant-actions">
-              <button class="primary-button" type="submit">Send prompt</button>
-              <button class="ghost-button" type="button" id="clear-assistant">Clear</button>
-            </div>
-          </form>
-        </div>
-
-        <aside class="assistant-sidebar" aria-label="Assistant sources and flight summary">
-          <div id="assistant-flight-summary" aria-live="polite"></div>
-          <div class="source-legend">
-            <p class="eyebrow">Source labels</p>
-            <ul>
-              <li><span class="legend-dot ai"></span><strong>AI suggestion</strong><small>Generated planning guidance</small></li>
-              <li><span class="legend-dot provider"></span><strong>Verified provider data</strong><small>Returned by a connected provider</small></li>
-              <li><span class="legend-dot external"></span><strong>External search</strong><small>Open and confirm on the supplier site</small></li>
-              <li><span class="legend-dot local"></span><strong>Saved user content</strong><small>Stored only in this browser</small></li>
-            </ul>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="provider-section" id="booking-status" aria-labelledby="provider-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Booking and provider status</p>
-          <h2 id="provider-title">Know what is live before you leave Katris.</h2>
-        </div>
-        <p>Katris structures the decision. Final inventory, price, and payment remain with the named external supplier.</p>
-      </div>
-
-      <div class="provider-layout">
-        <article class="ops-monitor-card" id="ops-monitor" aria-live="polite">
-          <span class="status-chip neutral">Waiting</span>
-          <p class="eyebrow">Operations status</p>
-          <h3>Waiting for the first plan.</h3>
-          <p>Provider and local-save status will appear after a trip is generated.</p>
-        </article>
-        <article class="provider-card">
-          <span class="status-chip external">External checkout</span>
-          <h3>Payment stays with the supplier.</h3>
-          <p>Hotel, airline, rail, and attraction links open externally. Reconfirm price, refund terms, and inventory there.</p>
-        </article>
-        <article class="provider-card">
-          <span class="status-chip fallback">Fallback-aware</span>
-          <h3>No fake success state.</h3>
-          <p>If live data is unavailable, Katris keeps the route usable and marks the fallback or external-search state.</p>
-        </article>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div>
-      <a class="brand footer-brand" href="#top" aria-label="Katris Travel AI home"><span class="brand-mark" aria-hidden="true">K</span><span class="brand-copy"><strong>Katris</strong><span>Plan with useful context</span></span></a>
-      <p>Travel inspiration, route planning, and provider context in one responsive web product.</p>
-    </div>
-    <nav aria-label="Footer navigation">
-      <a href="#discover">Discover</a><a href="#planner">Planner</a><a href="#assistant">Assistant</a><a href="#booking-status">Service status</a>
-    </nav>
-    <p class="footer-note">External prices and inventory must be confirmed with the supplier. Browser-local saves are not cloud-synced.</p>
-  </footer>
-
-  <nav class="mobile-nav" aria-label="Mobile navigation">
-    <a href="#discover"><span>Discover</span></a>
-    <a href="#saved"><span>Saved</span></a>
-    <a class="mobile-nav-primary" href="#planner"><span>Plan</span></a>
-    <a href="#assistant"><span>Assistant</span></a>
-  </nav>
-
-  <div class="toast" id="social-toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-
-  <script src="script.js" defer></script>
-  <script src="features.js" defer></script>
-  <script src="hero-gsap.js" defer></script>
+  <script src="landing.js" defer></script>
 </body>
 </html>
