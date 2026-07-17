@@ -27,6 +27,26 @@ The release keeps the original planner, assistant, destination switching, provid
 
 No fake users, engagement counts, live prices, or provider inventory were added.
 
+## Animated image system
+
+The follow-up motion release adds a Figma-authored cinematic image system without changing the page structure or product contracts.
+
+- Figma motion file: https://www.figma.com/design/r8ADZYgv3QyAZVUDfd5Omy
+- Animated surfaces: cinematic landing scenes, the train overlay, route-preview videos, hero stories, discovery cards, destination tiles, route-template media, saved thumbnails, and video posters
+- Four directional variants use 16–22 second pan-and-scale cycles with staggered phases
+- `IntersectionObserver` runs motion only near the viewport
+- `MutationObserver` automatically connects filter results and newly saved cards
+- Background tabs and offscreen images pause
+- `prefers-reduced-motion: reduce` removes every image animation
+
+Motion verification:
+
+- 8 cinematic landing surfaces and 22 initial app image/video nodes connected successfully
+- Dynamically filtered and saved images connected successfully
+- Visible hero animation time advanced; offscreen hero paused
+- Desktop and 375px mobile layouts retained zero horizontal overflow
+- Reduced-motion browser runs reported zero ambient playback; the landing train animation stopped and all 23 app visual nodes returned `animation: none`
+
 ## Final design review
 
 The requested Taste Skill was unavailable in the execution environment. An equivalent combined product-design and accessibility review was run with the requested intent:
@@ -55,8 +75,8 @@ Changes made after review:
 
 ## Verification record
 
-- UI and API contract suite: 23 passed, 0 failed
-- JavaScript syntax: `script.js`, `features.js`, and `hero-gsap.js` passed
+- UI and API contract suite: 29 passed, 0 failed
+- JavaScript syntax: `script.js`, `features.js`, `hero-gsap.js`, `landing.js`, and `image-motion.js` passed
 - HTML structural validation: passed after excluding XHTML void-tag style and intentional checkbox-name grouping
 - CSS syntax validation: passed
 - Automated accessibility scan at 1440px and 375px: 0 violations

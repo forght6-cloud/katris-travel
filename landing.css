@@ -477,6 +477,11 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .train-overlay {
+    animation: none !important;
+    transform: scale(1.03);
+  }
+
   *,
   *::before,
   *::after {

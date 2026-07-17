@@ -28,4 +28,8 @@ test("root page is the Ke cinematic shell that enters the Katris app", async () 
   assert.match(js, /querySelectorAll\("\[data-scene\]"\)/);
   assert.match(js, /setInterval/);
   assert.match(js, /prefers-reduced-motion/);
+  assert.match(js, /visibilitychange/);
+  assert.match(js, /video\.play\(\)\.catch/);
+  assert.match(js, /video\.pause\(\)/);
+  assert.doesNotMatch(html, /\bautoplay\b/);
 });
