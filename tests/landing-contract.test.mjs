@@ -15,14 +15,15 @@ test("root page is the Ke cinematic shell that enters the Katris app", async () 
   assert.match(html, /landing\.js/);
 
   assert.equal((html.match(/class="scene-video/g) || []).length, 4);
-  assert.equal((html.match(/class="motion-card/g) || []).length, 3);
+  assert.equal((html.match(/class="motion-card/g) || []).length, 0);
   assert.equal((html.match(/data-scene="/g) || []).length, 4);
-  assert.match(html, /data-active-scene/);
-  assert.match(html, /https:\/\/www\.pexels\.com\/download\/video/);
+  assert.match(html, /Golden Hour/);
+  assert.match(html, /Contact/);
+  assert.doesNotMatch(html, /https:\/\/www\.pexels\.com\/download\/video/);
 
   assert.match(css, /\.scene-video\.is-active/);
   assert.match(css, /\.train-overlay/);
-  assert.match(css, /\.motion-card/);
+  assert.match(css, /\.scene-switcher/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 
   assert.match(js, /querySelectorAll\("\[data-scene\]"\)/);

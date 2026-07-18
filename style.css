@@ -915,7 +915,7 @@ main > section,
 
 .video-card {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -929,8 +929,8 @@ main > section,
 
 .video-frame {
   position: relative;
-  min-height: 360px;
-  aspect-ratio: 4 / 5;
+  min-height: 390px;
+  aspect-ratio: 16 / 11;
   overflow: hidden;
   background: #cfe7f7;
 }
@@ -952,34 +952,32 @@ main > section,
 .video-play-button {
   position: absolute;
   z-index: 2;
-  top: 50%;
-  left: 50%;
-  min-width: 76px;
-  min-height: 50px;
-  padding: 0 18px;
+  right: 14px;
+  bottom: 14px;
+  min-width: 62px;
+  min-height: 38px;
+  padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.76);
   border-radius: 999px;
-  background: rgba(7, 27, 49, 0.82);
+  background: rgba(7, 27, 49, 0.7);
+  backdrop-filter: blur(14px);
   color: #fff;
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 800;
-  transform: translate(-50%, -50%);
+  transform: none;
   transition: background-color 160ms ease, transform 160ms ease, opacity 160ms ease;
 }
 
 .video-play-button:hover {
   background: var(--blue);
-  transform: translate(-50%, -50%) scale(1.04);
+  transform: translateY(-1px);
 }
 
 .video-card.is-playing .video-play-button {
-  top: auto;
   right: 12px;
   bottom: 12px;
-  left: auto;
   min-width: 64px;
-  transform: none;
 }
 
 .video-topic {
@@ -998,7 +996,7 @@ main > section,
 .video-loading {
   position: absolute;
   z-index: 2;
-  right: 14px;
+  right: 92px;
   bottom: 14px;
   left: 14px;
   color: #fff;
@@ -1019,7 +1017,7 @@ main > section,
 .video-copy {
   display: flex;
   flex-direction: column;
-  padding: 26px;
+  padding: 24px;
 }
 
 .video-copy h3 {
@@ -1145,19 +1143,33 @@ main > section,
 }
 
 .destination-template {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.22fr);
-  min-height: 510px;
+  min-height: 460px;
   margin-top: 22px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.86);
   box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+}
+
+.destination-template::before {
+  position: absolute;
+  inset: 18px -10px -18px 18px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(11, 116, 229, 0.16), rgba(255, 107, 85, 0.12));
+  content: "";
+  transform: skewY(-2deg);
 }
 
 .template-media {
   min-height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
   background-image: linear-gradient(to top, rgba(6, 26, 45, 0.28), transparent 55%), url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1400&q=88");
   background-position: center;
   background-size: 108% auto;
@@ -1257,10 +1269,24 @@ main > section,
 }
 
 .community-layout {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.62fr);
+  gap: 18px;
   align-items: start;
+}
+
+.community-layout::before {
+  position: absolute;
+  inset: 24px -18px -18px 22px;
+  z-index: -1;
+  border-radius: 32px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(229, 243, 255, 0.56)),
+    linear-gradient(120deg, rgba(11, 116, 229, 0.12), rgba(255, 107, 85, 0.1));
+  box-shadow: 0 28px 80px rgba(26, 55, 84, 0.12);
+  content: "";
+  transform: skewY(-1.8deg);
 }
 
 .community-list {
@@ -1273,19 +1299,20 @@ main > section,
 .community-form {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(18px);
 }
 
 .community-card {
   display: flex;
   flex-direction: column;
-  min-height: 270px;
-  padding: 22px;
+  min-height: 210px;
+  padding: 18px;
 }
 
 .community-card h3 {
-  margin: 18px 0 12px;
+  margin: 14px 0 10px;
   font-size: 1.18rem;
 }
 
@@ -1294,6 +1321,7 @@ main > section,
   border-left: 3px solid var(--coral);
   color: #4a6077;
   font-size: 0.84rem;
+  line-height: 1.55;
 }
 
 .community-card .feature-actions {
@@ -1309,8 +1337,8 @@ main > section,
   position: sticky;
   top: calc(var(--header-height) + 30px);
   display: grid;
-  gap: 15px;
-  padding: 25px;
+  gap: 12px;
+  padding: 21px;
 }
 
 .community-form h3 {
