@@ -1,10 +1,14 @@
 declare const process: { env: Record<string, string | undefined> };
 
+const MAX_AI_RESPONSE_MS = 9000;
+const PROVIDER_TIMEOUT_BUFFER_MS = 600;
+const MIN_PROVIDER_ATTEMPT_MS = 1200;
+
 type AiProvider = {
   name: string;
   key?: string;
   model: string;
-  run: (prompt: PromptMessages, provider: AiProvider) => Promise<any>;
+  run: (prompt: PromptMessages, provider: AiProvider, timeoutMs: number) => Promise<any>;
 };
 
 type PromptMessages = {
@@ -538,12 +542,13 @@ function getProviderQueue() {
   return selected ? [selected, ...providers.filter((provider) => provider.name !== preferred)] : providers;
 }
 
-async function runOpenRouter(prompt: PromptMessages, provider: AiProvider) {
+async function runOpenRouter(prompt: PromptMessages, provider: AiProvider, timeoutMs: number) {
   return runOpenAiCompatibleChat({
     url: "https://openrouter.ai/api/v1/chat/completions",
     key: provider.key || "",
     model: provider.model,
     prompt,
+    timeoutMs,
     headers: {
       "HTTP-Referer": "https://katris-travel-pearl.vercel.app",
       "X-Title": "Katris Travel AI",
@@ -551,21 +556,23 @@ async function runOpenRouter(prompt: PromptMessages, provider: AiProvider) {
   });
 }
 
-async function runMistral(prompt: PromptMessages, provider: AiProvider) {
+async function runMistral(prompt: PromptMessages, provider: AiProvider, timeoutMs: number) {
   return runOpenAiCompatibleChat({
     url: "https://api.mistral.ai/v1/chat/completions",
     key: provider.key || "",
     model: provider.model,
     prompt,
+    timeoutMs,
   });
 }
 
-async function runGroq(prompt: PromptMessages, provider: AiProvider) {
+async function runGroq(prompt: PromptMessages, provider: AiProvider, timeoutMs: number) {
   return runOpenAiCompatibleChat({
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: provider.key || "",
     model: provider.model,
     prompt,
+    timeoutMs,
   });
 }
 
@@ -574,11 +581,12 @@ async function runOpenAiCompatibleChat(options: {
   key: string;
   model: string;
   prompt: PromptMessages;
+  timeoutMs: number;
   headers?: Record<string, string>;
 }) {
   const response = await fetch(options.url, {
     method: "POST",
-    signal: getTimeoutSignal(),
+    signal: getTimeoutSignal(options.timeoutMs),
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${options.key}`,
@@ -611,10 +619,10 @@ async function runOpenAiCompatibleChat(options: {
   return parseJsonFromText(text);
 }
 
-async function runGemini(prompt: PromptMessages, provider: AiProvider) {
+async function runGemini(prompt: PromptMessages, provider: AiProvider, timeoutMs: number) {
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent`, {
     method: "POST",
-    signal: getTimeoutSignal(),
+    signal: getTimeoutSignal(timeoutMs),
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": provider.key || "",
@@ -642,8 +650,8 @@ async function runGemini(prompt: PromptMessages, provider: AiProvider) {
   return parseJsonFromText(extractGeminiText(data));
 }
 
-function getTimeoutSignal() {
-  return AbortSignal.timeout(18000);
+function getTimeoutSignal(timeoutMs: number) {
+  return AbortSignal.timeout(Math.max(Math.floor(timeoutMs), MIN_PROVIDER_ATTEMPT_MS));
 }
 
 function extractGeminiText(data: any) {
@@ -664,6 +672,7 @@ export default async function handler(req: any, res: any) {
   const payload = req.body || {};
   const prompt = buildPrompt(payload);
   const failures: string[] = [];
+  const startedAt = Date.now();
 
   for (const provider of getProviderQueue()) {
     if (!provider.key) {
@@ -671,9 +680,21 @@ export default async function handler(req: any, res: any) {
       continue;
     }
 
+    const remainingMs = MAX_AI_RESPONSE_MS - (Date.now() - startedAt) - PROVIDER_TIMEOUT_BUFFER_MS;
+
+    if (remainingMs < MIN_PROVIDER_ATTEMPT_MS) {
+      failures.push(`${provider.name}: skipped because the 10-second response budget was exhausted`);
+      break;
+    }
+
     try {
-      const plan = normalizePlan(await provider.run(prompt, provider));
-      res.status(200).json({ provider: provider.name, model: provider.model, plan });
+      const plan = normalizePlan(await provider.run(prompt, provider, remainingMs));
+      res.status(200).json({
+        provider: provider.name,
+        model: provider.model,
+        responseMs: Date.now() - startedAt,
+        plan,
+      });
       return;
     } catch (error: any) {
       failures.push(`${provider.name}: ${error?.message || "request failed"}`);
@@ -682,8 +703,9 @@ export default async function handler(req: any, res: any) {
 
   res.status(200).json({
     provider: "fallback",
+    responseMs: Date.now() - startedAt,
     plan: buildFallbackPlan(payload),
-    warning: `Live AI provider unavailable; fallback planning engine returned structured recommendations. ${failures.join(" | ")}`,
+    warning: `Live AI provider unavailable within the 10-second response budget; fallback planning engine returned structured recommendations. ${failures.join(" | ")}`,
   });
 }
 
