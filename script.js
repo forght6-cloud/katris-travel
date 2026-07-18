@@ -1446,7 +1446,7 @@ async function searchHotels(city, date, checkoutDate = getCheckoutDate(date), ad
   const safeDate = date || getFallbackTravelDate();
 
   try {
-    const response = await fetch("/api/booking", {
+    const response = await fetch("/api/hotels/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1583,7 +1583,7 @@ function getDateAfterDays(date, days) {
 
 async function searchAttractions(city) {
   try {
-    const response = await fetch("/api/google-places", {
+    const response = await fetch("/api/places/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -4581,7 +4581,7 @@ function getPlannerPayload() {
 }
 
 async function requestAiPlan(state) {
-  const response = await fetch("/api/generate-plan", {
+  const response = await fetch("/api/ai/plan", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

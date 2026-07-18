@@ -169,8 +169,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/booking"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 hotel options per city from the relative booking endpoint.",
+  /fetch\("\/api\/hotels\/search"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 hotel options per city from the live hotel-search endpoint.",
 );
 
 assert.match(
@@ -187,8 +187,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/google-places"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 place options per city from the local backend.",
+  /fetch\("\/api\/places\/search"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 place options per city from the live places-search endpoint.",
 );
 
 assert.match(
@@ -199,8 +199,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/generate-plan"/,
-  "AI plan generation should go through the relative generate-plan endpoint.",
+  /fetch\("\/api\/ai\/plan"/,
+  "AI plan generation should go through the multi-provider AI endpoint.",
 );
 
 assert.match(

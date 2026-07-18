@@ -19,7 +19,7 @@ test("keeps required IDs and planner fields", async () => {
 test("keeps navigation, action, API, storage, and static-product contracts", async () => {
   const [html, script, feature] = await Promise.all([read("app.html"), read("script.js"), read("features.js")]);
   includesAll(html, ['href="#destinations"', 'href="#planner"', 'href="#assistant"', 'data-scroll-target="#planner"', 'data-scroll-target="#destinations"', "data-liquid-menu-toggle", 'data-liquid-action="recommended"', 'data-liquid-action="saved"', 'data-liquid-action="suppliers"', 'data-liquid-action="monitor"', 'data-region="fjord"', 'data-region="forest"', 'data-region="coast"', 'data-region="aurora"', "style.css", "script.js", "features.js", "hero-gsap.js"], "product contract");
-  includesAll(script, ["/api/generate-plan", "/api/amadeus", "/api/google-places", "/api/booking", "katris-travel:last-trip-v1", "DOMContentLoaded"], "script contract");
+  includesAll(script, ["/api/ai/plan", "/api/amadeus", "/api/places/search", "/api/hotels/search", "katris-travel:last-trip-v1", "DOMContentLoaded"], "script contract");
   includesAll(feature, ["katris-travel:feature-state-v2", "localStorage"], "social storage contract");
 });
 

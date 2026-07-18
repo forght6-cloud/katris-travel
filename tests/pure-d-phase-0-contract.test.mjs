@@ -204,7 +204,7 @@ test("protects static and dynamically rendered data hooks", async () => {
 test("protects API paths, serverless entry files, and local-storage keys", async () => {
   const [script, feature] = await Promise.all([read("script.js"), read("features.js")]);
 
-  includesAll(script, ["/api/generate-plan", "/api/amadeus", "/api/google-places", "/api/booking"], "frontend API path");
+  includesAll(script, ["/api/ai/plan", "/api/amadeus", "/api/places/search", "/api/hotels/search"], "frontend API path");
   includesAll(script, ["katris-travel:last-trip-v1", "localStorage.setItem", "localStorage.getItem", "localStorage.removeItem"], "trip storage contract");
   includesAll(feature, ["katris-travel:feature-state-v2", "localStorage.setItem", "localStorage.getItem"], "feature storage contract");
 
