@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
+const aiPlanApi = readFileSync(new URL("../api/ai/plan.ts", import.meta.url), "utf8");
+const hotelsSearchApi = readFileSync(new URL("../api/hotels/search.ts", import.meta.url), "utf8");
 const generatePlanHandler = require("../api/generate-plan.js");
 const amadeusHandler = require("../api/amadeus.js");
 const googlePlacesHandler = require("../api/google-places.js");
@@ -83,6 +86,14 @@ function createMockResponse() {
   assert.equal(res.statusCode, 200, "amadeus mock mode should return 200.");
   assert.equal(res.body.provider, "mock", "amadeus mock mode should force mock provider.");
   process.env.AMADEUS_USE_MOCK = previous;
+}
+
+{
+  assert.match(aiPlanApi, /const MAX_AI_RESPONSE_MS = 9000;/, "AI plan route should enforce a sub-10-second response budget.");
+  assert.match(aiPlanApi, /responseMs:/, "AI plan route should report response timing for real API checks.");
+  assert.match(aiPlanApi, /budget was exhausted/, "AI plan route should stop provider attempts when the response budget is exhausted.");
+  assert.match(hotelsSearchApi, /const MAX_HOTEL_RESPONSE_MS = 9000;/, "Hotel search should enforce a sub-10-second response budget.");
+  assert.match(hotelsSearchApi, /Geoapify returned no hotels within the 10-second response budget/, "Hotel search should fall back instead of hanging on slow providers.");
 }
 
 {

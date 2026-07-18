@@ -3,489 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Katris Travel AI | Nordic Escapes</title>
+  <meta name="theme-color" content="#050607" />
+  <title>Ke | Katris Travel AI</title>
   <meta
     name="description"
-    content="Katris turns rough travel ideas into structured, bookable itineraries with route planning, flight context, hotel links, and AI-guided trip design."
+    content="Enter Katris through a cinematic travel shell, then continue into the AI travel execution workspace."
   />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23193d35'/%3E%3Cpath d='M32 11l5.4 15.6L54 32l-16.6 5.4L32 53l-5.4-15.6L10 32l16.6-5.4L32 11z' fill='%23fffdf7'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050607'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Times New Roman' font-size='34' font-style='italic' fill='white'%3EKe%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="taste-pass.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="landing.css" />
 </head>
 <body>
-  <svg class="liquid-glass-svg" aria-hidden="true" focusable="false">
-    <filter id="liquid-glass-filter" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7" result="liquidNoise" />
-      <feGaussianBlur in="liquidNoise" stdDeviation="1.8" result="softNoise" />
-      <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="18" xChannelSelector="R" yChannelSelector="G" result="refracted" />
-      <feColorMatrix
-        in="refracted"
-        type="matrix"
-        values="1 0 0 0 0.02  0 1 0 0 0.025  0 0 1 0 0.04  0 0 0 0.92 0"
-        result="edgeTint"
+  <a class="skip-link" href="#landing-main">Skip to content</a>
+
+  <section class="landing-shell" aria-labelledby="landing-title">
+    <div class="video-stage" aria-hidden="true">
+      <video class="scene-video is-active" muted loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081127_0992a171-d3c6-4978-8213-0ec5df8b6d63.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_092026_dd05b805-ea0f-40b2-8c52-332b88502592.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_081042_df7202bf-bd80-4b2b-bbc6-1f09ba2870e9.mp4" type="video/mp4" />
+      </video>
+      <video class="scene-video" muted loop playsinline preload="metadata">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260702_080959_4cac5234-3573-464e-a5b7-76b94b8a7d61.mp4" type="video/mp4" />
+      </video>
+      <img
+        class="train-overlay"
+        src="https://soft-zoom-63098134.figma.site/_assets/v11/0b4a435b2df2747593c43d7a1c9b4578f7d8d90c.png"
+        alt=""
       />
-      <feBlend in="SourceGraphic" in2="edgeTint" mode="screen" />
-    </filter>
-  </svg>
-  <div class="page-shell">
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="Katris Travel AI home">
-        <span class="brand-mark" aria-hidden="true">✦</span>
-        <span class="brand-copy">
-          <strong>Katris Travel AI</strong>
-          <span>Routes, stays, days, and booking context</span>
-        </span>
-      </a>
+    </div>
 
-      <nav class="site-nav" aria-label="Primary navigation">
-        <a href="#destinations">Destinations</a>
-        <a href="#planner">Plan</a>
-        <a href="#assistant">Assistant</a>
+    <header class="landing-nav">
+      <a class="wordmark" href="/" aria-label="Ke home">Ke</a>
+      <nav class="nav-links" aria-label="Landing navigation">
+        <a href="app.html#discover">Discover</a>
+        <a href="app.html#destinations">Templates</a>
+        <a href="app.html#planner">Planner</a>
+        <a href="app.html#assistant">Assistant</a>
+        <a class="nav-pill" href="app.html">Enter</a>
       </nav>
-
-      <button class="nav-cta" type="button" data-scroll-target="#planner">Start planning</button>
+      <a class="mobile-enter liquid-glass" href="app.html" aria-label="Enter Katris">Enter</a>
     </header>
-    <main id="top">
-      <section class="hero-section" id="overview">
-        <div class="hero-copy">
-          <p class="eyebrow">Trip planning with real decision points</p>
-          <h1>Plan the route, compare the stay, then move toward booking.</h1>
-          <p class="hero-text">
-            Katris turns a rough travel idea into a usable brief: daily pacing, likely neighborhoods,
-            hotel shortlists, flight context, places to visit, and a clear note on what is provider-confirmed or externally checked.
-          </p>
 
-          <svg class="hero-route-motion" viewBox="0 0 680 150" role="img" aria-label="Animated route from idea to booking">
-            <path class="hero-route-path" d="M22 108 C 150 18, 260 124, 364 58 S 548 16, 654 94" />
-            <circle class="hero-route-dot" cx="22" cy="108" r="7" />
-            <circle class="hero-route-dot" cx="364" cy="58" r="7" />
-            <circle class="hero-route-dot" cx="654" cy="94" r="7" />
-          </svg>
-
-          <div class="hero-actions">
-            <button class="primary-button" type="button" data-scroll-target="#planner">Build my trip</button>
-            <button class="secondary-button" type="button" data-scroll-target="#destinations">View ready templates</button>
-          </div>
-
-          <dl class="hero-stats" aria-label="Highlights">
-            <div>
-              <dt>14</dt>
-              <dd>days parsed from plain text</dd>
-            </div>
-            <div>
-              <dt>8+</dt>
-              <dd>hotel and place options</dd>
-            </div>
-            <div>
-              <dt>Clear</dt>
-              <dd>supplier clarity before checkout</dd>
-            </div>
-          </dl>
+    <main class="landing-content" id="landing-main">
+      <div class="copy-panel">
+        <p class="eyebrow liquid-glass">AI travel execution workflow</p>
+        <h1 id="landing-title">
+          <span class="mobile-title-line">A cinematic front door</span>
+          <span class="mobile-title-line">for trips that need</span>
+          <span class="mobile-title-line">a real plan.</span>
+        </h1>
+        <p class="landing-text">
+          Step through the atmosphere first, then continue into Katris to discover routes, save useful signals,
+          and turn the right idea into an execution-ready travel workspace.
+        </p>
+        <div class="landing-actions">
+          <a class="primary-action" href="app.html">Enter Katris</a>
+          <a class="secondary-action liquid-glass" href="app.html#destinations">View route templates</a>
         </div>
-
-        <aside class="hero-panel hero-panel--masonry" aria-label="Featured Nordic inspiration">
-          <div class="hero-masonry" aria-hidden="true">
-            <article class="masonry-card tall fjord-glass">
-              <div class="masonry-overlay">
-                <span>Fjord light</span>
-                <strong>Quiet waterlines</strong>
-              </div>
-            </article>
-
-            <article class="masonry-card short pine-mist">
-              <div class="masonry-overlay">
-                <span>Forest hush</span>
-                <strong>Pine air</strong>
-              </div>
-            </article>
-
-            <article class="masonry-card medium harbor-blue">
-              <div class="masonry-overlay">
-                <span>Coastal stillness</span>
-                <strong>Harbor calm</strong>
-              </div>
-            </article>
-
-            <article class="masonry-card short aurora-soft">
-              <div class="masonry-overlay">
-                <span>Winter glow</span>
-                <strong>Night light</strong>
-              </div>
-            </article>
-
-            <article class="masonry-card tall cabin-frost">
-              <div class="masonry-overlay">
-                <span>Design stay</span>
-                <strong>Warm interior</strong>
-              </div>
-            </article>
-
-            <article class="masonry-card medium ferry-line">
-              <div class="masonry-overlay">
-                <span>Movement</span>
-                <strong>Slow crossings</strong>
-              </div>
-            </article>
-          </div>
-
-          <div class="season-card">
-            <p class="eyebrow">Decision flow</p>
-            <h2>Plan first, compare next, book with context.</h2>
-            <ul>
-              <li><span aria-hidden="true"></span>Route, budget, dates, and traveler count</li>
-              <li><span aria-hidden="true"></span>Daily itinerary with fatigue-aware pacing</li>
-              <li><span aria-hidden="true"></span>Hotels, places, flights, and external booking paths</li>
-            </ul>
-          </div>
-        </aside>
-      </section>
-
-      <section class="inspiration-strip" aria-label="Travel atmosphere highlights">
-        <article>
-          <p class="eyebrow">Landscape</p>
-          <h3>Wide horizons</h3>
-          <p>Large visual storytelling and open breathing room shape the mood before any planning begins.</p>
-        </article>
-        <article>
-          <p class="eyebrow">Interface</p>
-          <h3>Minimal by default</h3>
-          <p>Quiet surfaces, elegant spacing, and understated controls keep attention on the destination.</p>
-        </article>
-        <article>
-          <p class="eyebrow">Journey</p>
-          <h3>Exploration first</h3>
-          <p>Discovery flows from inspiration into planning without feeling transactional or crowded.</p>
-        </article>
-      </section>
-
-      <section class="destinations-section" id="destinations">
-        <div class="section-heading">
-          <p class="eyebrow">Nordic landscapes</p>
-          <h2>Choose a ready-made travel direction.</h2>
-          <p>
-            Each card opens a prepared route template with real places, suggested pacing, and reusable planning
-            prompts. Use it as a starting point, then send it into the planner.
-          </p>
+        <div class="scene-switcher" role="group" aria-label="Change cinematic scene">
+          <button class="is-active" type="button" data-scene="0">Golden Hour</button>
+          <button type="button" data-scene="1">Still Water</button>
+          <button type="button" data-scene="2">Deep Woods</button>
+          <button type="button" data-scene="3">Quiet Dawn</button>
         </div>
-
-        <div class="destination-grid" role="list" aria-label="Destination moods">
-          <button class="destination-card is-active" type="button" data-region="fjord" aria-pressed="true">
-            <span class="destination-visual fjord" aria-hidden="true"></span>
-            <span class="destination-copy">
-              <span class="eyebrow">Norway</span>
-              <span class="destination-title">Fjord Quiet</span>
-              <span>Steep water inlets, ferry crossings, and design-forward cabins near reflective blue water.</span>
-            </span>
-          </button>
-
-          <button class="destination-card" type="button" data-region="forest" aria-pressed="false">
-            <span class="destination-visual forest" aria-hidden="true"></span>
-            <span class="destination-copy">
-              <span class="eyebrow">Sweden</span>
-              <span class="destination-title">Forest Retreat</span>
-              <span>Pine-lined lakes, sauna rituals, and soft contemporary hospitality nested in woodland calm.</span>
-            </span>
-          </button>
-
-          <button class="destination-card" type="button" data-region="coast" aria-pressed="false">
-            <span class="destination-visual coast" aria-hidden="true"></span>
-            <span class="destination-copy">
-              <span class="eyebrow">Denmark</span>
-              <span class="destination-title">Coastal Simplicity</span>
-              <span>Sea light, cycling towns, gallery stops, and elegant slow days framed by the shoreline.</span>
-            </span>
-          </button>
-
-          <button class="destination-card" type="button" data-region="aurora" aria-pressed="false">
-            <span class="destination-visual aurora" aria-hidden="true"></span>
-            <span class="destination-copy">
-              <span class="eyebrow">Iceland &amp; Lapland</span>
-              <span class="destination-title">Aurora Horizon</span>
-              <span>Volcanic textures, snowy silence, and evening routes designed around the northern sky.</span>
-            </span>
-          </button>
-        </div>
-
-        <article class="destination-template" id="destination-template" aria-live="polite">
-          <div class="template-media" aria-hidden="true"></div>
-          <div class="template-copy">
-            <p class="eyebrow" id="template-kicker">Norway / 7 days</p>
-            <h3 id="template-title">Fjord Quiet: Bergen, Flam, and Aurlandsfjord</h3>
-            <p id="template-summary">
-              A prepared route for travelers who want scenery, slow ferry movement, compact towns, and quiet stays.
-            </p>
-            <dl class="template-meta">
-              <div>
-                <dt>Best for</dt>
-                <dd id="template-best">scenery, ferry crossings, design cabins</dd>
-              </div>
-              <div>
-                <dt>Base</dt>
-                <dd id="template-base">Bergen + Flam</dd>
-              </div>
-              <div>
-                <dt>Use next</dt>
-                <dd id="template-action">Copy into the planner</dd>
-              </div>
-            </dl>
-            <div class="template-days" id="template-days">
-              <article><span>Day 1</span><p>Bergen arrival, Bryggen walk, quiet harbor dinner.</p></article>
-              <article><span>Day 2</span><p>Flam Railway, Aurlandsfjord viewpoint, slow evening by the water.</p></article>
-              <article><span>Day 3</span><p>Ferry movement, cabin check-in, flexible weather buffer.</p></article>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="planner-section" id="planner">
-        <div class="section-heading">
-          <p class="eyebrow">Live planning workspace</p>
-          <h2>Build the trip step by step.</h2>
-          <p>
-            Add the route, budget, dates, and traveler count. Katris then turns the input into a structured plan
-            with transparent data status.
-          </p>
-        </div>
-
-        <div class="liquid-plan-stage" aria-label="Travel plan quick controls">
-          <div class="liquid-sky-backdrop" aria-hidden="true"></div>
-          <nav class="liquid-glass-nav" aria-label="Travel plan dropdown">
-            <button
-              class="liquid-trigger"
-              type="button"
-              data-liquid-menu-toggle
-              aria-expanded="false"
-              aria-controls="liquid-plan-menu"
-            >
-              <span class="liquid-trigger-clone" aria-hidden="true">Travel Plan</span>
-              <span>Travel Plan</span>
-            </button>
-            <div class="liquid-menu" id="liquid-plan-menu" hidden>
-              <button type="button" data-liquid-action="recommended">Recommended path</button>
-              <button type="button" data-liquid-action="saved">Save current trip</button>
-              <button type="button" data-liquid-action="suppliers">Supplier checkout</button>
-              <button type="button" data-liquid-action="monitor">Operations status</button>
-            </div>
-          </nav>
-          <article class="liquid-menu-detail" id="liquid-menu-detail" aria-live="polite">
-            <p class="eyebrow">Liquid glass control</p>
-            <h3>Choose the next planning surface.</h3>
-            <p>
-              This menu opens real planner actions: jump to the recommended path, save the trip locally,
-              review external hotel payment flow, or inspect provider status before launch.
-            </p>
-          </article>
-        </div>
-
-        <div class="planner-layout">
-          <form class="planner-form" id="planner-form">
-            <div class="form-grid">
-              <div class="departure-budget-group">
-                <label class="departure-field">
-                  <span>Departure</span>
-                  <input id="from" name="from" placeholder="London" autocomplete="off" />
-                </label>
-                <label class="budget-field">
-                  <span>Budget</span>
-                  <input id="budget" name="budget" placeholder="800 bucks" autocomplete="off" />
-                </label>
-              </div>
-              <label>
-                <span>Destination</span>
-                <input id="to" name="to" placeholder="Frankfurt" autocomplete="off" />
-              </label>
-              <label>
-                <span>Travel date</span>
-                <input id="date" name="date" type="date" />
-              </label>
-              <label>
-                <span>Trip length</span>
-                <select id="tripLength" name="tripLength">
-                  <option value="3 nights">3 nights</option>
-                  <option value="5 nights">5 nights</option>
-                  <option value="7 nights" selected>7 nights</option>
-                  <option value="10+ nights">10+ nights</option>
-                  <option value="2 weeks">2 weeks</option>
-                </select>
-              </label>
-              <label>
-                <span>Travelers</span>
-                <input id="people" name="people" type="number" min="1" value="2" />
-              </label>
-            </div>
-
-            <label class="full-width">
-              <span>Itinerary outline</span>
-              <textarea
-                id="notes"
-                name="notes"
-                placeholder="Example:
-2026-06-01 Paris
-2026-06-04 Rome
-2026-06-07 Stockholm"
-              ></textarea>
-            </label>
-
-            <fieldset class="travel-pillars">
-              <legend>Trip priorities</legend>
-              <label><input type="checkbox" name="pillars" value="Scenery" checked />Scenery</label>
-              <label><input type="checkbox" name="pillars" value="Quiet stays" checked />Quiet stays</label>
-              <label><input type="checkbox" name="pillars" value="Local culture" />Local culture</label>
-              <label><input type="checkbox" name="pillars" value="Wellness" />Wellness</label>
-              <label><input type="checkbox" name="pillars" value="Rail or ferry" />Rail or ferry</label>
-            </fieldset>
-
-            <div class="planner-actions">
-              <button class="primary-button" id="analyze-planner" type="submit">Analyze itinerary</button>
-              <button class="ghost-button" type="button" id="reset-planner">Reset</button>
-            </div>
-
-            <div id="preference-gate" class="preference-gate" hidden></div>
-          </form>
-
-          <aside class="planner-preview" aria-live="polite">
-            <div class="preview-card route-brief-card">
-              <p class="eyebrow">Route brief</p>
-              <h3 id="preview-title">A seven-night Nordic reset.</h3>
-              <p id="preview-summary">
-                Build a trip concept to see itinerary structure, travel options, and partner-ready booking paths.
-              </p>
-              <ul id="preview-pillars" class="preview-pillars">
-                <li>Scenery-led routing</li>
-                <li>Quiet stays</li>
-                <li>AI suggestions</li>
-              </ul>
-            </div>
-
-            <div class="planner-motion-card" aria-hidden="true">
-              <span></span>
-            </div>
-
-            <div class="preview-card timeline-card">
-              <p class="eyebrow">Step flow</p>
-              <div id="timeline-output" class="timeline-output">
-                <article>
-                  <span>Step 1</span>
-                  <p>Collect route, date, traveler count, and budget.</p>
-                </article>
-                <article>
-                  <span>Step 2</span>
-                  <p>Generate pacing, stays, places, and transport context.</p>
-                </article>
-                <article>
-                  <span>Step 3</span>
-                  <p>Compare provider data, external booking links, and final supplier confirmation steps.</p>
-                </article>
-              </div>
-            </div>
-
-            <div class="preview-card analysis-card">
-              <p class="eyebrow">Travel options</p>
-              <div id="analysis-results" class="analysis-results">
-                <p class="analysis-empty">Analyze an itinerary to see flights, hotels, transport, and summary.</p>
-              </div>
-            </div>
-
-            <div class="preview-card ops-monitor-card" id="ops-monitor" aria-live="polite">
-              <p class="eyebrow">Operations status</p>
-              <h3>Waiting for the first plan.</h3>
-              <p>Provider and local-save status will appear after a trip is generated.</p>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section class="assistant-section" id="assistant">
-        <div class="section-heading compact">
-          <p class="eyebrow">AI assistant</p>
-          <h2>Generate a structured travel plan.</h2>
-          <p>
-            Use a short message like "Chicago to Manchester, 800 EUR, 2 weeks, 1 person." The result is rendered
-            as cards with route, hotels, places, flights, and PDF export.
-          </p>
-        </div>
-
-        <div class="assistant-layout">
-          <div class="assistant-panel">
-            <div class="assistant-status">
-              <span class="status-dot" aria-hidden="true"></span>
-              <p>Assistant ready with planning endpoint</p>
-            </div>
-
-            <div id="assistant-thread" class="assistant-thread" aria-live="polite">
-              <article class="message assistant">
-                <p class="message-label">Katris Assistant</p>
-                <p>
-                  I can turn your preferences into a structured itinerary. Ask about seasons,
-                  atmosphere, or route ideas.
-                </p>
-              </article>
-            </div>
-
-            <div class="assistant-progress" id="assistant-progress" aria-hidden="true">
-              <div class="assistant-progress-head">
-                <span id="assistant-progress-step">Preparing travel plan</span>
-                <span>Backup planning enabled</span>
-              </div>
-              <div class="assistant-progress-track">
-                <span id="assistant-progress-bar"></span>
-              </div>
-            </div>
-
-            <form id="assistant-form" class="assistant-form">
-              <label class="sr-only" for="assistant-input">Ask the travel assistant</label>
-              <textarea
-                id="assistant-input"
-                rows="3"
-                placeholder="Example: I want a quiet 7-night trip with fjords, scenic trains, and warm design hotels."
-              ></textarea>
-              <div class="assistant-actions">
-                <button class="primary-button" type="submit">Send prompt</button>
-                <button class="ghost-button" type="button" id="clear-assistant">Clear</button>
-              </div>
-            </form>
-          </div>
-
-          <aside class="assistant-sidebar">
-            <div id="assistant-flight-summary" aria-live="polite"></div>
-            <div class="preview-card">
-              <p class="eyebrow">Nordic winter notes</p>
-              <h3>Real places to anchor a route.</h3>
-              <ul class="hook-list destination-notes">
-                <li>
-                  <strong>Levi, Finland</strong>
-                  <span>
-                    Finland's Lapland ski village pairs fell skiing with sauna culture, reindeer routes, and quiet Arctic evenings.
-                    <em>Address: Hissitie 8, 99130 Levi, Finland.</em>
-                  </span>
-                </li>
-                <li>
-                  <strong>Trysil, Norway</strong>
-                  <span>
-                    Norway's large family-friendly ski area is shaped around mountain cabins, groomed forest pistes, and relaxed after-ski.
-                    <em>Address: Velkomstvegen 10, 2420 Trysil, Norway.</em>
-                  </span>
-                </li>
-                <li>
-                  <strong>Ruka, Finland</strong>
-                  <span>
-                    A Kuusamo fell resort known for long winter light, ski-jump heritage, snowy spruce forests, and Finnish sauna rituals.
-                    <em>Address: Rukatunturintie 9, 93830 Rukatunturi, Finland.</em>
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </aside>
-        </div>
-      </section>
+      </div>
     </main>
-  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-  <script src="script.js" defer></script>
-  <script src="hero-gsap.js" defer></script>
+    <footer class="landing-footer" aria-label="Landing links">
+      <span>Ke / Katris Travel AI</span>
+      <a href="app.html#planner">Start planning</a>
+      <a href="app.html#assistant">Ask assistant</a>
+      <a href="mailto:hello@katris.ai">Contact</a>
+    </footer>
+  </section>
+
+  <script src="landing.js" defer></script>
 </body>
 </html>

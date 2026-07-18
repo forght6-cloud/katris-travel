@@ -6,6 +6,9 @@ const APIFY_BOOKING_ACTOR_ID = "oeiQgfg5fsmIJB7Cn";
 const APIFY_API_BASE_URL = "https://api.apify.com/v2";
 const HASDATA_GOOGLE_HOTELS_URL = "https://api.hasdata.com/scrape/google/hotels";
 const HOTEL_CATEGORIES = "accommodation.hotel,accommodation.apartment,accommodation.guest_house";
+const MAX_HOTEL_RESPONSE_MS = 9000;
+const PROVIDER_TIMEOUT_BUFFER_MS = 500;
+const MIN_PROVIDER_ATTEMPT_MS = 1000;
 
 const CITY_CENTER_MAP: Record<string, { lat: number; lon: number }> = {
   amsterdam: { lat: 52.3676, lon: 4.9041 },
@@ -72,14 +75,16 @@ async function searchApifyHotels(
   checkoutDate: string,
   adults: number,
   limit: number,
+  timeoutMs: number,
 ) {
   const actorId = process.env.APIFY_BOOKING_ACTOR_ID || APIFY_BOOKING_ACTOR_ID;
   const requestUrl = new URL(`${APIFY_API_BASE_URL}/acts/${actorId}/run-sync-get-dataset-items`);
-  requestUrl.searchParams.set("timeout", "90");
+  requestUrl.searchParams.set("timeout", String(Math.max(1, Math.floor(timeoutMs / 1000))));
   requestUrl.searchParams.set("memory", "4096");
 
   const response = await fetch(requestUrl.toString(), {
     method: "POST",
+    signal: getTimeoutSignal(timeoutMs),
     headers: {
       Authorization: `Bearer ${apiToken}`,
       "Content-Type": "application/json",
@@ -200,6 +205,7 @@ async function searchHasDataHotels(
   checkoutDate: string,
   adults: number,
   limit: number,
+  timeoutMs: number,
 ) {
   const requestUrl = new URL(HASDATA_GOOGLE_HOTELS_URL);
   requestUrl.searchParams.set("q", `Hotels in ${city}`);
@@ -207,6 +213,7 @@ async function searchHasDataHotels(
   requestUrl.searchParams.set("checkOutDate", checkoutDate);
 
   const response = await fetch(requestUrl.toString(), {
+    signal: getTimeoutSignal(timeoutMs),
     headers: {
       "x-api-key": apiKey,
     },
@@ -310,7 +317,7 @@ function getPriceLabel(value: any) {
   return String(value.lowest || value.extractedLowest || value.extracted_lowest || value.beforeTaxesFees || value.before_taxes_fees || value.value || "");
 }
 
-async function geocodeCity(city: string) {
+async function geocodeCity(city: string, timeoutMs: number) {
   const knownCenter = CITY_CENTER_MAP[city.trim().toLowerCase()];
 
   if (knownCenter) {
@@ -330,7 +337,7 @@ async function geocodeCity(city: string) {
   requestUrl.searchParams.set("type", "city");
   requestUrl.searchParams.set("apiKey", apiKey);
 
-  const response = await fetch(requestUrl.toString());
+  const response = await fetch(requestUrl.toString(), { signal: getTimeoutSignal(timeoutMs) });
   const data = await response.json();
 
   if (!response.ok) {
@@ -349,14 +356,14 @@ async function geocodeCity(city: string) {
   };
 }
 
-async function searchGeoapifyHotels(city: string, date: string, checkoutDate: string, adults: number, limit: number) {
+async function searchGeoapifyHotels(city: string, date: string, checkoutDate: string, adults: number, limit: number, timeoutMs: number) {
   const apiKey = process.env.GEOAPIFY_PLACES_API_KEY;
 
   if (!apiKey) {
     throw new Error("Geoapify places key is not configured.");
   }
 
-  const center = await geocodeCity(city);
+  const center = await geocodeCity(city, Math.max(Math.floor(timeoutMs * 0.35), MIN_PROVIDER_ATTEMPT_MS));
   const requestUrl = new URL(GEOAPIFY_PLACES_URL);
   requestUrl.searchParams.set("categories", HOTEL_CATEGORIES);
   requestUrl.searchParams.set("filter", `circle:${center.lon},${center.lat},16000`);
@@ -364,7 +371,7 @@ async function searchGeoapifyHotels(city: string, date: string, checkoutDate: st
   requestUrl.searchParams.set("limit", String(Math.max(limit * 2, 12)));
   requestUrl.searchParams.set("apiKey", apiKey);
 
-  const response = await fetch(requestUrl.toString());
+  const response = await fetch(requestUrl.toString(), { signal: getTimeoutSignal(timeoutMs) });
   const data = await response.json();
 
   if (!response.ok) {
@@ -467,6 +474,14 @@ function getCheckoutDate(checkinDate: string) {
   return parsed.toISOString().slice(0, 10);
 }
 
+function getTimeoutSignal(timeoutMs: number) {
+  return AbortSignal.timeout(Math.max(Math.floor(timeoutMs), MIN_PROVIDER_ATTEMPT_MS));
+}
+
+function getRemainingProviderTimeout(startedAt: number) {
+  return MAX_HOTEL_RESPONSE_MS - (Date.now() - startedAt) - PROVIDER_TIMEOUT_BUFFER_MS;
+}
+
 function createFallbackHotels(city: string, date: string, checkoutDate: string, adults: number): HotelResult[] {
   const names = [
     `${city} Central Hotel`,
@@ -515,18 +530,26 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const startedAt = Date.now();
     const providerWarnings: string[] = [];
     const apifyToken = process.env.APIFY_TOKEN;
     const hasDataApiKey = process.env.HASDATA_API_KEY;
 
     if (apifyToken) {
       try {
-        const apifyHotels = await searchApifyHotels(apifyToken, city, date, checkoutDate, adults, limit);
+        const timeoutMs = getRemainingProviderTimeout(startedAt);
+
+        if (timeoutMs < MIN_PROVIDER_ATTEMPT_MS) {
+          throw new Error("Skipped Apify because the 10-second response budget was exhausted.");
+        }
+
+        const apifyHotels = await searchApifyHotels(apifyToken, city, date, checkoutDate, adults, limit, timeoutMs);
 
         if (apifyHotels.length) {
           res.status(200).json({
             provider: "apify-booking",
             city,
+            responseMs: Date.now() - startedAt,
             hotels: apifyHotels,
             warning: "Live Booking.com prices via Apify; final inventory and payment are confirmed by Booking.com.",
           });
@@ -543,12 +566,19 @@ export default async function handler(req: any, res: any) {
 
     if (hasDataApiKey) {
       try {
-        const hasDataHotels = await searchHasDataHotels(hasDataApiKey, city, date, checkoutDate, adults, limit);
+        const timeoutMs = getRemainingProviderTimeout(startedAt);
+
+        if (timeoutMs < MIN_PROVIDER_ATTEMPT_MS) {
+          throw new Error("Skipped HasData because the 10-second response budget was exhausted.");
+        }
+
+        const hasDataHotels = await searchHasDataHotels(hasDataApiKey, city, date, checkoutDate, adults, limit, timeoutMs);
 
         if (hasDataHotels.length) {
           res.status(200).json({
             provider: "hasdata",
             city,
+            responseMs: Date.now() - startedAt,
             hotels: hasDataHotels,
             warning: "Live hotel rates from Google Hotels via HasData; final inventory is confirmed by the booking provider.",
           });
@@ -563,15 +593,19 @@ export default async function handler(req: any, res: any) {
       providerWarnings.push("HasData hotel key is not configured.");
     }
 
-    const hotels = await searchGeoapifyHotels(city, date, checkoutDate, adults, limit);
+    const geoapifyTimeoutMs = getRemainingProviderTimeout(startedAt);
+    const hotels = geoapifyTimeoutMs >= MIN_PROVIDER_ATTEMPT_MS
+      ? await searchGeoapifyHotels(city, date, checkoutDate, adults, limit, geoapifyTimeoutMs)
+      : [];
 
     res.status(200).json({
       provider: "geoapify",
       city,
+      responseMs: Date.now() - startedAt,
       hotels: hotels.length ? hotels : createFallbackHotels(city, date, checkoutDate, adults),
       warning: hotels.length
         ? providerWarnings.join(" ")
-        : [...providerWarnings, "Geoapify returned no hotels; external search links were generated."].join(" "),
+        : [...providerWarnings, "Geoapify returned no hotels within the 10-second response budget; external search links were generated."].join(" "),
     });
   } catch (error: any) {
     res.status(200).json({

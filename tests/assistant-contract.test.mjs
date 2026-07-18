@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const script = readFileSync(new URL("../script.js", import.meta.url), "utf8");
-const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const heroAnimation = readFileSync(new URL("../hero-gsap.js", import.meta.url), "utf8");
+const indexHtml = readFileSync(new URL("../app.html", import.meta.url), "utf8");
 const generatePlanApi = readFileSync(new URL("../api/generate-plan.js", import.meta.url), "utf8");
 const amadeusApi = readFileSync(new URL("../api/amadeus.js", import.meta.url), "utf8");
 const googlePlacesApi = readFileSync(new URL("../api/google-places.js", import.meta.url), "utf8");
@@ -82,16 +83,22 @@ assert.doesNotMatch(
   "Landing page copy should not describe provider state with mock/fallback jargon.",
 );
 
-assert.match(
+assert.doesNotMatch(
   indexHtml,
   /cdnjs\.cloudflare\.com\/ajax\/libs\/gsap/,
-  "Homepage should load GSAP for the final front-page animation layer.",
+  "Homepage animation should not block initialization on a third-party script.",
+);
+
+assert.match(
+  heroAnimation,
+  /Element\.prototype\.animate/,
+  "Homepage should use the browser animation API for the finite hero sequence.",
 );
 
 assert.match(
   script,
   /function initHeroGsapAnimation/,
-  "Homepage should initialize a GSAP hero animation when GSAP is available.",
+  "Homepage should hand off to the single hero animation controller.",
 );
 
 assert.match(
@@ -162,8 +169,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/booking"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 hotel options per city from the relative booking endpoint.",
+  /fetch\("\/api\/hotels\/search"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 hotel options per city from the live hotel-search endpoint.",
 );
 
 assert.match(
@@ -180,8 +187,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/google-places"[\s\S]*?limit:\s*8/,
-  "Assistant data flow should request 8 place options per city from the local backend.",
+  /fetch\("\/api\/places\/search"[\s\S]*?limit:\s*8/,
+  "Assistant data flow should request 8 place options per city from the live places-search endpoint.",
 );
 
 assert.match(
@@ -192,8 +199,8 @@ assert.match(
 
 assert.match(
   script,
-  /fetch\("\/api\/generate-plan"/,
-  "AI plan generation should go through the relative generate-plan endpoint.",
+  /fetch\("\/api\/ai\/plan"/,
+  "AI plan generation should go through the multi-provider AI endpoint.",
 );
 
 assert.match(
